@@ -1,0 +1,88 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (square x) (* x x))
+;Value: square
+
+1 ]=> (define (abs x)
+  (if (< x 0)
+      (- x)
+      x))
+;Value: abs
+
+1 ]=> (define (average x y)
+  (/ (+ x y) 2))
+;Value: average
+
+1 ]=> (define (improve guess x)
+  (average guess (/ x guess)))
+;Value: improve
+
+1 ]=> (define (good-enough? guess x)
+  (< (abs (- (square guess) x)) 0.001))
+;Value: good-enough?
+
+1 ]=> (define (sqrt-iter guess x)
+  (if (good-enough? guess x)
+      guess
+      (sqrt-iter (improve guess x)
+                 x)))
+;Value: sqrt-iter
+
+1 ]=> (define (sqrt x)
+  (sqrt-iter 1.0 x))
+;Value: sqrt
+
+1 ]=> (sqrt 2)
+;Value: 1.4142156862745097
+
+1 ]=> ; expected value 1.414213562
+
+(sqrt 0.000244140625)
+;Value: .03380943055880753
+
+1 ]=> ; expected value 0.015625
+
+; loops forever
+;(sqrt 251728825683549488150424261); expected value 15865964379247.4678601874
+
+(define (good-enough? prev-guess curr-guess)
+  (< (abs (- curr-guess prev-guess)) 0.001))
+;Value: good-enough?
+
+1 ]=> (define (sqrt-iter prev-guess curr-guess x)
+  (if (good-enough? prev-guess curr-guess)
+      curr-guess
+      (sqrt-iter curr-guess
+                 (improve curr-guess x)
+                 x)))
+;Value: sqrt-iter
+
+1 ]=> (define (sqrt x)
+  (sqrt-iter 0.0 1.0 x))
+;Value: sqrt
+
+1 ]=> (sqrt 2)
+;Value: 1.4142135623746899
+
+1 ]=> ; expected value 1.414213562
+
+(sqrt 0.000244140625)
+;Value: .01563547989666451
+
+1 ]=> ; expected value 0.015625
+
+(sqrt 251728825683549488150424261)
+;Value: 15865964379247.469
+
+1 ]=> ; expected value 15865964379247.4678601874
+
+End of input stream reached.
+Fortitudine vincimus.

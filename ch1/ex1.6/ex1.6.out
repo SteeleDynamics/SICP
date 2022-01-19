@@ -1,0 +1,61 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; if is a special form, evaluates one clause based on pred value
+; new-if is a user-defined procedure, applicative-order evaluation
+(define (new-if predicate then-clause else-clause)
+  (cond (predicate then-clause)
+        (else else-clause)))
+;Value: new-if
+
+1 ]=> (new-if (= 2 3) 0 5)
+;Value: 5
+
+1 ]=> (new-if (= 1 1) 0 5)
+;Value: 0
+
+1 ]=> (define (square x) (* x x))
+;Value: square
+
+1 ]=> (define (abs x)
+  (if (< x 0)
+      (- x)
+      x))
+;Value: abs
+
+1 ]=> (define (average x y)
+  (/ (+ x y) 2))
+;Value: average
+
+1 ]=> (define (improve guess x)
+  (average guess (/ x guess)))
+;Value: improve
+
+1 ]=> (define (good-enough? guess x)
+  (< (abs (- (square guess) x)) 0.001))
+;Value: good-enough?
+
+1 ]=> (define (sqrt-iter guess x)
+  (new-if (good-enough? guess x)
+          guess
+          (sqrt-iter (improve guess x)
+                     x)))
+;Value: sqrt-iter
+
+1 ]=> (define (sqrt x)
+  (sqrt-iter 1.0 x))
+;Value: sqrt
+
+1 ]=> (sqrt 2)
+;Aborting!: maximum recursion depth exceeded
+
+1 ]=> 
+End of input stream reached.
+Moriturus te salutat.

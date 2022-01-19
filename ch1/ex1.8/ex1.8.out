@@ -1,0 +1,78 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (square x) (* x x))
+;Value: square
+
+1 ]=> (define (abs x)
+  (if (< x 0)
+      (- x)
+      x))
+;Value: abs
+
+1 ]=> (define (improve guess x)
+  (/ (+ (/ x
+           (square guess))
+        (* 2 guess))
+     3))
+;Value: improve
+
+1 ]=> (define (good-enough? guess x)
+  (< (abs (- (square guess) x)) 0.001))
+;Value: good-enough?
+
+1 ]=> (define (good-enough? prev-guess curr-guess)
+  (< (abs (- curr-guess prev-guess)) 0.001))
+;Value: good-enough?
+
+1 ]=> (define (cbrt-iter prev-guess curr-guess x)
+  (if (good-enough? prev-guess curr-guess)
+      curr-guess
+      (cbrt-iter curr-guess
+                 (improve curr-guess x)
+                 x)))
+;Value: cbrt-iter
+
+1 ]=> (define (cbrt x)
+  (cbrt-iter 0.0 1.0 x))
+;Value: cbrt
+
+1 ]=> (cbrt 8)
+;Value: 2.000000000012062
+
+1 ]=> ; expected value 2
+
+(cbrt 27)
+;Value: 3.0000000000000977
+
+1 ]=> ; expected value 3
+
+(cbrt 125)
+;Value: 5.000000000287929
+
+1 ]=> ; expected value 5
+
+(cbrt -343)
+;Value: -7.00000000000025
+
+1 ]=> ; expected value -7
+
+(cbrt -729)
+;Value: -9.00000000004225
+
+1 ]=> ; expected value -9
+
+(cbrt -1331)
+;Value: -11.000000000045418
+
+1 ]=> ; expected value -11
+
+End of input stream reached.
+Pulvis et umbra sumus.
