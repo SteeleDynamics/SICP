@@ -1,0 +1,38 @@
+Prove that Fib(n) is the closest integer to (phi ^ n) / sqrt(5), where
+phi = (1 + sqrt(5)) / 2. Hint: Let psi = (1 - sqrt(5)) / 2. Use induction and
+the definition of the Fibonacci numbers (see section 1.2.2) to prove that
+Fib(n) = ((phi ^ n) - (psi ^ n)) / sqrt(5)
+
+B.C.  Fib(0) = 0
+             = (1 - 1) / sqrt(5)
+             = ((phi ^ 0) - (psi ^ 0)) / sqrt(5)                             (1)
+
+      Fib(1) = 1
+             = sqrt(5) / sqrt(5)
+             = ((sqrt(5) / 2) - ( -sqrt(5) / 2) ) / sqrt(5)
+             = (((1 + sqrt(5)) / 2) - ( (1 - sqrt(5)) / 2) ) / sqrt(5)
+             = ((phi ^ 1) - (psi ^ 1)) / sqrt(5)                             (2)
+
+I.H   For all k <= n, Fib(n) = ((phi ^ n) - (psi ^ n)) / sqrt(5)
+
+NOTE: phi = (1 + sqrt(5)) / 2
+          = ((1 + sqrt(5)) * (1 - sqrt(5))) / (2 * (1 - sqrt(5)))
+          = (1 - 5) / (2 * (1 - sqrt(5)))
+          = - (2 / (1 - sqrt(5)))
+          = - (1 / psi)                                                      (3)
+
+NOTE:         phi ^ 2 = phi + 1                                              (4)
+      (1 / (psi ^ 2)) = - (1 / psi) + 1
+                    1 = - psi + (psi ^ 2)
+              psi + 1 = psi ^ 2                                              (5)
+
+I.S.  Fib(n+1) = Fib(n) + Fib(n-1)
+               = (((phi ^ n) - (psi ^ n)) / sqrt(5)) +
+                 (((phi ^ (n-1)) - (psi ^ (n-1))) / sqrt(5))
+               = ((phi ^ (n-1)) * (phi + 1) -
+                  (psi ^ (n-1)) * (psi + 1)) / sqrt(5)
+               = ((phi ^ (n-1)) * (phi ^ 2) -
+                  (psi ^ (n-1)) * (psi ^ 2)) / sqrt(5)
+               = ((phi ^ (n+1)) - (psi ^ (n+1))) / sqrt(5)                   (6)
+
+                                    Q.E.D.
