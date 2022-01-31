@@ -1,0 +1,135 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; 
+; (cc 11 5)
+; |-- (cc 11 4)
+; |   |-- (cc 11 3)
+; |   |   |-- (cc 11 2)
+; |   |   |   |-- (cc 11 1)
+; |   |   |   |   |-- (cc 11 0)
+; |   |   |   |   |   `-- 0
+; |   |   |   |   `-- (cc 10 1)
+; |   |   |   |       |-- (cc 10 0)
+; |   |   |   |       |   `-- 0
+; |   |   |   |       `-- (cc 9 1)
+; |   |   |   |           |-- (cc 9 0)
+; |   |   |   |           |   `-- 0
+; |   |   |   |           `-- (cc 8 1)
+; |   |   |   |               |-- (cc 8 0)
+; |   |   |   |               |   `-- 0
+; |   |   |   |               `-- (cc 7 1)
+; |   |   |   |                   |-- (cc 7 0)
+; |   |   |   |                   |   `-- 0
+; |   |   |   |                   `-- (cc 6 1)
+; |   |   |   |                       |-- (cc 6 0)
+; |   |   |   |                       |   `-- 0
+; |   |   |   |                       `-- (cc 5 1)
+; |   |   |   |                           |-- (cc 5 0)
+; |   |   |   |                           |   `-- 0
+; |   |   |   |                           `-- (cc 4 1)
+; |   |   |   |                               |-- (cc 4 0)
+; |   |   |   |                               |   `-- 0
+; |   |   |   |                               `-- (cc 3 1)
+; |   |   |   |                                   |-- (cc 3 0)
+; |   |   |   |                                   |   `-- 0
+; |   |   |   |                                   `-- (cc 2 1)
+; |   |   |   |                                       |-- (cc 2 0)
+; |   |   |   |                                       |   `-- 0
+; |   |   |   |                                       `-- (cc 1 1)
+; |   |   |   |                                           |-- (cc 1 0)
+; |   |   |   |                                           |   `-- 0
+; |   |   |   |                                           `-- (cc 0 1)
+; |   |   |   |                                               `-- 1
+; |   |   |   `-- (cc 6 2)
+; |   |   |       |-- (cc 6 1)
+; |   |   |       |   |-- (cc 6 0)
+; |   |   |       |   |   `-- 0
+; |   |   |       |   `-- (cc 5 1)
+; |   |   |       |       |-- (cc 5 0)
+; |   |   |       |       |   `-- 0
+; |   |   |       |       `-- (cc 4 1)
+; |   |   |       |           |-- (cc 4 0)
+; |   |   |       |           |   `-- 0
+; |   |   |       |           `-- (cc 3 1)
+; |   |   |       |               |-- (cc 3 0)
+; |   |   |       |               |   `-- 0
+; |   |   |       |               `-- (cc 2 1)
+; |   |   |       |                   |-- (cc 2 0)
+; |   |   |       |                   |   `-- 0
+; |   |   |       |                   `-- (cc 1 1)
+; |   |   |       |                       |-- (cc 1 0)
+; |   |   |       |                       |   `-- 0
+; |   |   |       |                       `-- (cc 0 1)
+; |   |   |       |                           `-- 1
+; |   |   |       `-- (cc 1 2)
+; |   |   |           |-- (cc 1 1)
+; |   |   |           |   |-- (cc 1 0)
+; |   |   |           |   |   `-- 0
+; |   |   |           |   `-- (cc 0 1)
+; |   |   |           |       `-- 1
+; |   |   |           `-- (cc -4 2)
+; |   |   |               `-- 0
+; |   |   `-- (cc 1 3)
+; |   |       |-- (cc 1 2)
+; |   |       |   |-- (cc 1 1)
+; |   |       |   |   |-- (cc 1 0)
+; |   |       |   |   |   `-- 0
+; |   |       |   |   `-- (cc 0 1)
+; |   |       |   |       `-- 1
+; |   |       |   `-- (cc -4 2)
+; |   |       |       `-- 0
+; |   |       `-- (cc -9 3)
+; |   |           `-- 0
+; |   `-- (cc -14 4)
+; |       `-- 0
+; `-- (cc -39 5)
+;     `-- 0
+;
+; (cc n k):
+; T (n, 1) = 2 * n + 1 = O(n)
+; T (n, 2) = 1 + (n / 5 ) + sum (i, 0, n / 5 , T (n - 5  * i, 1)) --> O (n ^ 2)
+; T (n, 3) = 1 + (n / 10) + sum (i, 0, n / 10, T (n - 10 * i, 2)) --> O (n ^ 3)
+; T (n, 4) = 1 + (n / 25) + sum (i, 0, n / 25, T (n - 25 * i, 3)) --> O (n ^ 4)
+; T (n, 5) = 1 + (n / 50) + sum (i, 0, n / 50, T (n - 50 * i, 4)) --> O (n ^ 5)
+; ==> Time Complexity: T (n, 5) = O (n ^ 5)
+; ==> Space Complexity: S (n, 5) = n + 5 = O (n)
+
+(define (count-change amount)
+  (cc amount 5))
+;Value: count-change
+
+1 ]=> (define (cc amount kinds-of-coins)
+  (cond ((= amount 0) 1)
+        ((or (< amount 0) (= kinds-of-coins 0)) 0)
+        (else (+ (cc amount
+                     (- kinds-of-coins 1))
+                 (cc (- amount
+                        (first-denomination kinds-of-coins))
+                     kinds-of-coins)))))
+;Value: cc
+
+1 ]=> (define (first-denomination kinds-of-coins)
+  (cond ((= kinds-of-coins 1) 1)
+        ((= kinds-of-coins 2) 5)
+        ((= kinds-of-coins 3) 10)
+        ((= kinds-of-coins 4) 25)
+        ((= kinds-of-coins 5) 50)))
+;Value: first-denomination
+
+1 ]=> ;
+; (cc 11 5) ==>* 4
+
+(cc 11 5)
+;Value: 4
+
+1 ]=> 
+End of input stream reached.
+Moriturus te salutat.
