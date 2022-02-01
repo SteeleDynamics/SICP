@@ -1,0 +1,50 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (mult a b)
+  (if (= b 0)
+      0
+      (+ a (mult a (- b 1)))))
+;Value: mult
+
+1 ]=> (define (even? n)
+  (= (remainder n 2) 0))
+;Value: even?
+
+1 ]=> (define (double a) (* a 2))
+;Value: double
+
+1 ]=> (define (halve a) (/ a 2))
+;Value: halve
+
+1 ]=> (define (fast-mult a b)
+  (cond ((= b 0) 0)
+        ((even? b) (fast-mult (double a) (halve b)))
+        (else (+ a (fast-mult a (- b 1))))))
+;Value: fast-mult
+
+1 ]=> ;
+; (fast-mult 3 7)
+; (+ 3 (fast-mult 3 6))
+; (+ 3 (fast-mult 6 3))
+; (+ 3 (+ 6 (fast-mult 6 2)))
+; (+ 3 (+ 6 (fast-mult 12 1)))
+; (+ 3 (+ 6 (+ 12 (fast-mult 12 0))))
+; (+ 3 (+ 6 (+ 12 0)))
+; (+ 3 (+ 6 12))
+; (+ 3 18)
+; 21 
+
+(fast-mult 3 7)
+;Value: 21
+
+1 ]=> 
+End of input stream reached.
+Moriturus te salutat.
