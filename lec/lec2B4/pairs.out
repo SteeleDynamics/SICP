@@ -1,0 +1,50 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ;
+; AXIOM FOR PAIRS
+;
+; For any x and y
+; 
+; (car (cons x y)) is x
+; (cdr (cons x y)) is y
+;
+
+(define (cons a b)
+  (lambda (pick)
+    (cond ((= pick 1) a)
+          ((= pick 2) b))))
+;Value: cons
+
+1 ]=> (define (car x) (x 1))
+;Value: car
+
+1 ]=> (define (cdr x) (x 2))
+;Value: cdr
+
+1 ]=> ;
+; (car (cons 37 49))
+; (car (lambda (pick)
+;        (cond ((= pick 1) 37)
+;              ((= pick 2) 49))))
+; ((lambda (pick)
+;    (cond ((= pick 1) 37)
+;          ((= pick 2) 49)))
+; 1)
+; (cond ((= 1 1) 37)
+;       ((= 1 2) 49))
+; 37
+
+(car (cons 37 49))
+;Value: 37
+
+1 ]=> 
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
