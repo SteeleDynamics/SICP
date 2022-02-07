@@ -1,0 +1,69 @@
+(define (expmod1 base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (square (expmod1 base (/ exp 2) m))
+                    m))
+        (else
+         (remainder (* base (expmod1 base (- exp 1) m))
+                    m))))        
+
+(define (fast-expt b n)
+  (cond ((= n 0) 1)
+        ((even? n) (square (fast-expt b (/ n 2))))
+        (else (* b (fast-expt b (- n 1))))))
+
+(define (expmod2 base exp m)
+  (remainder (fast-expt base exp) m))
+;
+; (expmod1 3 5 7)
+; (remainder (* 3 (expmod1 3 4 7)) 7)
+; (remainder (* 3 (remainder (square (expmod1 3 2 7)) 7)) 7)
+; (remainder (* 3 (remainder (square (remainder (square (expmod1 3 1 7)) 7)) 7)) 7)
+; (remainder (* 3 (remainder (square (remainder (square (remainder (* 3 (expmod1 3 0 7)) 7)) 7)) 7)) 7)
+; (remainder (* 3 (remainder (square (remainder (square (remainder (* 3 1) 7)) 7)) 7)) 7)
+; (remainder (* 3 (remainder (square (remainder (square (remainder 3 7)) 7)) 7)) 7)
+; (remainder (* 3 (remainder (square (remainder (square 3) 7)) 7)) 7)
+; (remainder (* 3 (remainder (square (remainder 9 7)) 7)) 7)
+; (remainder (* 3 (remainder (square 2) 7)) 7)
+; (remainder (* 3 (remainder 4 7)) 7)
+; (remainder (* 3 4) 7)
+; (remainder 12 7)
+; 5
+;
+; (expmod2 3 5 7)
+; (remainder (fast-expt 3 5) 7)
+; (remainder (* 3 (fast-expt 3 4)) 7)
+; (remainder (* 3 (square (fast-expt 3 2))) 7)
+; (remainder (* 3 (square (square (fast-expt 3 1)))) 7)
+; (remainder (* 3 (square (square (* 3 (fast-expt 3 0))))) 7)
+; (remainder (* 3 (square (square (* 3 1)))) 7)
+; (remainder (* 3 (square (square 3))) 7)
+; (remainder (* 3 (square 9)) 7)
+; (remainder (* 3 81) 7)
+; (remainder 243 7)
+; 5
+;
+; expmod1:
+; ########
+; 1. Intermediate values are smaller numbers
+; 2. Multiplication and Modulo operations are much faster on smaller numbers.
+;
+; expmod2:
+; ########
+; 1. Intermediate value for remainder evaluation can grow very large!
+; 2. Multiplication (*) will become increasingly slower (even with Karatsuba).
+; 3. Modulo (remainder) will be much slower with a very large number.
+;
+;
+; Q1. Is she correct?
+; A1. Yes, Alyssa P. Hacker is correct.
+;
+; Q2. Would this proceedure serve well for our fast prime tester?
+; A2. No, because expmod2 can generate very large integers as intermediate
+;     values, requiring arbitrary-precision arithmetic implementations for both
+;     multiplication and modulo operations. Arithmetic operations that have
+;     machine word-sized operands are much faster.
+
+(expmod1 3 5 7)
+
+(expmod2 3 5 7)
