@@ -42,25 +42,15 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
   (display elapsed-time))
 ;Value: report-prime
 
-1 ]=> (define (search-for-primes a b)
-  (cond ((>= a b) (search-complete))
-        ((odd? a) (search-for-primes-iter a b 2))
-        (else (search-for-primes (+ a 1) b))))
-;Value: search-for-primes
-
 1 ]=> (define (odd? n)
   (= (remainder n 2) 1))
 ;Value: odd?
 
-1 ]=> (define (search-for-primes-iter a b k)
-  (timed-prime-test a)
-  (search-for-primes (+ a k) b))
-;Value: search-for-primes-iter
-
-1 ]=> (define (search-complete)
-  (newline)
-  (display "search-complete"))
-;Value: search-complete
+1 ]=> (define (search-for-primes a b)
+  (cond ((>= a b) (newline))
+        ((odd? a) (timed-prime-test a) (search-for-primes (+ a 2) b))
+        (else (search-for-primes (+ a 1) b))))
+;Value: search-for-primes
 
 1 ]=> (search-for-primes 1000 1020)
 1001
@@ -73,7 +63,6 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 1015
 1017
 1019 *** 0.
-search-complete
 ;Unspecified return value
 
 1 ]=> (search-for-primes 10000 10040)
@@ -97,7 +86,6 @@ search-complete
 10035
 10037 *** 0.
 10039 *** 0.
-search-complete
 ;Unspecified return value
 
 1 ]=> (search-for-primes 100000 100050)
@@ -126,7 +114,6 @@ search-complete
 100045
 100047
 100049 *** 0.
-search-complete
 ;Unspecified return value
 
 1 ]=> (search-for-primes 1000000 1000040)
@@ -148,11 +135,10 @@ search-complete
 1000031
 1000033 *** 0.
 1000035
-1000037 *** 0.
+1000037 *** 9.999999999999995e-3
 1000039 *** 0.
-search-complete
 ;Unspecified return value
 
 1 ]=> 
 End of input stream reached.
-..#]^@^@^@ NO CARRIER
+Moriturus te salutat.

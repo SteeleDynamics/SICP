@@ -25,21 +25,13 @@
   (display " *** ")
   (display elapsed-time))
 
-(define (search-for-primes a b)
-  (cond ((>= a b) (search-complete))
-        ((odd? a) (search-for-primes-iter a b 2))
-        (else (search-for-primes (+ a 1) b))))
-
 (define (odd? n)
   (= (remainder n 2) 1))
 
-(define (search-for-primes-iter a b k)
-  (timed-prime-test a)
-  (search-for-primes (+ a k) b))
-
-(define (search-complete)
-  (newline)
-  (display "search-complete"))
+(define (search-for-primes a b)
+  (cond ((>= a b) (newline))
+        ((odd? a) (timed-prime-test a) (search-for-primes (+ a 2) b))
+        (else (search-for-primes (+ a 1) b))))
 
 (search-for-primes 1000 1020)
 (search-for-primes 10000 10040)
