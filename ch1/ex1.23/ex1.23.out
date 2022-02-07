@@ -1,0 +1,150 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (smallest-divisor n)
+  (find-divisor n 2))
+;Value: smallest-divisor
+
+1 ]=> (define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (next test-divisor)))))
+;Value: find-divisor
+
+1 ]=> (define (divides? a b)
+  (= (remainder b a) 0))
+;Value: divides?
+
+1 ]=> (define (next x)
+  (if (= x 2)
+      3
+      (+ x 2)))
+;Value: next
+
+1 ]=> (define (prime? n)
+  (= n (smallest-divisor n)))
+;Value: prime?
+
+1 ]=> (define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n (runtime)))
+;Value: timed-prime-test
+
+1 ]=> (define (start-prime-test n start-time)
+  (if (prime? n)
+      (report-prime (- (runtime) start-time))))
+;Value: start-prime-test
+
+1 ]=> (define (report-prime elapsed-time)
+  (display " *** ")
+  (display elapsed-time))
+;Value: report-prime
+
+1 ]=> (define (odd? n)
+  (= (remainder n 2) 1))
+;Value: odd?
+
+1 ]=> (define (search-for-primes a b)
+  (cond ((>= a b) (newline))
+        ((odd? a) (timed-prime-test a) (search-for-primes (+ a 2) b))
+        (else (search-for-primes (+ a 1) b))))
+;Value: search-for-primes
+
+1 ]=> (search-for-primes 1000 1020)
+1001
+1003
+1005
+1007
+1009 *** 0.
+1011
+1013 *** 0.
+1015
+1017
+1019 *** 0.
+;Unspecified return value
+
+1 ]=> (search-for-primes 10000 10040)
+10001
+10003
+10005
+10007 *** 0.
+10009 *** 0.
+10011
+10013
+10015
+10017
+10019
+10021
+10023
+10025
+10027
+10029
+10031
+10033
+10035
+10037 *** 0.
+10039 *** 0.
+;Unspecified return value
+
+1 ]=> (search-for-primes 100000 100050)
+100001
+100003 *** 0.
+100005
+100007
+100009
+100011
+100013
+100015
+100017
+100019 *** 0.
+100021
+100023
+100025
+100027
+100029
+100031
+100033
+100035
+100037
+100039
+100041
+100043 *** 0.
+100045
+100047
+100049 *** 0.
+;Unspecified return value
+
+1 ]=> (search-for-primes 1000000 1000040)
+1000001
+1000003 *** 0.
+1000005
+1000007
+1000009
+1000011
+1000013
+1000015
+1000017
+1000019
+1000021
+1000023
+1000025
+1000027
+1000029
+1000031
+1000033 *** 0.
+1000035
+1000037 *** 0.
+1000039 *** 0.
+;Unspecified return value
+
+1 ]=> 
+End of input stream reached.
+..#]^@^@^@ NO CARRIER
