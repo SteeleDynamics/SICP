@@ -5,7 +5,7 @@
                     m))
         (else
          (remainder (* base (expmod1 base (- exp 1) m))
-                    m))))        
+                    m))))
 
 (define (fast-expt b n)
   (cond ((= n 0) 1)
