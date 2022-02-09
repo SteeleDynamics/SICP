@@ -1,0 +1,55 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (sum term a next b)
+  (if (> a b)
+      0
+      (+ (term a) (sum term (next a) next b))))
+;Value: sum
+
+1 ]=> (define (integral f a b dx)
+  (define (add-dx x) (+ x dx))
+  (* (sum f (+ a (/ dx 2.0)) add-dx b)
+     dx))
+;Value: integral
+
+1 ]=> (define (simp-int f a b n)
+  (define (coeff k)
+    (cond ((= k 0) 1)
+          ((= k n) 1)
+          ((odd? k) 4)
+          (else 2)))
+  (define h (/ (- b a) n))
+  (define (y k)
+    (f (+ a (* k h))))
+  (sum (lambda (k) (* (/ h 3.0) (coeff k) (y k)))
+       0
+       (lambda (k) (+ k 1))
+       n))
+;Value: simp-int
+
+1 ]=> (define (cube x) (* x x x))
+;Value: cube
+
+1 ]=> (integral cube 0 1 0.01)
+;Value: .24998750000000042
+
+1 ]=> (integral cube 0 1 0.001)
+;Value: .249999875000001
+
+1 ]=> (simp-int cube 0 1 100)
+;Value: .25000000000000006
+
+1 ]=> (simp-int cube 0 1 1000)
+;Value: .25000000000000006
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.
