@@ -1,0 +1,39 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (sum term a next b)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a) (+ (term a) result))))
+  (iter a 0))
+;Value: sum
+
+1 ]=> ;
+; (sum (lambda (x) x) 1 (lambda (x) (+ x 1)) 10)
+; (iter 1 0)
+; (iter 2 1)
+; (iter 3 3)
+; (iter 4 6)
+; (iter 5 10)
+; (iter 6 15)
+; (iter 7 21)
+; (iter 8 28)
+; (iter 9 36)
+; (iter 10 45)
+; (iter 11 55)
+; 55
+
+(sum (lambda (x) x) 1 (lambda (x) (+ x 1)) 10)
+;Value: 55
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.
