@@ -1,0 +1,42 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (accumulate-rec combiner null-value term a next b)
+  (if (> a b)
+      null-value
+      (combiner (term a)
+                (accumulate-rec combiner null-value term (next a) next b))))
+;Value: accumulate-rec
+
+1 ]=> (define (accumulate-iter combiner null-value term a next b)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a) (combiner (term a) result))))
+  (iter a null-value))
+;Value: accumulate-iter
+
+1 ]=> (define (sum term a next b)
+  (accumulate-rec + 0 term a next b))
+;Value: sum
+
+1 ]=> (define (product term a next b)
+  (accumulate-iter * 1 term a next b))
+;Value: product
+
+1 ]=> (sum (lambda (x) x) 1 (lambda (x) (+ x 1)) 10)
+;Value: 55
+
+1 ]=> (product (lambda (x) x) 1 (lambda (x) (+ x 1)) 6)
+;Value: 720
+
+1 ]=> 
+End of input stream reached.
+Post proelium, praemium.
