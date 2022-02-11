@@ -1,0 +1,57 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ;
+; k-Term Finite Continued Fraction
+;
+;       N1
+; --------------
+;         N2
+; D1 + ---------
+;     ...    Nk
+;         + ----
+;            Dk
+
+()
+;Value: ()
+
+1 ]=> ; recursive process
+(define (cont-frac-rec n d k)
+  (define (rec i)
+    (if (= i k)
+        (/ (n i) (d i))
+        (/ (n i) (+ (d i) (rec (+ i 1))))))
+  (rec 1))
+;Value: cont-frac-rec
+
+1 ]=> ; iterative process
+(define (cont-frac-iter n d k)
+  (define (iter i acc)
+    (if (= i 0)
+        acc
+        (iter (- i 1) (/ (n i) (+ (d i) acc)))))
+  (iter k 0))
+;Value: cont-frac-iter
+
+1 ]=> ; 1 / phi = 0.618033989
+(cont-frac-rec (lambda (x) 1.0)
+               (lambda (x) 1.0)
+               11)
+;Value: .6180555555555556
+
+1 ]=> ; 1 / phi = 0.618033989
+(cont-frac-iter (lambda (x) 1.0)
+                (lambda (x) 1.0)
+                11)
+;Value: .6180555555555556
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.
