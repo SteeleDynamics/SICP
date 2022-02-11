@@ -1,0 +1,46 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; iterative process
+(define (cont-frac n d k)
+  (define (iter i acc)
+    (if (= i 0)
+        acc
+        (iter (- i 1) (/ (n i) (+ (d i) acc)))))
+  (iter k 0))
+;Value: cont-frac
+
+1 ]=> ; numerator of continued fraction expansion for tan x
+(define (n x)
+  (lambda (i)
+    (if (< i 2)
+        x
+        (- (square x)))))
+;Value: n
+
+1 ]=> ; denominator of continued fraction expansion for tan x
+(define (d i) (- (* 2 i) 1))
+;Value: d
+
+1 ]=> ; tan-cf is an approximation of a Lambert's formula
+(define (tan-cf x k) (cont-frac (n x) d k))
+;Value: tan-cf
+
+1 ]=> ; get approximation of pi radians
+(define pi (acos -1))
+;Value: pi
+
+1 ]=> ; tan (pi / 3) = sqrt(3) = 1.732050808
+(tan-cf (/ pi 3.0) 16)
+;Value: 1.732050807568877
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.
