@@ -1,0 +1,33 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (double f)
+  (lambda (x) (f (f x))))
+;Value: double
+
+1 ]=> (define (inc x) (+ x 1))
+;Value: inc
+
+1 ]=> ;
+; (((double (double double)) inc) 5)
+; (((double (lambda (x) (double (double x)))) inc) 5)
+; (((double (lambda (x) (double (double x)))) inc) 5)
+; (((lambda (x) ((lambda (x) (double (double x))) ((lambda (x) (double (double x))) x))) inc) 5)
+; (((lambda (x) (double (double x))) ((lambda (x) (double (double x))) inc)) 5)
+; (((lambda (x) (double (double x))) (double (double inc))) 5)
+; (((double (double (double (double inc))))) 5)
+; --> 21
+
+(((double (double double)) inc) 5)
+;Value: 21
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.
