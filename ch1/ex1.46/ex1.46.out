@@ -1,0 +1,56 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (iterative-improve good-enough? improve)
+  (define (iter guess)
+    (if (good-enough? guess)
+        guess
+        (iter (improve guess))))
+  iter)
+;Value: iterative-improve
+
+1 ]=> (define (improve x)
+  (lambda (guess)
+    (average guess (/ x guess))))
+;Value: improve
+
+1 ]=> (define (average x y)
+  (/ (+ x y) 2))
+;Value: average
+
+1 ]=> (define (good-enough? x)
+  (lambda (guess)
+    (< (abs (- (square guess) x)) 0.001)))
+;Value: good-enough?
+
+1 ]=> (define (sqrt x)
+  ((iterative-improve (good-enough? x) (improve x)) 1.0))
+;Value: sqrt
+
+1 ]=> (sqrt 2)
+;Value: 1.4142156862745097
+
+1 ]=> (define tolerance 0.00001)
+;Value: tolerance
+
+1 ]=> (define (fixed-point f first-guess)
+  (define (close-enough? x)
+    (< (abs (- (f x) x)) tolerance))
+  (define (try guess)
+    ((iterative-improve close-enough? f) guess))
+  (try first-guess))
+;Value: fixed-point
+
+1 ]=> (fixed-point cos 1.0)
+;Value: .7390893414033927
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.

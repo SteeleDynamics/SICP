@@ -1,0 +1,46 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (compose f g)
+  (lambda (x) (f (g x))))
+;Value: compose
+
+1 ]=> (define (id x) x)
+;Value: id
+
+1 ]=> (define (repeated f n)
+  (define (iter f i acc)
+    (if (> i n)
+      acc
+      (iter f (+ i 1) (compose f acc))))
+  (iter f 1 id))
+;Value: repeated
+
+1 ]=> (define dx 0.000001)
+;Value: dx
+
+1 ]=> (define (smooth f)
+  (lambda (x)
+    (/ (+ (f (- x dx))
+          (f x)
+          (f (+ x dx)))
+       3.0)))
+;Value: smooth
+
+1 ]=> (define (n-fold-smooth f n)
+  (repeated (smooth f) n))
+;Value: n-fold-smooth
+
+1 ]=> ((n-fold-smooth cos 4) 1)
+;Value: .7934803587423449
+
+1 ]=> 
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
