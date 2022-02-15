@@ -1,0 +1,80 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (add-rat x y)
+  (make-rat (+ (* (numer x) (denom y))
+               (* (numer y) (denom x)))
+            (* (denom x) (denom y))))
+;Value: add-rat
+
+1 ]=> (define (sub-rat x y)
+  (make-rat (- (* (numer x) (denom y))
+               (* (numer y) (denom x)))
+            (* (denom x) (denom y))))
+;Value: sub-rat
+
+1 ]=> (define (mul-rat x y)
+  (make-rat (* (numer x) (numer y))
+            (* (denom x) (denom y))))
+;Value: mul-rat
+
+1 ]=> (define (div-rat x y)
+  (make-rat (* (numer x) (denom y))
+            (* (denom x) (numer y))))
+;Value: div-rat
+
+1 ]=> (define (equal-rat? x y)
+  (= (* (numer x) (denom y))
+     (* (numer y) (denom x))))
+;Value: equal-rat?
+
+1 ]=> (define (print-rat x)
+  (newline)
+  (display (numer x))
+  (display "/")
+  (display (denom x)))
+;Value: print-rat
+
+1 ]=> ; (define (make-rat n d) (cons n d))
+; (define (make-rat n d)
+;   (let ((g (gcd n d)))
+;     (cons (/ n g) (/ d g))))
+(define (make-rat n d)
+  (let ((g (gcd n d)))
+    (cond ((< d 0) (cons (- (/ n g)) (- (/ d g))))
+          ((= d 0) (error "make-rat error: division by zero"))
+          (else (cons (/ n g) (/ d g))))))
+;Value: make-rat
+
+1 ]=> (define (numer x) (car x))
+;Value: numer
+
+1 ]=> (define (denom x) (cdr x))
+;Value: denom
+
+1 ]=> (print-rat (make-rat 21 49))
+3/7
+;Unspecified return value
+
+1 ]=> (print-rat (make-rat -17 43))
+-17/43
+;Unspecified return value
+
+1 ]=> (print-rat (make-rat 22 -36))
+-11/18
+;Unspecified return value
+
+1 ]=> (print-rat (make-rat -42 -1078))
+3/77
+;Unspecified return value
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.
