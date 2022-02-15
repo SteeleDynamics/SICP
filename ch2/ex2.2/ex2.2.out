@@ -1,0 +1,62 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (make-point x y) (cons x y))
+;Value: make-point
+
+1 ]=> (define (x-point p) (car p))
+;Value: x-point
+
+1 ]=> (define (y-point p) (cdr p))
+;Value: y-point
+
+1 ]=> (define (print-point p)
+  (newline)
+  (display "(")
+  (display (x-point p))
+  (display ",")
+  (display (y-point p))
+  (display ")"))
+;Value: print-point
+
+1 ]=> (define (make-segment p q) (cons p q))
+;Value: make-segment
+
+1 ]=> (define (start-segment s) (car s))
+;Value: start-segment
+
+1 ]=> (define (end-segment s) (cdr s))
+;Value: end-segment
+
+1 ]=> (define (midpoint-segment s)
+  (make-point (/ (+ (x-point (start-segment s))
+                    (x-point (end-segment s)))
+                 2.0)
+              (/ (+ (y-point (start-segment s))
+                    (y-point (end-segment s)))
+                 2.0)))
+;Value: midpoint-segment
+
+1 ]=> (define p (make-point 2.3 5.7))
+;Value: p
+
+1 ]=> (define q (make-point 11.13 17.19))
+;Value: q
+
+1 ]=> (define s (make-segment p q))
+;Value: s
+
+1 ]=> (print-point (midpoint-segment s))
+(6.715,11.445)
+;Unspecified return value
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.
