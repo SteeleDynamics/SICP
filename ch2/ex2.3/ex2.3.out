@@ -1,0 +1,109 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (make-point x y) (cons x y))
+;Value: make-point
+
+1 ]=> (define (x-point p) (car p))
+;Value: x-point
+
+1 ]=> (define (y-point p) (cdr p))
+;Value: y-point
+
+1 ]=> (define (print-point p)
+  (newline)
+  (display "(")
+  (display (x-point p))
+  (display ",")
+  (display (y-point p))
+  (display ")"))
+;Value: print-point
+
+1 ]=> (define (area-rect1 rect)
+  (* (width-rect1 rect)
+     (height-rect1 rect)))
+;Value: area-rect1
+
+1 ]=> (define (perimeter-rect1 rect)
+  (* (+ (width-rect1 rect)
+        (height-rect1 rect))
+     2))
+;Value: perimeter-rect1
+
+1 ]=> (define (make-rect1 bot-left top-right)
+  (cons bot-left top-right))
+;Value: make-rect1
+
+1 ]=> (define (width-rect1 rect)
+  (- (cadr rect) (caar rect)))
+;Value: width-rect1
+
+1 ]=> (define (height-rect1 rect)
+  (- (cddr rect) (cdar rect)))
+;Value: height-rect1
+
+1 ]=> (define r1 (make-rect1 (make-point 3 2) (make-point 10 7)))
+;Value: r1
+
+1 ]=> (width-rect1 r1)
+;Value: 7
+
+1 ]=> (height-rect1 r1)
+;Value: 5
+
+1 ]=> (area-rect1 r1)
+;Value: 35
+
+1 ]=> (perimeter-rect1 r1)
+;Value: 24
+
+1 ]=> (define (area-rect2 rect)
+  (* (width-rect2 rect)
+     (height-rect2 rect)))
+;Value: area-rect2
+
+1 ]=> (define (perimeter-rect2 rect)
+  (* (+ (width-rect2 rect)
+        (height-rect2 rect))
+     2))
+;Value: perimeter-rect2
+
+1 ]=> (define (make-rect2 bot-left top-right)
+  (cons bot-left
+        (cons (- (x-point top-right)
+                 (x-point bot-left))
+              (- (y-point top-right)
+                 (y-point bot-left)))))
+;Value: make-rect2
+
+1 ]=> (define (width-rect2 rect) (cadr rect))
+;Value: width-rect2
+
+1 ]=> (define (height-rect2 rect) (cddr rect))
+;Value: height-rect2
+
+1 ]=> (define r2 (make-rect2 (make-point 3 2) (make-point 10 7)))
+;Value: r2
+
+1 ]=> (width-rect2 r2)
+;Value: 7
+
+1 ]=> (height-rect2 r2)
+;Value: 5
+
+1 ]=> (area-rect2 r2)
+;Value: 35
+
+1 ]=> (perimeter-rect2 r2)
+;Value: 24
+
+1 ]=> 
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
