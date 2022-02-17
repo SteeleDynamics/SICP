@@ -1,0 +1,59 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ;
+; (a,b)   |-->  (2^a)*(3^b)
+; #########################
+; (0,0)         1
+; (1,0)         2
+; (1,1)         6
+; (0,1)         3
+; (2,0)         4
+; (2,1)         12
+; (2,2)         36
+; (1,2)         18
+; (0,2)         9
+; ...           ...
+
+(define (cons a b)
+  (* (expt 2 a) (expt 3 b)))
+;Value: cons
+
+1 ]=> (define (car p)
+  (define (iter q acc)
+    (if (> (remainder q 2) 0)
+        acc
+        (iter (/ q 2) (+ acc 1))))
+  (iter p 0))
+;Value: car
+
+1 ]=> (define (cdr p)
+  (define (iter q acc)
+    (if (> (remainder q 3) 0)
+        acc
+        (iter (/ q 3) (+ acc 1))))
+  (iter p 0))
+;Value: cdr
+
+1 ]=> (define p (cons 3 7))
+;Value: p
+
+1 ]=> p
+;Value: 17496
+
+1 ]=> (car p)
+;Value: 3
+
+1 ]=> (cdr p)
+;Value: 7
+
+1 ]=> 
+End of input stream reached.
+Post proelium, praemium.
