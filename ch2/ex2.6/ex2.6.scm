@@ -36,6 +36,7 @@
 ; (add one one)
 ; (add (lambda (f) (lambda (x) (f x))) (lambda (f) (lambda (x) (f x))))
 ; (lambda (f) (lambda (x) (((lambda (f) (lambda (x) (f x))) f) (((lambda (f) (lambda (x) (f x))) f) x))))
+; (lambda (f) (lambda (x) ((lambda (x) (f x)) (((lambda (f) (lambda (x) (f x))) f) x))))
 ; (lambda (f) (lambda (x) ((lambda (x) (f x)) ((lambda (x) (f x)) x))))
 ; (lambda (f) (lambda (x) ((lambda (x) (f x)) (f x))))
 ; (lambda (f) (lambda (x) (f (f x))))
@@ -45,6 +46,7 @@
 ; (lambda (f) (lambda (x) (((lambda (f) (lambda (x) (f x))) f) (((lambda (f) (lambda (x) (f (f x)))) f) x))))
 ; (lambda (f) (lambda (x) ((lambda (x) (f x)) (((lambda (f) (lambda (x) (f (f x)))) f) x))))
 ; (lambda (f) (lambda (x) ((lambda (x) (f x)) ((lambda (x) (f (f x))) x))))
+; (lambda (f) (lambda (x) ((lambda (x) (f x)) (f (f x)))))
 ; (lambda (f) (lambda (x) (f (f (f x)))))
 ;
 ; (add two one)
@@ -58,6 +60,7 @@
 ; (add two two)
 ; (add (lambda (f) (lambda (x) (f (f x)))) (lambda (f) (lambda (x) (f (f x)))))
 ; (lambda (f) (lambda (x) (((lambda (f) (lambda (x) (f (f x)))) f) (((lambda (f) (lambda (x) (f (f x)))) f) x))))
+; (lambda (f) (lambda (x) ((lambda (x) (f (f x))) (((lambda (f) (lambda (x) (f (f x)))) f) x))))
 ; (lambda (f) (lambda (x) ((lambda (x) (f (f x))) ((lambda (x) (f (f x))) x))))
 ; (lambda (f) (lambda (x) ((lambda (x) (f (f x))) (f (f x)))))
 ; (lambda (f) (lambda (x) (f (f (f (f x))))))
