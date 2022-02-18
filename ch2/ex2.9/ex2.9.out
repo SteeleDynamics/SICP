@@ -1,0 +1,95 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (add-interval x y)
+  (make-interval (+ (lower-bound x) (lower-bound y))
+                 (+ (upper-bound x) (upper-bound y))))
+;Value: add-interval
+
+1 ]=> (define (sub-interval x y)
+  (make-interval (- (lower-bound x) (lower-bound y))
+                 (- (upper-bound x) (upper-bound y))))
+;Value: sub-interval
+
+1 ]=> (define (mul-interval x y)
+  (let ((p1 (* (lower-bound x) (lower-bound y)))
+        (p2 (* (lower-bound x) (upper-bound y)))
+        (p3 (* (upper-bound x) (lower-bound y)))
+        (p4 (* (upper-bound x) (upper-bound y))))
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+;Value: mul-interval
+
+1 ]=> (define (div-interval x y)
+  (mul-interval x
+                (make-interval (/ 1.0 (upper-bound y))
+                               (/ 1.0 (lower-bound y)))))
+;Value: div-interval
+
+1 ]=> (define (width-interval ival)
+  (/ (- (upper-bound ival) (lower-bound ival)) 2.0))
+;Value: width-interval
+
+1 ]=> (define (make-interval a b) (cons a b))
+;Value: make-interval
+
+1 ]=> (define (lower-bound ival) (car ival))
+;Value: lower-bound
+
+1 ]=> (define (upper-bound ival) (cdr ival))
+;Value: upper-bound
+
+1 ]=> (define ival1 (make-interval 2 3))
+;Value: ival1
+
+1 ]=> (define ival2 (make-interval 5 7))
+;Value: ival2
+
+1 ]=> ; unit tests for arithmetic ops for intervals
+(define res1 (add-interval ival1 ival2))
+;Value: res1
+
+1 ]=> (define res2 (sub-interval ival2 ival1))
+;Value: res2
+
+1 ]=> (define res3 (mul-interval ival1 ival2))
+;Value: res3
+
+1 ]=> (define res4 (div-interval ival1 ival2))
+;Value: res4
+
+1 ]=> ; unit tests for width op for intervals
+(width-interval res1)
+;Value: 1.5
+
+1 ]=> (+ (width-interval ival1) (width-interval ival2))
+;Value: 1.5
+
+1 ]=> (width-interval res2)
+;Value: .5
+
+1 ]=> (- (width-interval ival2) (width-interval ival1))
+;Value: .5
+
+1 ]=> (width-interval res3)
+;Value: 5.5
+
+1 ]=> (* (width-interval ival1) (width-interval ival2))
+;Value: .5
+
+1 ]=> (width-interval res4)
+;Value: .1571428571428572
+
+1 ]=> (/ (width-interval ival1) (width-interval ival2))
+;Value: .5
+
+1 ]=> 
+End of input stream reached.
+Happy happy joy joy!
