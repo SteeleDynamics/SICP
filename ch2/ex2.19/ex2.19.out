@@ -1,0 +1,55 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (count-change amount)
+  (cc amount 5))
+;Value: count-change
+
+1 ]=> (define (cc amount coin-values)
+  (cond ((= amount 0) 1)
+        ((or (< amount 0) (no-more? coin-values)) 0)
+        (else
+         (+ (cc amount
+                (except-first-denomination coin-values))
+            (cc (- amount
+                   (first-denomination coin-values))
+                coin-values)))))
+;Value: cc
+
+1 ]=> (define (first-denomination coin-values)
+  (car coin-values))
+;Value: first-denomination
+
+1 ]=> (define (except-first-denomination coin-values)
+  (cdr coin-values))
+;Value: except-first-denomination
+
+1 ]=> (define (no-more? coin-values)
+  (null? coin-values))
+;Value: no-more?
+
+1 ]=> (define us-coins (list 50 25 10 5 1))
+;Value: us-coins
+
+1 ]=> (define uk-coins (list 100 50 20 10 5 2 1 0.5))
+;Value: uk-coins
+
+1 ]=> ;
+; It does not matter what order the coin denominations are in, because the tree
+; recursion explores all possible combinations of coins.
+(cc 100 us-coins)
+;Value: 292
+
+1 ]=> (cc 100 (reverse us-coins))
+;Value: 292
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.
