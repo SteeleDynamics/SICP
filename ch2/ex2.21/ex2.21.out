@@ -1,0 +1,41 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; map : ('a -> 'b) * ('a list) -> 'b list
+(define (map proc items)
+  (if (null? items)
+      '()
+      (cons (proc (car items))
+            (map proc (cdr items)))))
+;Value: map
+
+1 ]=> ; square-list1 : not implemented with map HOF
+(define (square-list1 items)
+  (if (null? items)
+      '()
+      (cons (square (car items))
+            (square-list1 (cdr items)))))
+;Value: square-list1
+
+1 ]=> ; square-list2 : implemented using map HOF
+(define (square-list2 items)
+  (map square items))
+;Value: square-list2
+
+1 ]=> ; unit tests
+(square-list1 (list 1 2 3 4))
+;Value: (1 4 9 16)
+
+1 ]=> (square-list2 (list 1 2 3 4))
+;Value: (1 4 9 16)
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.
