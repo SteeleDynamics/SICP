@@ -1,0 +1,29 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ;
+; implementation of for-each
+
+(define (for-each proc items)
+  (cond ((null? items) true)
+        (else (proc (car items)) (for-each proc (cdr items)))))
+;Value: for-each
+
+1 ]=> ; unit test of for-each
+(for-each (lambda (x) (newline) (display x))
+          (list 57 321 88))
+57
+321
+88
+;Value: #t
+
+1 ]=> 
+End of input stream reached.
+Post proelium, praemium.
