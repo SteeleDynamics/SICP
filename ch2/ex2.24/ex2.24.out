@@ -1,0 +1,47 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ;
+; (list 1 (list 2 (list 3 4)))
+; (list 1 (list 2 '(3 4)))
+; (list 1 '(2 (3 4)))
+; '(1 (2 (3 4)))
+;
+;    ┌─┬─┐  ┌─┬─┐
+;  ─>│•│•┼─>│•│╱│
+;    └┼┴─┘  └┼┴─┘
+;     v      v
+;    ┌─┐    ┌─┬─┐  ┌─┬─┐
+;    │1│    │•│•┼─>│•│╱│
+;    └─┘    └┼┴─┘  └┼┴─┘
+;            v      v
+;           ┌─┐    ┌─┬─┐  ┌─┬─┐
+;           │2│    │•│•┼─>│•│╱│
+;           └─┘    └┼┴─┘  └┼┴─┘
+;                   v      v
+;                  ┌─┐    ┌─┐
+;                  │3│    │4│
+;                  └─┘    └─┘
+;
+;     (1 (2 (3 4)))
+;           •
+;          ╱ ╲ (2 (3 4))
+;         1   •
+;            ╱ ╲ (3 4)
+;           2   •
+;              ╱ ╲
+;             3   4
+
+(list 1 (list 2 (list 3 4)))
+;Value: (1 (2 (3 4)))
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.
