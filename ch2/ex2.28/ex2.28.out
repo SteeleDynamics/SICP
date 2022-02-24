@@ -8,30 +8,44 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 Image saved on Sunday March 7, 2021 at 3:24:56 PM
   Release 11.2 || SF || LIAR/x86-64
 
-1 ]=> ; nil def'n
+1 ]=> ; nil defn
 (define nil '())
 ;Value: nil
 
-1 ]=> ; fringe proc
-(define (fringe xs)
+1 ]=> ; fringe iterative process
+(define (fringe-iter xs)
   (define (iter xs acc)
     (cond ((null? xs) acc)
           ((not (pair? xs)) (cons xs acc))
           (else (iter (car xs)
                       (iter (cdr xs) acc)))))
   (iter xs nil))
-;Value: fringe
+;Value: fringe-iter
 
-1 ]=> ; fringe unit tests
+1 ]=> ; fringe recursive process
+(define (fringe-rec xs)
+  (cond ((null? xs) nil)
+        ((not (pair? xs)) (list xs))
+        (else (append (fringe-rec (car xs))
+                      (fringe-rec (cdr xs))))))
+;Value: fringe-rec
+
+1 ]=> ; fringe-iter and fringe-rec unit tests
 (define x (list (list 1 2) (list 3 4)))
 ;Value: x
 
-1 ]=> (fringe x)
+1 ]=> (fringe-iter x)
 ;Value: (1 2 3 4)
 
-1 ]=> (fringe (list x x))
+1 ]=> (fringe-iter (list x x))
+;Value: (1 2 3 4 1 2 3 4)
+
+1 ]=> (fringe-rec x)
+;Value: (1 2 3 4)
+
+1 ]=> (fringe-rec (list x x))
 ;Value: (1 2 3 4 1 2 3 4)
 
 1 ]=> 
 End of input stream reached.
-Happy happy joy joy!
+Ceterum censeo Carthaginem esse delendam.

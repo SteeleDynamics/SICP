@@ -12,17 +12,24 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 (define nil '())
 ;Value: nil
 
-1 ]=> ; reverse procedure
-(define (reverse xs)
+1 ]=> ; reverse iterative procedure
+(define (reverse-iter xs)
   (define (iter xs acc)
     (if (null? xs)
         acc
         (iter (cdr xs) (cons (car xs) acc))))
   (iter xs nil))
-;Value: reverse
+;Value: reverse-iter
 
-1 ]=> ; deep-reverse procedure
-(define (deep-reverse xs)
+1 ]=> ; reverse recursive procedure
+(define (reverse-rec xs)
+  (if (null? xs)
+      nil
+      (append (reverse-rec (cdr xs)) (list (car xs)))))
+;Value: reverse-rec
+
+1 ]=> ; deep-reverse iterative procedure
+(define (deep-reverse-iter xs)
   (define (iter xs acc)
     (cond ((null? xs) acc)
           ((not (pair? xs)) xs)
@@ -30,15 +37,36 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
                       (cons (iter (car xs) nil)
                             acc)))))
   (iter xs nil))
-;Value: deep-reverse
+;Value: deep-reverse-iter
 
-1 ]=> ; unit tests for reverse and deep-reverse
-(deep-reverse '((1 2) (3 4)))
+1 ]=> ; deep-reverse recursive procedure
+(define (deep-reverse-rec xs)
+    (cond ((null? xs) nil)
+          ((not (pair? xs)) xs)
+          (else (append (deep-reverse-rec (cdr xs))
+                        (list (deep-reverse-rec (car xs)))))))
+;Value: deep-reverse-rec
+
+1 ]=> ; unit tests for reverse-iter and reverse-rec
+(reverse-iter '(1 2 3 4))
+;Value: (4 3 2 1)
+
+1 ]=> (reverse-rec '(1 2 3 4))
+;Value: (4 3 2 1)
+
+1 ]=> ; unit tests for deep-reverse-iter and deep-reverse-rec
+(deep-reverse-iter '((1 2) (3 4)))
 ;Value: ((4 3) (2 1))
 
-1 ]=> (deep-reverse '(1 2 (3 4) 5 (6 (7 8) 9) 10))
+1 ]=> (deep-reverse-iter '(1 2 (3 4) 5 (6 (7 8) 9) 10))
+;Value: (10 (9 (8 7) 6) 5 (4 3) 2 1)
+
+1 ]=> (deep-reverse-rec '((1 2) (3 4)))
+;Value: ((4 3) (2 1))
+
+1 ]=> (deep-reverse-rec '(1 2 (3 4) 5 (6 (7 8) 9) 10))
 ;Value: (10 (9 (8 7) 6) 5 (4 3) 2 1)
 
 1 ]=> 
 End of input stream reached.
-Happy happy joy joy!
+Pulvis et umbra sumus.
