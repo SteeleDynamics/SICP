@@ -1,0 +1,234 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; constructors
+(define (make-mobile1 left right)
+  (list left right))
+;Value: make-mobile1
+
+1 ]=> (define (make-branch1 length structure)
+  (list length structure))
+;Value: make-branch1
+
+1 ]=> ; selectors
+(define (left-branch1 m)
+  (car m))
+;Value: left-branch1
+
+1 ]=> (define (right-branch1 m)
+  (cadr m))
+;Value: right-branch1
+
+1 ]=> (define (branch-length1 b)
+  (car b))
+;Value: branch-length1
+
+1 ]=> (define (branch-structure1 b)
+  (cadr b))
+;Value: branch-structure1
+
+1 ]=> ; total-weight1 procedure
+(define (total-weight1 m)
+  (let ((left (branch-structure1 (left-branch1 m)))
+        (right (branch-structure1 (right-branch1 m))))
+    (cond ((and (not (pair? left)) (not (pair? right))) 
+           (+ left right))
+          ((and (not (pair? left)) (pair? right)) 
+           (+ left (total-weight1 right)))
+          ((and (pair? left) (not (pair? right))) 
+           (+ (total-weight1 left) right))
+          ((and (pair? left) (pair? right)) 
+           (+ (total-weight1 left) (total-weight1 right))))))
+;Value: total-weight1
+
+1 ]=> ; balanced1? procedure
+(define (balanced1? m)
+  (define (moment w d)
+    (if (pair? w)
+        (* (total-weight1 w) d)
+        (* w d)))
+  (let ((left (branch-structure1 (left-branch1 m)))
+        (right (branch-structure1 (right-branch1 m)))
+        (left-len (branch-length1 (left-branch1 m)))
+        (right-len (branch-length1 (right-branch1 m))))
+    (let ((top-balanced (= (moment left left-len)
+                           (moment right right-len))))
+      (cond ((and (not (pair? left)) (not (pair? right)))
+             top-balanced)
+            ((and (not (pair? left)) (pair? right))
+             (and top-balanced (balanced1? right)))
+            ((and (pair? left) (not (pair? right)))
+             (and top-balanced (balanced1? left)))
+            ((and (pair? left) (pair? right))
+             (and top-balanced (balanced1? left) (balanced1? right)))))))
+;Value: balanced1?
+
+1 ]=> ; constructors
+(define (make-mobile2 left right)
+  (cons left right))
+;Value: make-mobile2
+
+1 ]=> (define (make-branch2 length structure)
+  (cons length structure))
+;Value: make-branch2
+
+1 ]=> ; selectors
+(define (left-branch2 m)
+  (car m))
+;Value: left-branch2
+
+1 ]=> (define (right-branch2 m)
+  (cdr m))
+;Value: right-branch2
+
+1 ]=> (define (branch-length2 b)
+  (car b))
+;Value: branch-length2
+
+1 ]=> (define (branch-structure2 b)
+  (cdr b))
+;Value: branch-structure2
+
+1 ]=> ; total-weight2 procedure
+(define (total-weight2 m)
+  (let ((left (branch-structure2 (left-branch2 m)))
+        (right (branch-structure2 (right-branch2 m))))
+    (cond ((and (not (pair? left)) (not (pair? right))) 
+           (+ left right))
+          ((and (not (pair? left)) (pair? right)) 
+           (+ left (total-weight2 right)))
+          ((and (pair? left) (not (pair? right))) 
+           (+ (total-weight2 left) right))
+          ((and (pair? left) (pair? right)) 
+           (+ (total-weight2 left) (total-weight2 right))))))
+;Value: total-weight2
+
+1 ]=> ; balanced2? procedure
+(define (balanced2? m)
+  (define (moment w d)
+    (if (pair? w)
+        (* (total-weight2 w) d)
+        (* w d)))
+  (let ((left (branch-structure2 (left-branch2 m)))
+        (right (branch-structure2 (right-branch2 m)))
+        (left-len (branch-length2 (left-branch2 m)))
+        (right-len (branch-length2 (right-branch2 m))))
+    (let ((top-balanced (= (moment left left-len)
+                           (moment right right-len))))
+      (cond ((and (not (pair? left)) (not (pair? right)))
+             top-balanced)
+            ((and (not (pair? left)) (pair? right))
+             (and top-balanced (balanced2? right)))
+            ((and (pair? left) (not (pair? right)))
+             (and top-balanced (balanced2? left)))
+            ((and (pair? left) (pair? right))
+             (and top-balanced (balanced2? left) (balanced2? right)))))))
+;Value: balanced2?
+
+1 ]=> ; unit tests for balanced1? and balanced2?
+(define b1 (make-branch1 1 2))
+;Value: b1
+
+1 ]=> (define b2 (make-branch1 2 1))
+;Value: b2
+
+1 ]=> (define m1 (make-mobile1 b1 b2))
+;Value: m1
+
+1 ]=> (define b3 (make-branch1 2 3))
+;Value: b3
+
+1 ]=> (define b4 (make-branch1 1 6))
+;Value: b4
+
+1 ]=> (define m2 (make-mobile1 b3 b4))
+;Value: m2
+
+1 ]=> (define b5 (make-branch1 6 m1))
+;Value: b5
+
+1 ]=> (define b6 (make-branch1 2 m2))
+;Value: b6
+
+1 ]=> (define m3 (make-mobile1 b5 b6))
+;Value: m3
+
+1 ]=> (define b7 (make-branch1 3 m3))
+;Value: b7
+
+1 ]=> (define b8 (make-branch1 8 4))
+;Value: b8
+
+1 ]=> (define m4 (make-mobile1 b7 b8))
+;Value: m4
+
+1 ]=> (total-weight1 m3)
+;Value: 12
+
+1 ]=> (balanced1? m3)
+;Value: #t
+
+1 ]=> (total-weight1 m4)
+;Value: 16
+
+1 ]=> (balanced1? m4)
+;Value: #f
+
+1 ]=> (define b9 (make-branch2 1 2))
+;Value: b9
+
+1 ]=> (define b10 (make-branch2 2 1))
+;Value: b10
+
+1 ]=> (define m5 (make-mobile2 b9 b10))
+;Value: m5
+
+1 ]=> (define b11 (make-branch2 2 3))
+;Value: b11
+
+1 ]=> (define b12 (make-branch2 1 6))
+;Value: b12
+
+1 ]=> (define m6 (make-mobile2 b11 b12))
+;Value: m6
+
+1 ]=> (define b13 (make-branch2 6 m5))
+;Value: b13
+
+1 ]=> (define b14 (make-branch2 2 m6))
+;Value: b14
+
+1 ]=> (define m7 (make-mobile2 b13 b14))
+;Value: m7
+
+1 ]=> (define b15 (make-branch2 3 m7))
+;Value: b15
+
+1 ]=> (define b16 (make-branch2 8 4))
+;Value: b16
+
+1 ]=> (define m8 (make-mobile2 b15 b16))
+;Value: m8
+
+1 ]=> (total-weight2 m7)
+;Value: 12
+
+1 ]=> (balanced2? m7)
+;Value: #t
+
+1 ]=> (total-weight2 m8)
+;Value: 16
+
+1 ]=> (balanced2? m8)
+;Value: #f
+
+1 ]=> 
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
