@@ -1,0 +1,140 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; nil defn
+(define nil '())
+;Value: nil
+
+1 ]=> ; map procedure
+(define (map proc seq)
+  (if (null? seq)
+      nil
+      (cons (proc (car seq)) (map proc (cdr seq)))))
+;Value: map
+
+1 ]=> ; filter procedure
+(define (filter pred seq)
+  (cond ((null? seq) nil)
+        ((pred (car seq))
+         (cons (car seq)
+               (filter pred (cdr seq))))
+        (else (filter pred (cdr seq)))))
+;Value: filter
+
+1 ]=> ; accumulate procedure
+(define (accumulate op init seq)
+  (if (null? seq)
+      init
+      (op (car seq)
+          (accumulate op init (cdr seq)))))
+;Value: accumulate
+
+1 ]=> ; enumerate-interval procedure
+(define (enumerate-interval low high)
+  (if (> low high)
+      nil
+      (cons low (enumerate-interval (+ low 1) high))))
+;Value: enumerate-interval
+
+1 ]=> ; enumerate-tree procedure
+(define (enumerate-tree tree)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (list tree))
+        (else (append (enumerate-tree (car tree))
+                      (enumerate-tree (cdr tree))))))
+;Value: enumerate-tree
+
+1 ]=> ; accumulate-n procedure
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
+;Value: accumulate-n
+
+1 ]=> ; fold-right procedure (formerly known as accumulate)
+(define (fold-right op init seq)
+  (if (null? seq)
+      init
+      (op (car seq)
+          (fold-right op init (cdr seq)))))
+;Value: fold-right
+
+1 ]=> ; fold-left procedure
+(define (fold-left op init seq)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter init seq))
+;Value: fold-left
+
+1 ]=> ; flatmap procedure
+(define (flatmap proc seq)
+  (accumulate append nil (map proc seq)))
+;Value: flatmap
+
+1 ]=> ; [ch1/ex1.21] smallest-divisor procedure
+(define (smallest-divisor n)
+  (find-divisor n 2))
+;Value: smallest-divisor
+
+1 ]=> ; [ch1/ex1.21] find-divisor procedure
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (+ test-divisor 1)))))
+;Value: find-divisor
+
+1 ]=> ; [ch1/ex1.21] divides? predicate procedure
+(define (divides? a b)
+  (= (remainder b a) 0))
+;Value: divides?
+
+1 ]=> ; [ch1/ex1.21] prime? predicate procedure
+(define (prime? n)
+  (= n (smallest-divisor n)))
+;Value: prime?
+
+1 ]=> ; prime-sum? procedure
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+;Value: prime-sum?
+
+1 ]=> ; make-pair-sum procedure
+(define (make-pair-sum pair)
+  (list (car pair) (cadr pair) (+ (car pair) (cadr pair))))
+;Value: make-pair-sum
+
+1 ]=> ; unique-pairs procedure
+(define (unique-pairs n)
+  (flatmap (lambda (i) (map (lambda (j) (list i j))
+                            (enumerate-interval 1 (- i 1))))
+           (enumerate-interval 1 n)))
+;Value: unique-pairs
+
+1 ]=> ; prime-sum-pairs procedure
+(define (prime-sum-pairs n)
+  (map make-pair-sum
+       (filter prime-sum?
+               (unique-pairs n))))
+;Value: prime-sum-pairs
+
+1 ]=> ; unit tests for unique-pairs and prime-sum-pairs
+(unique-pairs 6)
+;Value: ((2 1) (3 1) (3 2) (4 1) (4 2) (4 3) (5 1) (5 2) (5 3) (5 4) (6 1) (6 2) (6 3) (6 4) (6 5))
+
+1 ]=> (prime-sum-pairs 6)
+;Value: ((2 1 3) (3 2 5) (4 1 5) (4 3 7) (5 2 7) (6 1 7) (6 5 11))
+
+1 ]=> 
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
