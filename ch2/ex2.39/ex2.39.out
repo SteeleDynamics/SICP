@@ -1,0 +1,99 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; nil defn
+(define nil '())
+;Value: nil
+
+1 ]=> ; map procedure
+(define (map proc seq)
+  (if (null? seq)
+      nil
+      (cons (proc (car seq)) (map proc (cdr seq)))))
+;Value: map
+
+1 ]=> ; filter procedure
+(define (filter pred seq)
+  (cond ((null? seq) nil)
+        ((pred (car seq))
+         (cons (car seq)
+               (filter pred (cdr seq))))
+        (else (filter pred (cdr seq)))))
+;Value: filter
+
+1 ]=> ; accumulate procedure
+(define (accumulate op init seq)
+  (if (null? seq)
+      init
+      (op (car seq)
+          (accumulate op init (cdr seq)))))
+;Value: accumulate
+
+1 ]=> ; enumerate-interval procedure
+(define (enumerate-interval low high)
+  (if (> low high)
+      nil
+      (cons low (enumerate-interval (+ low 1) high))))
+;Value: enumerate-interval
+
+1 ]=> ; enumerate-tree procedure
+(define (enumerate-tree tree)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (list tree))
+        (else (append (enumerate-tree (car tree))
+                      (enumerate-tree (cdr tree))))))
+;Value: enumerate-tree
+
+1 ]=> ; accumulate-n procedure
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
+;Value: accumulate-n
+
+1 ]=> ; fold-right procedure (formerly known as accumulate)
+(define (fold-right op init seq)
+  (if (null? seq)
+      init
+      (op (car seq)
+          (fold-right op init (cdr seq)))))
+;Value: fold-right
+
+1 ]=> ; fold-left procedure
+(define (fold-left op init seq)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter init seq))
+;Value: fold-left
+
+1 ]=> ; reverse-right procedure
+(define (reverse-right seq)
+  (fold-right (lambda (x y) (append y (list x))) nil seq))
+;Value: reverse-right
+
+1 ]=> ; reverse-left procedure
+(define (reverse-left seq)
+  (fold-left (lambda (x y) (cons y x)) nil seq))
+;Value: reverse-left
+
+1 ]=> ; unit tests for reverse-left and reverse-right
+(reverse-right (list 1 2 3 4))
+;Value: (4 3 2 1)
+
+1 ]=> (reverse-left (list 1 2 3 4))
+;Value: (4 3 2 1)
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.
