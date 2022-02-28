@@ -1,0 +1,74 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; right-split procedure
+(define (right-split painter n)
+  (if (= n 0)
+      painter
+      (let ((smaller (right-split painter (- n 1))))
+        (beside painter (below smaller smaller)))))
+;Value: right-split
+
+1 ]=> ; up-split procedure
+(define (up-split painter n)
+  (if (= n 0)
+      painter
+      (let ((smaller (up-split painter (- n 1))))
+        (below painter (beside smaller smaller)))))
+;Value: up-split
+
+1 ]=> ; corner-split procedure
+(define (corner-split painter n)
+  (if (= n 0)
+      painter
+      (let ((up (up-split painter (- n 1)))
+            (right (right-split painter (- n 1))))
+        (let ((top-left (beside up up))
+              (bottom-right (below right right))
+              (corner (corner-split painter (- n 1))))
+          (beside (below painter top-left)
+                  (below bottom-right corner))))))
+;Value: corner-split
+
+1 ]=> ; square-limit1 procedure
+(define (square-limit1 painter n)
+  (let ((quarter (corner-split painter n)))
+    (let ((half (beside (flip-horiz quarter) quarter)))
+      (below (flip-vert half) half))))
+;Value: square-limit1
+
+1 ]=> ; square-of-four procedure
+(define (square-of-four tl tr bl br)
+  (lambda (painter)
+    (let ((top (beside (tl painter) (tr painter)))
+          (bottom (beside (bl painter) (br painter))))
+      (below bottom top))))
+;Value: square-of-four
+
+1 ]=> ; square-limit2 procedure
+(define (square-limit2 painter n)
+  (let ((combine4 (square-of-four flip-horiz identity
+                                  rotate180 flip-vert)))
+    (combine4 (corner-split painter n))))
+;Value: square-limit2
+
+1 ]=> ; split HOF procedure
+(define (split proc1 proc2)
+  (define (rec painter n)
+    (if (= n 0)
+        painter
+        (let ((smaller (rec painter (- n 1))))
+          (proc1 painter (proc2 smaller smaller)))))
+  rec)
+;Value: split
+
+1 ]=> 
+End of input stream reached.
+Happy happy joy joy!
