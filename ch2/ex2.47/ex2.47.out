@@ -1,0 +1,53 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; make-frame1 procedure
+(define (make-frame1 origin edge1 edge2)
+  (list origin edge1 edge2))
+;Value: make-frame1
+
+1 ]=> ; origin-frame1 procedure
+(define (origin-frame1 frame)
+  (car frame))
+;Value: origin-frame1
+
+1 ]=> ; edge1-frame1 procedure
+(define (edge1-frame1 frame)
+  (cadr frame))
+;Value: edge1-frame1
+
+1 ]=> ; edge2-frame1 procedure
+(define (edge1-frame2 frame)
+  (caddr frame))
+;Value: edge1-frame2
+
+1 ]=> ; make-frame2 procedure
+(define (make-frame2 origin edge1 edge2)
+  (cons origin (cons edge1 edge2)))
+;Value: make-frame2
+
+1 ]=> ; origin-frame2 procedure
+(define (origin-frame2 frame)
+  (car frame))
+;Value: origin-frame2
+
+1 ]=> ; edge1-frame2 procedure
+(define (edge1-frame2 frame)
+  (cadr frame))
+;Value: edge1-frame2
+
+1 ]=> ; edge2-frame2 procedure
+(define (edge1-frame2 frame)
+  (cddr frame))
+;Value: edge1-frame2
+
+1 ]=> 
+End of input stream reached.
+Happy happy joy joy!
