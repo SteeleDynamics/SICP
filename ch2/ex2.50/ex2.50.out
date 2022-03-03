@@ -1,0 +1,162 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; make-vect procedure
+(define (make-vect x y)
+  (list x y))
+;Value: make-vect
+
+1 ]=> ; xcor-vect procedure
+(define (xcor-vect v)
+  (car v))
+;Value: xcor-vect
+
+1 ]=> ; ycor-vect procedure
+(define (ycor-vect v)
+  (cadr v))
+;Value: ycor-vect
+
+1 ]=> ; add-vect procedure
+(define (add-vect v1 v2)
+  (make-vect (+ (xcor-vect v1) (xcor-vect v2))
+             (+ (ycor-vect v2) (ycor-vect v2))))
+;Value: add-vect
+
+1 ]=> ; sub-vect procedure
+(define (sub-vect v1 v2)
+  (make-vect (- (xcor-vect v1) (xcor-vect v2))
+             (- (ycor-vect v1) (ycor-vect v2))))
+;Value: sub-vect
+
+1 ]=> ; scale-vect procedure
+(define (scale-vect s v)
+  (make-vect (* s (xcor-vect v))
+             (* s (ycor-vect v))))
+;Value: scale-vect
+
+1 ]=> ; make-frame procedure
+(define (make-frame origin edge1 edge2)
+  (list origin edge1 edge2))
+;Value: make-frame
+
+1 ]=> ; origin-frame procedure
+(define (origin-frame frame)
+  (car frame))
+;Value: origin-frame
+
+1 ]=> ; edge1-frame procedure
+(define (edge1-frame frame)
+  (cadr frame))
+;Value: edge1-frame
+
+1 ]=> ; edge2-frame procedure
+(define (edge2-frame frame)
+  (caddr frame))
+;Value: edge2-frame
+
+1 ]=> ; frame-coord-map procedure
+(define (frame-coord-map frame)
+  (lambda (v)
+    (add-vect
+     (origin-frame frame)
+     (add-vect (scale-vect (xcor-vect v)
+                           (edge1-frame frame))
+               (scale-vect (ycor-vect v)
+                           (edge2-frame frame))))))
+;Value: frame-coord-map
+
+1 ]=> ; transform-painter procedure
+(define (transform-painter painter origin corner1 corner2)
+  (lambda (frame)
+    (let ((m (frame-coord-map frame)))
+      (let ((new-origin (m origin)))
+        (painter
+         (make-frame new-origin
+                     (sub-vect (m corner1) new-origin)
+                     (sub-vect (m corner2) new-origin)))))))
+;Value: transform-painter
+
+1 ]=> ; flip-vert procedure
+(define (flip-vert painter)
+  (transform-painter painter
+                     (make-vect 0.0 1.0)
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 0.0)))
+;Value: flip-vert
+
+1 ]=> ; shrink-to-upper-right procedure
+(define (shrink-to-upper-right painter)
+  (transform-painter painter
+                     (make-vect 0.5 0.5)
+                     (make-vect 1.0 0.5)
+                     (make-vect 0.5 1.0)))
+;Value: shrink-to-upper-right
+
+1 ]=> ; rotate90 procedure (counterclockwise)
+(define (rotate90 painter)
+  (transform-painter painter
+                     (make-vect 1.0 0.0)
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 0.0)))
+;Value: rotate90
+
+1 ]=> ; squash-inwards procedure
+(define (squash-inwards painter)
+  (transform-painter painter
+                     (make-vect 0.0 0.0)
+                     (make-vect 0.65 0.35)
+                     (make-vect 0.35 0.65)))
+;Value: squash-inwards
+
+1 ]=> ; beside procedure
+(define (beside painter1 painter2)
+  (let ((split-point (make-vect 0.5 0.0)))
+    (let ((paint-left
+           (transform-painter painter1
+                              (make-vect 0.0 0.0)
+                              split-point
+                              (make-vect 0.0 1.0)))
+          (paint-right
+           (transform-painter painter2
+                              split-point
+                              (make-vect 1.0 0.0)
+                              (make-vect 0.5 1.0))))
+      (lambda (frame)
+        (paint-left frame)
+        (paint-right frame)))))
+;Value: beside
+
+1 ]=> ; flip-horiz procedure
+(define (flip-horiz painter)
+  (transform-painter painter
+                     (make-vect 1.0 0.0)
+                     (make-vect 0.0 0.0)
+                     (make-vect 1.0 1.0)))
+;Value: flip-horiz
+
+1 ]=> ; rotate180 procedure (counterclockwise)
+(define (rotate180 painter)
+  (transform-painter painter
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 1.0)
+                     (make-vect 1.0 0.0)))
+;Value: rotate180
+
+1 ]=> ; rotate270 procedure (counterclockwise)
+(define (rotate270 painter)
+  (transform-painter painter
+                     (make-vect 0.0 1.0)
+                     (make-vect 0.0 0.0)
+                     (make-vect 1.0 1.0)))
+;Value: rotate270
+
+1 ]=> 
+End of input stream reached.
+Moriturus te salutat.

@@ -1,0 +1,158 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; make-vect procedure
+(define (make-vect x y)
+  (list x y))
+;Value: make-vect
+
+1 ]=> ; xcor-vect procedure
+(define (xcor-vect v)
+  (car v))
+;Value: xcor-vect
+
+1 ]=> ; ycor-vect procedure
+(define (ycor-vect v)
+  (cadr v))
+;Value: ycor-vect
+
+1 ]=> ; add-vect procedure
+(define (add-vect v1 v2)
+  (make-vect (+ (xcor-vect v1) (xcor-vect v2))
+             (+ (ycor-vect v2) (ycor-vect v2))))
+;Value: add-vect
+
+1 ]=> ; sub-vect procedure
+(define (sub-vect v1 v2)
+  (make-vect (- (xcor-vect v1) (xcor-vect v2))
+             (- (ycor-vect v1) (ycor-vect v2))))
+;Value: sub-vect
+
+1 ]=> ; scale-vect procedure
+(define (scale-vect s v)
+  (make-vect (* s (xcor-vect v))
+             (* s (ycor-vect v))))
+;Value: scale-vect
+
+1 ]=> ; make-frame procedure
+(define (make-frame origin edge1 edge2)
+  (list origin edge1 edge2))
+;Value: make-frame
+
+1 ]=> ; origin-frame procedure
+(define (origin-frame frame)
+  (car frame))
+;Value: origin-frame
+
+1 ]=> ; edge1-frame procedure
+(define (edge1-frame frame)
+  (cadr frame))
+;Value: edge1-frame
+
+1 ]=> ; edge2-frame procedure
+(define (edge2-frame frame)
+  (caddr frame))
+;Value: edge2-frame
+
+1 ]=> ; frame-coord-map procedure
+(define (frame-coord-map frame)
+  (lambda (v)
+    (add-vect
+     (origin-frame frame)
+     (add-vect (scale-vect (xcor-vect v)
+                           (edge1-frame frame))
+               (scale-vect (ycor-vect v)
+                           (edge2-frame frame))))))
+;Value: frame-coord-map
+
+1 ]=> ; make-segment procedure
+(define (make-segment v1 v2)
+  (list v1 v2))
+;Value: make-segment
+
+1 ]=> ; start-segment
+(define (start-segment s)
+  (car s))
+;Value: start-segment
+
+1 ]=> ; end-segment
+(define (end-segment s)
+  (cadr s))
+;Value: end-segment
+
+1 ]=> ; segments->painter procedure
+(define (segments->painter segment-list)
+  (lambda (frame)
+    (for-each
+     (lambda (segment)
+       (draw-line
+        ((frame-coord-map frame) (start-segment segment))
+        ((frame-coord-map frame) (end-segment segment))))
+     segment-list)))
+;Value: segments->painter
+
+1 ]=> ; part (a)
+(define outline-segments
+  (list (make-segment (make-vect 0.0 0.0) (make-vect 1.0 0.0))
+        (make-segment (make-vect 1.0 0.0) (make-vect 1.0 1.0))
+        (make-segment (make-vect 1.0 1.0) (make-vect 0.0 1.0))
+        (make-segment (make-vect 0.0 1.0) (make-vect 0.0 0.0))))
+;Value: outline-segments
+
+1 ]=> (define outline-painter (segments->painter outline-segments))
+;Value: outline-painter
+
+1 ]=> ; part (b)
+(define x-segments
+  (list (make-segment (make-vect 0.0 0.0) (make-vect 1.0 1.0))
+        (make-segment (make-vect 0.0 1.0) (make-vect 1.0 0.0))))
+;Value: x-segments
+
+1 ]=> (define x-painter (segments->painter x-segments))
+;Value: x-painter
+
+1 ]=> ; part (c)
+(define diamond-segments
+  (list (make-segment (make-vect 0.5 0.0) (make-vect 1.0 0.5))
+        (make-segment (make-vect 1.0 0.5) (make-vect 0.5 1.0))
+        (make-segment (make-vect 0.5 1.0) (make-vect 0.0 0.5))
+        (make-segment (make-vect 0.0 0.5) (make-vect 0.5 0.0))))
+;Value: diamond-segments
+
+1 ]=> (define diamond-painter (segments->painter diamond-segments))
+;Value: diamond-painter
+
+1 ]=> ; part (d)
+(define wave-segments
+  (list (make-segment (make-vect 0.4 0.0) (make-vect 0.5 0.3))
+        (make-segment (make-vect 0.5 0.3) (make-vect 0.6 0))
+        (make-segment (make-vect 0.7 0) (make-vect 0.6 0.4))
+        (make-segment (make-vect 0.6 0.4) (make-vect 1.0 0.2))
+        (make-segment (make-vect 1.0 0.4) (make-vect 0.7 0.6))
+        (make-segment (make-vect 0.7 0.6) (make-vect 0.6 0.6))
+        (make-segment (make-vect 0.6 0.6) (make-vect 0.67 0.8))
+        (make-segment (make-vect 0.67 0.8) (make-vect 0.6 1.0))
+        (make-segment (make-vect 0.4 1.0) (make-vect 0.33 0.8))
+        (make-segment (make-vect 0.33 0.8) (make-vect 0.4 0.6))
+        (make-segment (make-vect 0.4 0.6) (make-vect 0.3 0.6))
+        (make-segment (make-vect 0.3 0.6) (make-vect 0.2 0.55))
+        (make-segment (make-vect 0.2 0.55) (make-vect 0.0 0.8))
+        (make-segment (make-vect 0.0 0.6) (make-vect 0.2 0.35))
+        (make-segment (make-vect 0.2 0.35) (make-vect 0.3 0.55))
+        (make-segment (make-vect 0.3 0.55) (make-vect 0.35 0.45))
+        (make-segment (make-vect 0.35 0.45) (make-vect 0.0 0.4))))
+;Value: wave-segments
+
+1 ]=> (define wave-painter (segments->painter wave-segments))
+;Value: wave-painter
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.
