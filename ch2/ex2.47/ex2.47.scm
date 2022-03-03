@@ -11,7 +11,7 @@
   (cadr frame))
 
 ; edge2-frame1 procedure
-(define (edge1-frame2 frame)
+(define (edge2-frame1 frame)
   (caddr frame))
 
 ; make-frame2 procedure
@@ -27,5 +27,5 @@
   (cadr frame))
 
 ; edge2-frame2 procedure
-(define (edge1-frame2 frame)
+(define (edge2-frame2 frame)
   (cddr frame))
