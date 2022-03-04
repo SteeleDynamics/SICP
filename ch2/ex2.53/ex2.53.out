@@ -1,0 +1,41 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; memq procedure (how does this type-check?!)
+(define (memq item x)
+  (cond ((null? x) false)
+        ((eq? item (car x)) x)
+        (else (memq item (cdr x)))))
+;Value: memq
+
+1 ]=> (list 'a 'b 'c)
+;Value: (a b c)
+
+1 ]=> (list (list 'george))
+;Value: ((george))
+
+1 ]=> (cdr '((x1 x2) (y1 y2)))
+;Value: ((y1 y2))
+
+1 ]=> (cadr '((x1 x2) (y1 y2)))
+;Value: (y1 y2)
+
+1 ]=> (pair? (car '(a short list)))
+;Value: #f
+
+1 ]=> (memq 'red '((red shoes) (blue socks)))
+;Value: #f
+
+1 ]=> (memq 'red '(red shoes blue socks))
+;Value: (red shoes blue socks)
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.
