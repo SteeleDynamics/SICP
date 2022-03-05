@@ -1,0 +1,102 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; car-list procedure
+(define (car-list seq)
+  (if (null? (cdr seq))
+      (car seq)
+      seq))
+;Value: car-list
+
+1 ]=> ; deriv procedure
+(define (deriv exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp)
+         (if (same-variable? exp var) 1 0))
+        ((sum? exp)
+         (make-sum (deriv (addend exp) var)
+                   (deriv (augend exp) var)))
+        ((product? exp)
+         (make-sum
+           (make-product (multiplier exp)
+                         (deriv (multiplicand exp) var))
+           (make-product (deriv (multiplier exp) var)
+                         (multiplicand exp))))
+        (else
+         (error "unknown expression type -- DERIV" exp))))
+;Value: deriv
+
+1 ]=> ; variable? predicate procedure
+(define (variable? x) (symbol? x))
+;Value: variable?
+
+1 ]=> ; same-variable? predicate procedure
+(define (same-variable? v1 v2)
+  (and (variable? v1) (variable? v2) (eq? v1 v2)))
+;Value: same-variable?
+
+1 ]=> ; sum? predicate procedure
+(define (sum? x)
+  (and (pair? x) (eq? (cadr x) '+)))
+;Value: sum?
+
+1 ]=> ; make-sum constructor procedure
+(define (make-sum a1 a2)
+  (cond ((=number? a1 0) a2)
+        ((=number? a2 0) a1)
+        ((and (number? a1) (number? a2)) (+ a1 a2))
+        (else (list a1 '+ a2))))
+;Value: make-sum
+
+1 ]=> ; addend selector procedure
+(define (addend s) (car s))
+;Value: addend
+
+1 ]=> ; augend selector procedure
+(define (augend s) (car-list (cddr s)))
+;Value: augend
+
+1 ]=> ; product? predicate procedure
+(define (product? x)
+  (and (pair? x) (eq? (cadr x) '*)))
+;Value: product?
+
+1 ]=> ; =number? predicate procedure
+(define (=number? exp num)
+  (and (number? exp) (= exp num)))
+;Value: =number?
+
+1 ]=> ; make-product constructor procedure
+(define (make-product m1 m2)
+  (cond ((or (=number? m1 0) (=number? m2 0)) 0)
+        ((=number? m1 1) m2)
+        ((=number? m2 1) m1)
+        ((and (number? m1) (number? m2)) (* m1 m2))
+        (else (list m1 '* m2))))
+;Value: make-product
+
+1 ]=> ; multiplier selector procedure
+(define (multiplier p) (car p))
+;Value: multiplier
+
+1 ]=> ; multiplicand selector procedure
+(define (multiplicand p) (car-list (cddr p)))
+;Value: multiplicand
+
+1 ]=> ; unit tests
+(deriv '(x + 3 * (x + y + 2)) 'x)
+;Value: 4
+
+1 ]=> (deriv '(x * y * (x + 3)) 'x)
+;Value: ((x * y) + (y * (x + 3)))
+
+1 ]=> 
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
