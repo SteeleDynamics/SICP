@@ -1,0 +1,49 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; element-of-set? predicate procedure
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((equal? x (car set)) true)
+        (else (element-of-set? x (cdr set)))))
+;Value: element-of-set?
+
+1 ]=> ; adjoin-set procedure
+(define (adjoin-set x set)
+  (if (element-of-set? x set)
+      set
+      (cons x set)))
+;Value: adjoin-set
+
+1 ]=> ; intersection-set procedure
+(define (intersection-set set1 set2)
+  (cond ((or (null? set1) (null? set2)) '())
+        ((element-of-set? (car set1) set2)
+         (cons (car set1)
+               (intersection-set (cdr set1) set2)))
+        (else (intersection-set (cdr set1) set2))))
+;Value: intersection-set
+
+1 ]=> ; union-set procedure
+(define (union-set set1 set2)
+  (cond ((null? set1) set2)
+        ((not (element-of-set? (car set1) set2))
+         (cons (car set1)
+               (union-set (cdr set1) set2)))
+        (else (union-set (cdr set1) set2))))
+;Value: union-set
+
+1 ]=> ; unit tests
+(union-set '(7 8 14 2 11 3 4) '(16 9 10 12 2 14))
+;Value: (7 8 11 3 4 16 9 10 12 2 14)
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.

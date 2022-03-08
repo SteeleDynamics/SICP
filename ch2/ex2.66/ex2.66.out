@@ -1,0 +1,195 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; entry selector procedure
+(define (entry tree) (car tree))
+;Value: entry
+
+1 ]=> ; left-branch selector procedure
+(define (left-branch tree) (cadr tree))
+;Value: left-branch
+
+1 ]=> ; right-branch selector procedure
+(define (right-branch tree) (caddr tree))
+;Value: right-branch
+
+1 ]=> ; make-tree constructor procedure
+(define (make-tree entry left right)
+  (list entry left right))
+;Value: make-tree
+
+1 ]=> ; element-of-set? predicate procedure
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((= x (entry set)) true)
+        ((< x (entry set))
+         (element-of-set? x (left-branch set)))
+        ((> x (entry set))
+         (element-of-set? x (right-branch set)))))
+;Value: element-of-set?
+
+1 ]=> ; adjoin-set procedure
+(define (adjoin-set x set)
+  (cond ((null? set) (make-tree x '() '()))
+        ((= x (entry set)) set)
+        ((< x (entry set))
+         (make-tree (entry set)
+                    (adjoin-set x (left-branch set))
+                    (right-branch set)))
+        ((> x (entry set))
+         (make-tree (entry set)
+                    (left-branch set)
+                    (adjoin-set x (right-branch set))))))
+;Value: adjoin-set
+
+1 ]=> ; list->tree procedure
+(define (list->tree elements)
+  (car (partial-tree elements (length elements))))
+;Value: list->tree
+
+1 ]=> ; partial-tree procedure
+(define (partial-tree elts n)
+  (if (= n 0)
+      (cons '() elts)
+      (let ((left-size (quotient (- n 1) 2)))
+        (let ((left-result (partial-tree elts left-size)))
+          (let ((left-tree (car left-result))
+                (non-left-elts (cdr left-result))
+                (right-size (- n (+ left-size 1))))
+            (let ((this-entry (car non-left-elts))
+                  (right-result (partial-tree (cdr non-left-elts)
+                                              right-size)))
+              (let ((right-tree (car right-result))
+                    (remaining-elts (cdr right-result)))
+                (cons (make-tree this-entry left-tree right-tree)
+                      remaining-elts))))))))
+;Value: partial-tree
+
+1 ]=> ; indent procedure
+(define (indent d)
+  (if (= d 0)
+      (display "")
+      ((lambda ()
+         (display "  ")
+         (indent (- d 1))))))
+;Value: indent
+
+1 ]=> ; print-tree procedure
+(define (print-tree tree d)
+  (newline)
+  (indent d)
+  (if (not (null? tree))
+      ((lambda ()
+         (display (entry tree))
+         (print-tree (left-branch tree) (+ d 1))
+         (print-tree (right-branch tree) (+ d 1))))
+      (display "nil")))
+;Value: print-tree
+
+1 ]=> ; record constructor procedure
+(define (make-record key field1 field2 field3)
+  (list key field1 field2 field3))
+;Value: make-record
+
+1 ]=> ; key selector procedure
+(define (key record)
+  (car record))
+;Value: key
+
+1 ]=> ; field1 selector procedure
+(define (field1 record)
+  (cadr record))
+;Value: field1
+
+1 ]=> ; field2 selector procedure
+(define (field2 record)
+  (caddr record))
+;Value: field2
+
+1 ]=> ; field3 selector procedure
+(define (field3 record)
+  (cadddr record))
+;Value: field3
+
+1 ]=> (define (lookup given-key set-of-records)
+  (cond ((null? set-of-records) false)
+        ((= given-key (key (entry set-of-records)))
+         (entry set-of-records))
+        ((< given-key (key (entry set-of-records)))
+         (lookup given-key (left-branch set-of-records)))
+        (else
+         (lookup given-key (right-branch set-of-records)))))
+;Value: lookup
+
+1 ]=> ; unit tests
+(define r0 (make-record 0 "Alyssa" "P." "Hacker"))
+;Value: r0
+
+1 ]=> (define r1 (make-record 1 "Ben" "" "Bitdiddle"))
+;Value: r1
+
+1 ]=> (define r2 (make-record 2 "Cy" "D." "Fect"))
+;Value: r2
+
+1 ]=> (define r3 (make-record 3 "Eva" "Lu" "Ator"))
+;Value: r3
+
+1 ]=> (define r4 (make-record 4 "Lem" "E." "Tweakit"))
+;Value: r4
+
+1 ]=> (define r5 (make-record 5 "Louis" "" "Reasoner"))
+;Value: r5
+
+1 ]=> (define set-of-records (list->tree (list r0 r1 r2 r3 r4 r5)))
+;Value: set-of-records
+
+1 ]=> (print-tree set-of-records 0)
+(2 Cy D. Fect)
+  (0 Alyssa P. Hacker)
+    nil
+    (1 Ben  Bitdiddle)
+      nil
+      nil
+  (4 Lem E. Tweakit)
+    (3 Eva Lu Ator)
+      nil
+      nil
+    (5 Louis  Reasoner)
+      nil
+      nil
+;Unspecified return value
+
+1 ]=> (lookup -1 set-of-records)
+;Value: #f
+
+1 ]=> (lookup 0 set-of-records)
+;Value: (0 "Alyssa" "P." "Hacker")
+
+1 ]=> (lookup 1 set-of-records)
+;Value: (1 "Ben" "" "Bitdiddle")
+
+1 ]=> (lookup 2 set-of-records)
+;Value: (2 "Cy" "D." "Fect")
+
+1 ]=> (lookup 3 set-of-records)
+;Value: (3 "Eva" "Lu" "Ator")
+
+1 ]=> (lookup 4 set-of-records)
+;Value: (4 "Lem" "E." "Tweakit")
+
+1 ]=> (lookup 5 set-of-records)
+;Value: (5 "Louis" "" "Reasoner")
+
+1 ]=> (lookup 6 set-of-records)
+;Value: #f
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.
