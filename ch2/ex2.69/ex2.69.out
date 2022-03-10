@@ -1,0 +1,155 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; nil defn
+(define nil '())
+;Value: nil
+
+1 ]=> ; memq procedure
+(define (memq item x)
+  (cond ((null? x) false)
+        ((eq? item (car x)) x)
+        (else (memq item (cdr x)))))
+;Value: memq
+
+1 ]=> ; make-leaf constructor procedure
+(define (make-leaf symbol weight)
+  (list 'leaf symbol weight))
+;Value: make-leaf
+
+1 ]=> ; leaf? predicate procedure
+(define (leaf? object)
+  (eq? (car object) 'leaf))
+;Value: leaf?
+
+1 ]=> ; symbol-leaf selector procedure
+(define (symbol-leaf x) (cadr x))
+;Value: symbol-leaf
+
+1 ]=> ; weight-leaf selector procedure
+(define (weight-leaf x) (caddr x))
+;Value: weight-leaf
+
+1 ]=> ; make-code-tree constructor procedure
+(define (make-code-tree left right)
+  (list left
+        right
+        (append (symbols left) (symbols right))
+        (+ (weight left) (weight right))))
+;Value: make-code-tree
+
+1 ]=> ; left-branch selector procedure
+(define (left-branch tree) (car tree))
+;Value: left-branch
+
+1 ]=> ; right-branch selector procedure
+(define (right-branch tree) (cadr tree))
+;Value: right-branch
+
+1 ]=> ; symbols selector procedure
+(define (symbols tree)
+  (if (leaf? tree)
+      (list (symbol-leaf tree))
+      (caddr tree)))
+;Value: symbols
+
+1 ]=> ; weight selector procedure
+(define (weight tree)
+  (if (leaf? tree)
+      (weight-leaf tree)
+      (cadddr tree)))
+;Value: weight
+
+1 ]=> ; decode procedure
+(define (decode bits tree)
+  (define (decode-1 bits current-branch)
+    (if (null? bits)
+        nil
+        (let ((next-branch
+               (choose-branch (car bits) current-branch)))
+          (if (leaf? next-branch)
+              (cons (symbol-leaf next-branch)
+                    (decode-1 (cdr bits) tree))
+              (decode-1 (cdr bits) next-branch)))))
+  (decode-1 bits tree))
+;Value: decode
+
+1 ]=> ; choose-branch helper procedure
+(define (choose-branch bit branch)
+  (cond ((= bit 0) (left-branch branch))
+        ((= bit 1) (right-branch branch))
+        (else (error "bad bit -- CHOOSE-BRANCH" bit))))
+;Value: choose-branch
+
+1 ]=> ; adjoin-set procedure
+(define (adjoin-set x set)
+  (cond ((null? set) (list x))
+        ((< (weight x) (weight (car set))) (cons x set))
+        (else (cons (car set)
+                    (adjoin-set x (cdr set))))))
+;Value: adjoin-set
+
+1 ]=> ; make-leaf-set procedure
+(define (make-leaf-set pairs)
+  (if (null? pairs)
+      nil
+      (let ((pair (car pairs)))
+        (adjoin-set (make-leaf (car pair)
+                               (cadr pair))
+                    (make-leaf-set (cdr pairs))))))
+;Value: make-leaf-set
+
+1 ]=> ; encode procedure
+(define (encode message tree)
+  (if (null? message)
+      nil
+      (append (encode-symbol (car message) tree)
+              (encode (cdr message) tree))))
+;Value: encode
+
+1 ]=> ; encode-symbol procedure
+(define (encode-symbol x tree)
+  (cond ((leaf? tree) nil)
+        ((pair? (memq x (symbols (left-branch tree))))
+         (cons 0 (encode-symbol x (left-branch tree))))
+        (else (cons 1 (encode-symbol x (right-branch tree))))))
+;Value: encode-symbol
+
+1 ]=> ; generate-huffman-tree procedure
+(define (generate-huffman-tree pairs)
+  (successive-merge (make-leaf-set pairs)))
+;Value: generate-huffman-tree
+
+1 ]=> ; successive-merge procedure
+(define (successive-merge set)
+  (if (null? (cdr set))
+      (car set)
+      (successive-merge
+        (adjoin-set
+          (make-code-tree (car set) (cadr set))
+          (cddr set)))))
+;Value: successive-merge
+
+1 ]=> ; unit tests for successive-merge and generate-huffman-tree procedures
+(define pairs '((A 4) (B 2) (D 1) (C 1)))
+;Value: pairs
+
+1 ]=> (define tree (generate-huffman-tree pairs))
+;Value: tree
+
+1 ]=> (define message '(0 1 1 0 0 1 0 1 0 1 1 1 0))
+;Value: message
+
+1 ]=> (encode (decode message tree) tree)
+;Value: (0 1 1 0 0 1 0 1 0 1 1 1 0)
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.
