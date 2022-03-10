@@ -21,18 +21,17 @@
 ;
 ; most frequent symbol:
 ; ---------------------
-; 1. memq finds most frequent symbol after 1 iteration, O(1)
-; 2. (cons 0 ...), O(1)
+; 1. memq finds most freq symbol in left branch after 1 iter, O(1)
+; 2. Evaluating consequent (cons 0 ...), O(1)
 ; 3. Subsequent recursion into top-level left branch is a leaf, O(1)
 ;
 ; ==> O(1)
 ;
 ; least frequent symbol:
 ; ----------------------
-; 1. memq finds least frequent symbol after n iterations
-; 2. (cons 1 ...), O(1)
-; 3. Subsequent recursions have one less memq iter. than before: n-1, n-2, ...
-; 4. Total number of iterations: (n/2)*(n-1) - 1
+; 1. memq doesn't find least freq symbol in left branch after 1 iter, O(1)
+; 2. Evaluating alternative (cons 1 ...), O(1)
+; 3. Subsequent n-2 recursions
 ;
-; ==> O(n^2)
+; ==> O(n)
 ;
