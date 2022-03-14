@@ -92,13 +92,33 @@
            (cons (car set1)
                  (union-set (cdr set1) set2)))
           (else (union-set (cdr set1) set2))))
-
+  ; record constructor and selectors - Parts (a) and (b)
+  (define (mak-record name salary address)
+    (list name salary address))
+  (define (sel-name record)
+    (car record))
+  (define (sel-salary record)
+    (cadr record))
+  (define (sel-address record)
+    (caddr record))
+  ; get-record procedure - Part (a)
+  (define (get-record name file)
+    (cond ((null? file) false)
+          ((eq? name (sel-name (car file)))
+           (car file))
+          (else (get-record name (cdr file)))))
+  ; get-salary procedure - Part (b)
+  (define (get-salary record)
+    (sel-salary record))
   ; interface to the rest of the system
   (put 'make-set 'unordered-list make-set)
   (put 'element-of-set? 'unordered-list element-of-set?)
   (put 'adjoin-set 'unordered-list adjoin-set)
   (put 'intersection-set '(unordered-list unordered-list) intersection-set)
   (put 'union-set '(unordered-list unordered-list) union-set)
+  ; add get-record/salary entries to operation-table - Parts (a) and (b)
+  (put 'get-record 'unordered-list get-record)
+  (put 'get-salary 'unordered-list get-salary)
   'done)
 
 ; install-ordered-list-pkg procedure
@@ -256,6 +276,24 @@
 (define (union-set set1 set2)
   (attach-tag (type-tag set1)
               (apply-generic 'union-set set1 set2)))
+
+; find-employee-record procedure - Part (c)
+(define (find-employee-record name files)
+  (if (null? files)
+      false
+      (let ((file (car files)))
+        (let ((tag (type-tag file)))
+          (let ((result ((get 'get-record tag) name file)))
+            (if result
+                result
+                (find-employee-record name (cdr files))))))))
+
+;
+; Part (d)
+; ########
+; Whenever Insatiable takes over another company, another installation package
+; must be implemented. Since find-employee-record (lookup) is a generic
+; procedure, no additional changes are required.
 
 ; unit tests
 (install-unordered-list-pkg)
