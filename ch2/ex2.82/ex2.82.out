@@ -1,0 +1,203 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; nil defn
+(define nil '())
+;Value: nil
+
+1 ]=> ; fold-left procedure
+(define (fold-left op init seq)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter init seq))
+;Value: fold-left
+
+1 ]=> ; fold-right procedure
+(define (fold-right op init seq)
+  (if (null? seq)
+      init
+      (op (car seq)
+          (fold-right op init (cdr seq)))))
+;Value: fold-right
+
+1 ]=> ; assoc procedure
+(define (assoc key records)
+  (cond ((null? records) false)
+        ((equal? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+;Value: assoc
+
+1 ]=> ; make-table procedure
+(define (make-table)
+  (let ((local-table (list '*table*)))
+    (define (lookup key-1 key-2)
+      (let ((subtable (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (assoc key-2 (cdr subtable))))
+              (if record
+                  (cdr record)
+                  false))
+            false)))
+    (define (insert! key-1 key-2 value)
+      (let ((subtable (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (assoc key-2 (cdr subtable))))
+              (if record
+                  (set-cdr! record value)
+                  (set-cdr! subtable
+                            (cons (cons key-2 value)
+                                  (cdr subtable)))))
+            (set-cdr! local-table
+                      (cons (list key-1
+                                  (cons key-2 value))
+                            (cdr local-table)))))
+      'ok)
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch))
+;Value: make-table
+
+1 ]=> ; instantiate operation-table, get/put procedures
+(define operation-table (make-table))
+;Value: operation-table
+
+1 ]=> (define get (operation-table 'lookup-proc))
+;Value: get
+
+1 ]=> (define put (operation-table 'insert-proc!))
+;Value: put
+
+1 ]=> ; instantiate coercion-table, get-coercion/put-coercion procedures
+(define coercion-table (make-table))
+;Value: coercion-table
+
+1 ]=> (define get-coercion (coercion-table 'lookup-proc))
+;Value: get-coercion
+
+1 ]=> (define put-coercion (coercion-table 'insert-proc!))
+;Value: put-coercion
+
+1 ]=> ; attach-tag constructor procedure
+(define (attach-tag type-tag contents)
+  (cons type-tag contents))
+;Value: attach-tag
+
+1 ]=> ; type-tag selector procedure
+(define (type-tag datum)
+  (if (pair? datum)
+      (car datum)
+      (error "Bad tagged datum -- TYPE-TAG" datum)))
+;Value: type-tag
+
+1 ]=> ; contents selector procedure
+(define (contents datum)
+  (if (pair? datum)
+      (cdr datum)
+      (error "Bad tagged datum -- CONTENTS" datum)))
+;Value: contents
+
+1 ]=> ; ; apply-generic procedure
+; (define (apply-generic op . args)
+;   (let ((type-tags (map type-tag args)))
+;     (let ((proc (get op type-tags)))
+;       (if proc
+;           (apply proc (map contents args))
+;           (error
+;             "No method for these types -- APPLY-GENERIC"
+;             (list op type-tags))))))
+
+; eq-types? predicate procedure
+(define (eq-types? ts)
+  (let ((t (car ts)))
+    (fold-left (lambda (acc x) (and acc (eq? x t))) true ts)))
+;Value: eq-types?
+
+1 ]=> ; get-coercion-col procedure
+(define (get-coercion-col t ts)
+  (map (lambda (x)
+         (if (eq? x t)
+             (lambda (x) x)
+             (get-coercion x t)))
+         ts))
+;Value: get-coercion-col
+
+1 ]=> ; coercions-exist? predicate procedure
+(define (coercions-exist? col)
+  (fold-right (lambda (x acc) (and x acc)) true col))
+;Value: coercions-exist?
+
+1 ]=> ; coerce-args-rec procedure
+(define (coerce-args-rec col args)
+  (if (null? args)
+      nil
+      (cons ((car col) (car args))
+            (coerce-args-rec (cdr col) (cdr args)))))
+;Value: coerce-args-rec
+
+1 ]=> ; coerce-args procedure
+(define (coerce-args ts args)
+  (define (iter tl ts)
+    (if (null? tl)
+        false
+        (let ((col (get-coercion-col (car tl) ts)))
+          (if (coercions-exist? col)
+              (coerce-args-rec col args)
+              (iter (cdr tl) ts)))))
+  (iter ts ts))
+;Value: coerce-args
+
+1 ]=> ; apply-generic procedure
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (if (not (eq-types? type-tags))
+              (apply apply-generic (cons op (coerce-args type-tags args)))
+              (error
+                "No method for these types -- APPLY-GENERIC"
+                (list op type-tags)))))))
+;Value: apply-generic
+
+1 ]=> ; unit tests
+(define x (list 'B 2))
+;Value: x
+
+1 ]=> (define y (list 'A 3))
+;Value: y
+
+1 ]=> (put-coercion 'A 'B (lambda (x) (list 'B (cadr x))))
+;Value: ok
+
+1 ]=> (put 'foo '(B B) (lambda (x y) (+ (car x) (car y))))
+;Value: ok
+
+1 ]=> (apply-generic 'foo x x)
+;Value: 4
+
+1 ]=> (apply-generic 'foo x y)
+;Value: 5
+
+1 ]=> (apply-generic 'foo y x)
+;Value: 5
+
+1 ]=> (apply-generic 'foo y y)
+;No method for these types -- APPLY-GENERIC (foo (a a))
+;To continue, call RESTART with an option number:
+; (RESTART 1) => Return to read-eval-print level 1.
+
+2 error> 
+End of input stream reached.
+Moriturus te salutat.
