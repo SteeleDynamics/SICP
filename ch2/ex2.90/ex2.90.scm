@@ -62,6 +62,7 @@
 ; attach-tag procedure
 (define (attach-tag t contents)
   (cond ((pair? contents) (cons t contents))
+        ((null? contents) (cons t contents))
         ((number? contents) contents)
         (else (error "Bad contents -- ATTACH-TAG" contents))))
 
@@ -271,276 +272,193 @@
   (put 'angle '(complex) angle)
   'done)
 
-; term constructor and selector procedures
-(define (make-term order coeff) (list order coeff))
-(define (order term) (car term))
-(define (coeff term) (cadr term))
-
-; empty-termlist constructor and predicate procedures
-(define (the-empty-termlist) '())
-(define (empty-termlist? term-list) (null? term-list))
-
 ; install-sparse-pkg procedure
 (define (install-sparse-pkg)
   ;; internal procedures
+  (define (the-empty-termlist) '())
+  (define (empty-termlist? term-list) (null? term-list))
+  (define (make-term order coeff) (list order coeff))
+  (define (order term) (car term))
+  (define (coeff term) (cadr term))
   (define (adjoin-sparse term term-list)
     (if (=zero? (coeff term))
         term-list
         (cons term term-list)))
-  (define (make-sparse terms)
-    (if (null? terms)
-        (the-empty-termlist)
-        (adjoin-sparse (car terms) (make-sparse (cdr terms)))))
   (define (first-sparse term-list) (car term-list))
   (define (rest-sparse term-list) (cdr term-list))
+  (define (add-sparse L1 L2)
+    (cond ((empty-termlist? L1) L2)
+          ((empty-termlist? L2) L1)
+          (else
+           (let ((t1 (first-sparse L1)) (t2 (first-sparse L2)))
+             (cond ((> (order t1) (order t2))
+                    (adjoin-sparse
+                     t1 (add-sparse (rest-sparse L1) L2)))
+                   ((< (order t1) (order t2))
+                    (adjoin-sparse
+                     t2 (add-sparse L1 (rest-sparse L2))))
+                   (else
+                    (adjoin-sparse
+                     (make-term (order t1)
+                                (add (coeff t1) (coeff t2)))
+                     (add-sparse (rest-sparse L1)
+                                 (rest-sparse L2)))))))))
+  (define (mul-sparse L1 L2)
+    (if (empty-termlist? L1)
+        (the-empty-termlist)
+        (add-sparse (mul-sparse-by-all-sparse (first-sparse L1) L2)
+                    (mul-sparse (rest-sparse L1) L2))))
+  (define (mul-sparse-by-all-sparse t1 L)
+    (if (empty-termlist? L)
+        (the-empty-termlist)
+        (let ((t2 (first-sparse L)))
+          (adjoin-sparse
+           (make-term (+ (order t1) (order t2))
+                      (mul (coeff t1) (coeff t2)))
+           (mul-sparse-by-all-sparse t1 (rest-sparse L))))))
+  (define (neg-sparse L)
+    (if (empty-termlist? L)
+        (the-empty-termlist)
+        (cons (make-term (order (first-sparse L))
+                         (neg (coeff (first-sparse L))))
+              (neg-sparse (rest-sparse L)))))
+  (define (zero-sparse? L)
+    (empty-termlist? L))
 
   ;; interface to rest of the system
   (define (tag p) (attach-tag 'sparse p))
-  (put 'adjoin-term '(term sparse)
-       (lambda (term term-list) (tag (adjoin-sparse term term-list))))
   (put 'make-termlist 'sparse
-       (lambda (terms) (tag (make-sparse terms))))
-  (put 'first-term '(sparse) first-sparse)
-  (put 'rest-terms '(sparse)
-       (lambda (term-list) (tag (rest-sparse term-list))))
+       (lambda (terms) (tag terms)))
+  (put 'add-terms '(sparse sparse)
+       (lambda (L1 L2) (tag (add-sparse L1 L2))))
+  (put 'mul-terms '(sparse sparse)
+       (lambda (L1 L2) (tag (mul-sparse L1 L2))))
+  (put 'neg-terms '(sparse)
+       (lambda (L) (tag (neg-sparse L))))
+  (put '=zero-terms? '(sparse) zero-sparse?)
   'done)
 
 ; install-dense-pkg procedure
 (define (install-dense-pkg)
   ;; internal procedures
+  (define (the-empty-termlist) '())
+  (define (empty-termlist? term-list) (null? term-list))
   (define (adjoin-dense term term-list)
-        (cons (coeff term) term-list))
-  (define (make-dense terms)
-    (if (null? terms)
-        (the-empty-termlist)
-        (adjoin-dense (car terms) (make-dense (cdr terms)))))
-  (define (first-dense term-list)
-    (make-term (- (length term-list) 1)
-               (car term-list)))
-  (define (rest-dense term-list) (cdr term-list))
-
-  ;; interface to rest of the system
-  (define (tag p) (attach-tag 'dense p))
-  (put 'adjoin-term '(term dense)
-       (lambda (term term-list) (tag (adjoin-dense term term-list))))
-  (put 'make-termlist 'dense
-       (lambda (terms) (tag (make-dense terms))))
-  (put 'first-term '(dense) first-dense)
-  (put 'rest-terms '(dense)
-       (lambda (term-list) (tag (rest-dense term-list))))
-  'done)
-
-; generic adjoin-term procedure
-(define (adjoin-term term term-list)
-  (apply-generic 'adjoin-term (cons 'term term) term-list))
-
-; generic first-term procedure
-(define (first-term term-list)
-  (apply-generic 'first-term term-list))
-
-; generic rest-terms procedure
-(define (rest-terms term-list)
-  (apply-generic 'rest-terms term-list))
-
-; make-sparse-termlist constructor procedure
-(define (make-sparse-termlist . terms)
-  ((get 'make-termlist 'sparse) terms))
-
-; make-dense-termlist constructor procedure
-(define (make-dense-termlist . terms)
-  ((get 'make-termlist 'dense) terms))
-
-; install-sparse-poly-pkg procedure
-(define (install-sparse-poly-pkg)
-  ;; internal procedures
-  (define (make-poly variable term-list)
-    (cons variable term-list))
-  (define (variable p) (car p))
-  (define (term-list p) (cdr p))
-  (define (variable? x) (symbol? x))
-  (define (same-variable? v1 v2)
-    (and (variable? v1) (variable? v2) (eq? v1 v2)))
-  (define (adjoin-term term term-list)
-    (if (=zero? (coeff term))
-        term-list
-        (cons term term-list)))
-  (define (the-empty-termlist) '())
-  (define (first-term term-list) (car term-list))
-  (define (rest-terms term-list) (cdr term-list))
-  (define (empty-termlist? term-list) (null? term-list))
-  (define (make-term order coeff) (list order coeff))
-  (define (order term) (car term))
-  (define (coeff term) (cadr term))
-  (define (add-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (add-terms (term-list p1)
-                              (term-list p2)))
-        (error "Polys not in same var -- ADD-POLY"
-               (list p1 p2))))
-  (define (add-terms L1 L2)
-    (cond ((empty-termlist? L1) L2)
-          ((empty-termlist? L2) L1)
-          (else
-           (let ((t1 (first-term L1)) (t2 (first-term L2)))
-             (cond ((> (order t1) (order t2))
-                    (adjoin-term
-                     t1 (add-terms (rest-terms L1) L2)))
-                   ((< (order t1) (order t2))
-                    (adjoin-term
-                     t2 (add-terms L1 (rest-terms L2))))
-                   (else
-                    (adjoin-term
-                     (make-term (order t1)
-                                (add (coeff t1) (coeff t2)))
-                     (add-terms (rest-terms L1)
-                                (rest-terms L2)))))))))
-  (define (mul-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (mul-terms (term-list p1)
-                              (term-list p2)))
-        (error "Polys not in same var -- MUL-POLY"
-               (list p1 p2))))
-  (define (mul-terms L1 L2)
-    (if (empty-termlist? L1)
-        (the-empty-termlist)
-        (add-terms (mul-term-by-all-terms (first-term L1) L2)
-                   (mul-terms (rest-terms L1) L2))))
-  (define (mul-term-by-all-terms t1 L)
-    (if (empty-termlist? L)
-        (the-empty-termlist)
-        (let ((t2 (first-term L)))
-          (adjoin-term
-           (make-term (+ (order t1) (order t2))
-                      (mul (coeff t1) (coeff t2)))
-           (mul-term-by-all-terms t1 (rest-terms L))))))
-  (define (zero-poly? p)
-    (let ((L (term-list p)))
-      (empty-termlist? L)))
-  (define (neg-terms L)
-    (if (empty-termlist? L)
-        (the-empty-termlist)
-        (cons (make-term (order (first-term L))
-                         (neg (coeff (first-term L))))
-              (neg-terms (rest-terms L)))))
-  (define (neg-poly p)
-    (let ((var (variable p))
-          (lst (term-list p)))
-      (make-poly var (neg-terms lst))))
-  (define (sub-poly p1 p2)
-    (add-poly p1 (neg-poly p2)))
-
-  ;; interface to rest of the system
-  (define (tag p) (attach-tag 'sparse-poly p))
-  (put 'add '(sparse-poly sparse-poly)
-       (lambda (p1 p2) (tag (add-poly p1 p2))))
-  (put 'mul '(sparse-poly sparse-poly)
-       (lambda (p1 p2) (tag (mul-poly p1 p2))))
-  (put 'make 'sparse-poly
-       (lambda (var terms) (tag (make-poly var terms))))
-  (put '=zero? '(polynomial) zero-poly?)
-  (put 'neg '(sparse-poly)
-       (lambda (p) (tag (neg-poly p))))
-  (put 'sub '(sparse-poly sparse-poly)
-       (lambda (p1 p2) (tag (sub-poly p1 p2))))
-  'done)
-
-; install-dense-poly-pkg procedure
-(define (install-dense-poly-pkg)
-  ;; internal procedures
-  (define (make-poly variable term-list)
-    (cons variable term-list))
-  (define (variable p) (car p))
-  (define (term-list p) (cdr p))
-  (define (variable? x) (symbol? x))
-  (define (same-variable? v1 v2)
-    (and (variable? v1) (variable? v2) (eq? v1 v2)))
-  (define (adjoin-term term term-list)
         (cons term term-list))
-  (define (the-empty-termlist) '())
-  (define (empty-termlist? term-list) (null? term-list))
-  (define (add-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (add-terms (term-list p1)
-                              (term-list p2)))
-        (error "Polys not in same var -- ADD-POLY"
-               (list p1 p2))))
-  (define (add-terms L1 L2)
+  (define (add-dense L1 L2)
     (cond ((empty-termlist? L1) L2)
           ((empty-termlist? L2) L1)
           (else
             (cond ((> (length L1) (length L2))
-                   (adjoin-term (car L1) (add-terms (cdr L1) L2)))
+                   (adjoin-dense (car L1) (add-dense (cdr L1) L2)))
                  ((< (length L1) (length L2))
-                  (adjoin-term (car L2) (add-terms L1 (cdr L2))))
+                  (adjoin-dense (car L2) (add-dense L1 (cdr L2))))
                  (else
-                  (adjoin-term
+                  (adjoin-dense
                     (add (car L1) (car L2))
-                    (add-terms (cdr L1) (cdr L2))))))))
-  (define (mul-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (mul-terms (term-list p1)
-                              (term-list p2)))
-        (error "Polys not in same var -- MUL-POLY"
-               (list p1 p2))))
-  (define (mul-terms L1 L2)
+                    (add-dense (cdr L1) (cdr L2))))))))
+  (define (mul-dense L1 L2)
     (if (empty-termlist? L1)
         (the-empty-termlist)
-        (add-terms (append (mul-term-by-all-terms (car L1) L2)
+        (add-dense (append (mul-dense-by-all-dense (car L1) L2)
                            (make-placeholders (length L1)))
-                   (mul-terms (cdr L1) L2))))
-  (define (mul-term-by-all-terms c1 L2)
+                   (mul-dense (cdr L1) L2))))
+  (define (mul-dense-by-all-dense c1 L2)
     (if (empty-termlist? L2)
         (the-empty-termlist)
-        (adjoin-term (mul c1 (car L2))
-           (mul-term-by-all-terms c1 (cdr L2)))))
+        (adjoin-dense (mul c1 (car L2))
+           (mul-dense-by-all-dense c1 (cdr L2)))))
   (define (make-placeholders len)
     (define (iter i acc)
       (if (< i (- len 1))
           (iter (+ i 1) (cons 0 acc))
           acc))
     (iter 0 (the-empty-termlist)))
-  (define (zero-poly? p)
-    (let ((L (term-list p))
-          (f (lambda (x acc) (and (=zero? x) acc))))
-      (fold-right f true L)))
-  (define (neg-terms L)
+  (define (neg-dense L)
     (if (empty-termlist? L)
         (the-empty-termlist)
         (cons (neg (car L))
-              (neg-terms (cdr L)))))
-  (define (neg-poly p)
-    (let ((var (variable p))
-          (lst (term-list p)))
-      (make-poly var (neg-terms lst))))
-  (define (sub-poly p1 p2)
-    (add-poly p1 (neg-poly p2)))
+              (neg-dense (cdr L)))))
+  (define (zero-dense? L)
+    (let ((f (lambda (x acc) (and (=zero? x) acc))))
+      (fold-right f true L)))
 
   ;; interface to rest of the system
-  (define (tag p) (attach-tag 'polynomial p))
-  (put 'add '(dense-poly dense-poly)
-       (lambda (p1 p2) (tag (add-poly p1 p2))))
-  (put 'mul '(dense-poly dense-poly)
-       (lambda (p1 p2) (tag (mul-poly p1 p2))))
-  (put 'make 'dense-poly
-       (lambda (var terms) (tag (make-poly var terms))))
-  (put '=zero? '(polynomial) zero-poly?)
-  (put 'neg '(dense-poly)
-       (lambda (p) (tag (neg-poly p))))
-  (put 'sub '(dense-poly dense-poly)
-       (lambda (p1 p2) (tag (sub-poly p1 p2))))
+  (define (tag p) (attach-tag 'dense p))
+  (put 'make-termlist 'dense
+       (lambda (terms) (tag terms)))
+  (put 'add-terms '(dense dense)
+       (lambda (L1 L2) (tag (add-dense L1 L2))))
+  (put 'mul-terms '(dense dense)
+       (lambda (L1 L2) (tag (mul-dense L1 L2))))
+  (put 'neg-terms '(dense)
+       (lambda (L) (tag (neg-dense L))))
+  (put '=zero-terms? '(dense) zero-dense?)
   'done)
+
+; generic add-terms procedure
+(define (add-terms L1 L2)
+  (apply-generic 'add-terms L1 L2))
+
+; generic mul-terms procedure
+(define (mul-terms L1 L2)
+  (apply-generic 'mul-terms L1 L2))
+
+; generic neg-terms procedure
+(define (neg-terms L)
+  (apply-generic 'neg-terms L))
+
+; generic =zero-terms? predicate procedure
+(define (=zero-terms? L)
+  (apply-generic '=zero-terms? L))
 
 ; install-poly-pkg procedure
 (define (install-poly-pkg)
   ;; internal procedures
-  ; TODO: implement...
+  (define (make-poly variable term-list)
+    (cons variable term-list))
+  (define (variable p) (car p))
+  (define (term-list p) (cdr p))
+  (define (variable? x) (symbol? x))
+  (define (same-variable? v1 v2)
+    (and (variable? v1) (variable? v2) (eq? v1 v2)))
+  (define (add-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (add-terms (term-list p1)
+                              (term-list p2)))
+        (error "Polys not in same var -- ADD-POLY"
+               (list p1 p2))))
+  (define (mul-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+        (make-poly (variable p1)
+                   (mul-terms (term-list p1)
+                              (term-list p2)))
+        (error "Polys not in same var -- MUL-POLY"
+               (list p1 p2))))
+  (define (neg-poly p)
+    (let ((x (variable p))
+          (L (term-list p)))
+      (make-poly x (neg-terms L))))
+  (define (sub-poly p1 p2)
+    (add-poly p1 (neg-poly p2)))
+  (define (zero-poly? p)
+    (let ((L (term-list p)))
+      (=zero-terms? L)))
 
   ;; interface to rest of the system
-  ; TODO: implement...
+  (define (tag p) (attach-tag 'poly p))
+  (put 'make 'poly
+       (lambda (var term-list) (tag (make-poly var term-list))))
+  (put 'add '(poly poly)
+       (lambda (p1 p2) (tag (add-poly p1 p2))))
+  (put 'mul '(poly poly)
+       (lambda (p1 p2) (tag (mul-poly p1 p2))))
+  (put 'neg '(poly)
+       (lambda (p) (tag (neg-poly p))))
+  (put 'sub '(poly poly)
+       (lambda (p1 p2) (tag (sub-poly p1 p2))))
+  (put '=zero? '(poly) zero-poly?)
   'done)
 
 ; make-scheme-number constructor procedure
@@ -559,9 +477,13 @@
 (define (make-complex-from-mag-ang r a)
   ((get 'make-from-mag-ang 'complex) r a))
 
-; make-polynomial constructor procedure
-(define (make-polynomial var terms)
-  ((get 'make 'polynomial) var terms))
+; make-sparse-poly constructor procedure
+(define (make-sparse-poly var terms)
+  ((get 'make 'poly) var ((get 'make-termlist 'sparse) terms)))
+
+; make-dense-poly constructor procedure
+(define (make-dense-poly var terms)
+  ((get 'make 'poly) var ((get 'make-termlist 'dense) terms)))
 
 ; generic operator procedures
 (define (add x y) (apply-generic 'add x y))
@@ -580,34 +502,42 @@
 (install-complex-package)
 (install-sparse-pkg)
 (install-dense-pkg)
+(install-poly-pkg)
 
-(define t16 (make-term 6 7))
-(define t13 (make-term 3 1))
-(define t12 (make-term 2 3))
-(define t11 (make-term 1 3))
-(define t10 (make-term 0 1))
+(define p1s (make-sparse-poly 'x '((3 1) (2 3) (1 3) (0 1))))
+(define p2s (make-sparse-poly 'x '((2 1) (1 2) (0 1))))
+(define p3s (add p1s p2s))
+(define p4s (sub p1s p2s))
+(define p5s (sub p2s p2s))
+(define p6s (mul p1s p3s))
+(define p7s (mul p5s p6s))
+p1s
+p2s
+p3s
+p4s
+p5s
+p6s
+p7s
+(=zero? p4s)
+(=zero? p5s)
+(=zero? p6s)
+(=zero? p7s)
 
-(define t23 (make-term 3 4))
-(define t22 (make-term 2 1))
-(define t21 (make-term 1 2))
-(define t20 (make-term 0 1))
-
-(define s1 (make-sparse-termlist t13 t12 t11 t10))
-(define s2 (make-sparse-termlist t22 t21 t20))
-(define d1 (make-dense-termlist t13 t12 t11 t10))
-(define d2 (make-dense-termlist t22 t21 t20))
-
-s1
-s2
-d1
-d2
-(first-term s1)
-(first-term s2)
-(first-term d1)
-(first-term d2)
-(rest-terms s1)
-(rest-terms s2)
-(rest-terms d1)
-(rest-terms d2)
-(adjoin-term t16 s1)
-(adjoin-term t23 d2)
+(define p1d (make-dense-poly 'x '(1 3 3 1)))
+(define p2d (make-dense-poly 'x '(1 2 1)))
+(define p3d (add p1d p2d))
+(define p4d (sub p1d p2d))
+(define p5d (sub p2d p2d))
+(define p6d (mul p1d p3d))
+(define p7d (mul p5d p6d))
+p1d
+p2d
+p3d
+p4d
+p5d
+p6d
+p7d
+(=zero? p4d)
+(=zero? p5d)
+(=zero? p6d)
+(=zero? p7d)
