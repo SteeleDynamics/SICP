@@ -1,0 +1,77 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (make-monitored f)
+  (let ((count 0))
+    (lambda (m)
+      (cond ((eq? m 'how-many-calls?) count)
+            ((eq? m 'reset-count)
+              (begin (set! count 0)
+                     count))
+            (else
+              (begin (set! count (+ count 1))
+                     (f m)))))))
+;Value: make-monitored
+
+1 ]=> ; unit tests
+(define (incr x) (+ x 1))
+;Value: incr
+
+1 ]=> (define (decr x) (- x 1))
+;Value: decr
+
+1 ]=> (define mon-incr (make-monitored incr))
+;Value: mon-incr
+
+1 ]=> (define mon-decr (make-monitored decr))
+;Value: mon-decr
+
+1 ]=> (define (add a b)
+  (if (= a 0)
+      b
+      (add (mon-decr a) (mon-incr b))))
+;Value: add
+
+1 ]=> (add 2 3)
+;Value: 5
+
+1 ]=> (mon-decr 'how-many-calls?)
+;Value: 2
+
+1 ]=> (mon-incr 'how-many-calls?)
+;Value: 2
+
+1 ]=> (add 4 1)
+;Value: 5
+
+1 ]=> (mon-decr 'how-many-calls?)
+;Value: 6
+
+1 ]=> (mon-incr 'how-many-calls?)
+;Value: 6
+
+1 ]=> (mon-decr 'reset-count)
+;Value: 0
+
+1 ]=> (mon-incr 'reset-count)
+;Value: 0
+
+1 ]=> (add 1 4)
+;Value: 5
+
+1 ]=> (mon-decr 'how-many-calls?)
+;Value: 1
+
+1 ]=> (mon-incr 'how-many-calls?)
+;Value: 1
+
+1 ]=> 
+End of input stream reached.
+Happy happy joy joy!
