@@ -1,0 +1,41 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (make-account balance password)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (dispatch p m)
+    (cond ((not (eq? p password)) (lambda (x) "Incorrect password"))
+          ((eq? m 'withdraw) withdraw)
+          ((eq? m 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT"
+                       m))))
+  dispatch)
+;Value: make-account
+
+1 ]=> ; unit tests
+(define acc (make-account 100 'secret-password))
+;Value: acc
+
+1 ]=> ((acc 'secret-password 'withdraw) 40)
+;Value: 60
+
+1 ]=> ((acc 'some-other-password 'deposit) 50)
+;Value: "Incorrect password"
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.
