@@ -1,0 +1,77 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; rand-init value
+(define rand-init 107)
+;Value: rand-init
+
+1 ]=> ; rand-update procedure
+(define (rand-update x)
+  (let ((a 41) (b 71) (m 2053))
+    (modulo (+ (* a x) b) m)))
+;Value: rand-update
+
+1 ]=> ))
+
+; rand procedure
+(define rand
+  (let ((x rand-init))
+    (lambda (m)
+      (cond ((eq? m 'generate) (set! x (rand-update x)) x)
+            ((eq? m 'reset) (lambda (y) (set! x y) x))
+            (else (error "message not understood -- RAND"
+                         m))))))
+;Value: rand
+
+1 ]=> ; unit-tests
+(rand 'generate)
+;Value: 352
+
+1 ]=> (rand 'generate)
+;Value: 132
+
+1 ]=> (rand 'generate)
+;Value: 1377
+
+1 ]=> ((rand 'reset) 107)
+;Value: 107
+
+1 ]=> (rand 'generate)
+;Value: 352
+
+1 ]=> (rand 'generate)
+;Value: 132
+
+1 ]=> (rand 'generate)
+;Value: 1377
+
+1 ]=> ((rand 'reset) 1009)
+;Value: 1009
+
+1 ]=> (rand 'generate)
+;Value: 380
+
+1 ]=> (rand 'generate)
+;Value: 1280
+
+1 ]=> (rand 'generate)
+;Value: 1226
+
+1 ]=> (rand 'foo)
+;message not understood -- RAND foo
+;To continue, call RESTART with an option number:
+; (RESTART 1) => Return to read-eval-print level 1.
+
+2 error> (restart 1)
+;Abort!
+
+1 ]=> 
+End of input stream reached.
+Happy happy joy joy!

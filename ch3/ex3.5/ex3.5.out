@@ -1,0 +1,67 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; random-in-range procedure
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (random range))))
+;Value: random-in-range
+
+1 ]=> ; estimate-integral procedure
+(define (estimate-integral P x1 x2 y1 y2 n)
+  (define (experiment)
+    (P (random-in-range x1 x2)
+       (random-in-range y1 y2)))
+  (let ((ratio (monte-carlo n experiment))
+        (area (* (- x2 x1) (- y2 y1))))
+    (* ratio area)))
+;Value: estimate-integral
+
+1 ]=> ; monte-carlo procedure
+(define (monte-carlo trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (cond ((= trials-remaining 0)
+           (/ trials-passed trials))
+          ((experiment)
+           (iter (- trials-remaining 1) (+ trials-passed 1)))
+          (else
+           (iter (- trials-remaining 1) trials-passed))))
+  (iter trials 0))
+;Value: monte-carlo
+
+1 ]=> ; unit-circle? predicate procedure
+(define (unit-circle? x y)
+  (<= (+ (square x) (square y)) 1.0))
+;Value: unit-circle?
+
+1 ]=> ; rectangular bounds
+(define x1 -2.0)
+;Value: x1
+
+1 ]=> (define x2 2.0)
+;Value: x2
+
+1 ]=> (define y1 -1.25)
+;Value: y1
+
+1 ]=> (define y2 1.25)
+;Value: y2
+
+1 ]=> ; number of trials
+(define n 10000000)
+;Value: n
+
+1 ]=> ; estimate pi
+(estimate-integral unit-circle? x1 x2 y1 y2 n)
+;Value: 3.142914
+
+1 ]=> 
+End of input stream reached.
+..#]^@^@^@ NO CARRIER
