@@ -1,0 +1,86 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (make-account balance password)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (dispatch p m)
+    (cond ((not (eq? p password)) (lambda (x) "Incorrect password"))
+          ((eq? m 'withdraw) withdraw)
+          ((eq? m 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT"
+                       m))))
+  dispatch)
+;Value: make-account
+
+1 ]=> (define (make-joint acc p1 p2)
+  (define (dispatch p m)
+    (if (not (eq? p p2))
+        (lambda (x) "Incorrect password")
+        (acc p1 m)))
+  dispatch)
+;Value: make-joint
+
+1 ]=> ; unit tests
+(define acct (make-account 100 'foo))
+;Value: acct
+
+1 ]=> (define alias (make-joint acct 'foo 'bar))
+;Value: alias
+
+1 ]=> ((acct 'foo 'deposit) 0)
+;Value: 100
+
+1 ]=> ((alias 'bar 'deposit) 0)
+;Value: 100
+
+1 ]=> ((acct 'foo 'withdraw) 15)
+;Value: 85
+
+1 ]=> ((alias 'bar 'withdraw) 0)
+;Value: 85
+
+1 ]=> ((alias 'bar 'deposit) 42)
+;Value: 127
+
+1 ]=> ((acct 'foo 'deposit) 0)
+;Value: 127
+
+1 ]=> ((acct 'bar 'baz) 0)
+;Value: "Incorrect password"
+
+1 ]=> ((acct 'foo 'qux) 0)
+;Unknown request -- MAKE-ACCOUNT qux
+;To continue, call RESTART with an option number:
+; (RESTART 1) => Return to read-eval-print level 1.
+
+2 error> (restart 1)
+;Abort!
+
+1 ]=> ((alias 'foo 'quux) 0)
+;Value: "Incorrect password"
+
+1 ]=> ((alias 'bar 'corge) 0)
+;Unknown request -- MAKE-ACCOUNT corge
+;To continue, call RESTART with an option number:
+; (RESTART 1) => Return to read-eval-print level 1.
+
+2 error> (restart 1)
+;Abort!
+
+1 ]=> 
+End of input stream reached.
+Post proelium, praemium.

@@ -1,0 +1,39 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (make-fn)
+  (let ((x false))
+    (lambda (y)
+      (cond (x (* x y))
+            (else (set! x y) x)))))
+;Value: make-fn
+
+1 ]=> ; unit tests
+(define f1 (make-fn))
+;Value: f1
+
+1 ]=> (define f2 (make-fn))
+;Value: f2
+
+1 ]=> ; left to right evaluation of (+ (f 0) (f 1))
+(let ((a (f1 0)))
+  (let ((b (f1 1)))
+    (+ a b)))
+;Value: 0
+
+1 ]=> ; right to left evaluation of (+ (f 0) (f 1))
+(let ((a (f2 1)))
+  (let ((b (f2 0)))
+    (+ a b)))
+;Value: 1
+
+1 ]=> 
+End of input stream reached.
+Fortitudine vincimus.
