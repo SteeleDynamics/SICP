@@ -1,0 +1,115 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; append procedure
+(define (append x y)
+  (if (null? x)
+      y
+      (cons (car x) (append (cdr x) y))))
+;Value: append
+
+1 ]=> ; append! mutator procedure
+(define (append! x y)
+  (set-cdr! (last-pair x) y)
+  x)
+;Value: append!
+
+1 ]=> ; last-pair procedure
+(define (last-pair x)
+  (if (null? (cdr x))
+      x
+      (last-pair (cdr x))))
+;Value: last-pair
+
+1 ]=> ; define list x (see box-and-pointer diagram below)
+(define x (list 'a 'b))
+;Value: x
+
+1 ]=> ;
+;      ┌─┐        ┌─┐
+;      │a│        │b│
+;      └─┘        └─┘
+;       Λ          Λ
+;      ┌┼┬─┐      ┌┼┬─┐
+;  x ─>│•│•┼─────>│•│╱│
+;      └─┴─┘      └─┴─┘
+;
+
+; define list y (see box-and-pointer diagram below)
+(define y (list 'c 'd))
+;Value: y
+
+1 ]=> ;
+;      ┌─┐        ┌─┐        ┌─┐        ┌─┐
+;      │a│        │b│        │c│        │d│
+;      └─┘        └─┘        └─┘        └─┘
+;       Λ          Λ          Λ          Λ
+;      ┌┼┬─┐      ┌┼┬─┐      ┌┼┬─┐      ┌┼┬─┐
+;  x ─>│•│•┼─────>│•│╱│  y ─>│•│•┼─────>│•│╱│
+;      └─┴─┘      └─┴─┘      └─┴─┘      └─┴─┘
+;
+
+; define list z (see box-and-pointer diagram below)
+(define z (append x y))
+;Value: z
+
+1 ]=> ;
+;      ┌─┬─┐      ┌─┬─┐      ┌─┬─┐      ┌─┬─┐
+;  z ─>│•│•┼─────>│•│•┼─────>│•│•┼─────>│•│╱│
+;      └┼┴─┘      └┼┴─┘      └┼┴─┘      └┼┴─┘
+;       V          V          V          V
+;      ┌─┐        ┌─┐        ┌─┐        ┌─┐
+;      │a│        │b│        │c│        │d│
+;      └─┘        └─┘        └─┘        └─┘
+;       Λ          Λ          Λ          Λ
+;      ┌┼┬─┐      ┌┼┬─┐      ┌┼┬─┐      ┌┼┬─┐
+;  x ─>│•│•┼─────>│•│╱│  y ─>│•│•┼─────>│•│╱│
+;      └─┴─┘      └─┴─┘      └─┴─┘      └─┴─┘
+;
+
+; z ==> (a b c d)
+z
+;Value: (a b c d)
+
+1 ]=> ; (cdr x) ==> (b)
+(cdr x)
+;Value: (b)
+
+1 ]=> ; define list w by mutating x (see box-and-pointer diagram below)
+(define w (append! x y))
+;Value: w
+
+1 ]=> ;
+;      ┌─┬─┐      ┌─┬─┐      ┌─┬─┐      ┌─┬─┐
+;  z ─>│•│•┼─────>│•│•┼─────>│•│•┼─────>│•│╱│
+;      └┼┴─┘      └┼┴─┘      └┼┴─┘      └┼┴─┘
+;       V          V          V          V
+;      ┌─┐        ┌─┐        ┌─┐        ┌─┐
+;      │a│        │b│        │c│        │d│
+;      └─┘        └─┘        └─┘        └─┘
+;       Λ          Λ          Λ          Λ
+;      ┌┼┬─┐      ┌┼┬─┐      ┌┼┬─┐      ┌┼┬─┐
+;  x ─>│•│•┼─────>│•│•┼─────>│•│•┼─────>│•│╱│
+;      └─┴─┘      └─┴─┘      └─┴─┘      └─┴─┘
+;       Λ                     Λ
+;       │                     │
+;       w                     y
+
+; w ==> (a b c d)
+w
+;Value: (a b c d)
+
+1 ]=> ; (cdr x) ==> (b c d)
+(cdr x)
+;Value: (b c d)
+
+1 ]=> 
+End of input stream reached.
+..#]^@^@^@ NO CARRIER
