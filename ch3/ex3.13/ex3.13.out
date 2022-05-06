@@ -1,0 +1,41 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; last-pair procedure
+(define (last-pair x)
+  (if (null? (cdr x))
+      x
+      (last-pair (cdr x))))
+;Value: last-pair
+
+1 ]=> ; make-cycle procedure
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+;Value: make-cycle
+
+1 ]=> (define z (make-cycle (list 'a 'b 'c)))
+;Value: z
+
+1 ]=> ;
+;      ┌─┐    ┌─┐    ┌─┐  
+;      │a│    │b│    │c│  
+;      └─┘    └─┘    └─┘  
+;       Λ      Λ      Λ   
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;  x ─>│•│•┼─>│•│•┼─>│•│•┼┐
+;      └─┴─┘  └─┴─┘  └─┴─┘│
+;       Λ                 │
+;       └─────────────────┘
+;
+; (last-pair z) results in an infinite loop
+;
+
+(last-pair z)

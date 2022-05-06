@@ -1,0 +1,135 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; mystery procedure
+(define (mystery x)
+  (define (loop x y)
+    (if (null? x)
+        y
+        (let ((temp (cdr x)))
+          (set-cdr! x y)
+          (loop temp x))))
+  (loop x '()))
+;Value: mystery
+
+1 ]=> (define v (list 'a 'b 'c 'd))
+;Value: v
+
+1 ]=> (define w (mystery v))
+;Value: w
+
+1 ]=> ;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │a│    │b│    │c│    │d│
+;      └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;  v ─>│•│•┼─>│•│•┼─>│•│•┼─>│•│╱│
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘
+;
+; 1st Iteration:
+; ##############
+;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │a│    │b│    │c│    │d│
+;      └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;v,x ─>│•│╱│  │•│•┼─>│•│•┼─>│•│╱│
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘
+;         Λ    Λ
+;         │    │
+;         y  temp
+;
+;
+; 2nd Iteration:
+; ##############
+;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │b│    │a│    │c│    │d│
+;      └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;  x ─>│•│•┼─>│•│╱│  │•│•┼─>│•│╱│
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘
+;              Λ      Λ
+;              │      │
+;             v,y    temp
+;
+;
+; 3rd Iteration:
+; ##############
+;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │c│    │b│    │a│    │d│
+;      └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;  x ─>│•│•┼─>│•│•┼─>│•│╱│  │•│╱│
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘
+;              Λ      Λ      Λ
+;              │      │      │
+;              y      v     temp
+;
+;
+; 4th Iteration:
+; ##############
+;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │d│    │c│    │b│    │a│
+;      └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌─┐
+;  x ─>│•│•┼─>│•│•┼─>│•│•┼─>│•│╱│  │╱│
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┘
+;              Λ             Λ      Λ
+;              │             │      │
+;              y             v     temp
+;
+;
+; 5th Iteration:
+; ##############
+;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │d│    │c│    │b│    │a│
+;      └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌─┐
+;  y ─>│•│•┼─>│•│•┼─>│•│•┼─>│•│╱│  │╱│
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┘
+;                            Λ      Λ
+;                            │      │
+;                            v      x
+;
+;
+; Output:
+; #######
+;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │d│    │c│    │b│    │a│
+;      └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;  w ─>│•│•┼─>│•│•┼─>│•│•┼─>│•│╱│
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘
+;                            Λ
+;                            │
+;                            v
+;
+
+v
+;Value: (a)
+
+1 ]=> w
+;Value: (d c b a)
+
+1 ]=> 
+End of input stream reached.
+Pulvis et umbra sumus.
