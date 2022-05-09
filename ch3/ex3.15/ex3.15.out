@@ -1,0 +1,98 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define x (list 'a 'b))
+;Value: x
+
+1 ]=> (define z1 (cons x x))
+;Value: z1
+
+1 ]=> ;
+;      ┌─┬─┐
+; z1 ─>│•│•│
+;      └┼┴┼┘
+;       V V
+;      ┌─┬─┐  ┌─┬─┐
+;  x ─>│•│•┼─>│•│╱│
+;      └┼┴─┘  └┼┴─┘
+;       V      V
+;      ┌─┐    ┌─┐
+;      │a│    │b│
+;      └─┘    └─┘
+;
+
+(define z2 (cons (list 'a 'b) (list 'a 'b)))
+;Value: z2
+
+1 ]=> ;
+;      ┌─┬─┐  ┌─┬─┐  ┌─┬─┐
+; z2 ─>│•│•┼─>│•│•┼─>│•│╱│
+;      └┼┴─┘  └┼┴─┘  └┼┴─┘
+;       │      V      V
+;       │     ┌─┐    ┌─┐
+;       │     │a│    │b│
+;       │     └─┘    └─┘
+;       │      Λ      Λ
+;       │     ┌┼┬─┐  ┌┼┬─┐
+;       └────>│•│•┼─>│•│╱│
+;             └─┴─┘  └─┴─┘
+;
+
+(define (set-to-wow! x)
+  (set-car! (car x) 'wow)
+  x)
+;Value: set-to-wow!
+
+1 ]=> z1
+;Value: ((a b) a b)
+
+1 ]=> (set-to-wow! z1)
+;Value: ((wow b) wow b)
+
+1 ]=> ;
+;       ┌─┬─┐
+;  z1 ─>│•│•│
+;       └┼┴┼┘
+;        V V
+;       ┌─┬─┐  ┌─┬─┐
+;   x ─>│•│•┼─>│•│╱│
+;       └┼┴─┘  └┼┴─┘
+;   ┌────┘      │
+;   V           V
+; ┌───┐ ┌─┐    ┌─┐
+; │wow│ │a│    │b│
+; └───┘ └─┘    └─┘
+;
+
+z2
+;Value: ((a b) a b)
+
+1 ]=> (set-to-wow! z2)
+;Value: ((wow b) a b)
+
+1 ]=> ;
+;      ┌─┬─┐  ┌─┬─┐  ┌─┬─┐
+; z2 ─>│•│•┼─>│•│•┼─>│•│╱│
+;      └┼┴─┘  └┼┴─┘  └┼┴─┘
+;       │      V      V
+;       │     ┌─┐    ┌─┐
+;       │     │a│    │b│
+;       │     └─┘    └─┘
+;       │             Λ
+;       │     ┌─┬─┐  ┌┼┬─┐
+;       └────>│•│•┼─>│•│╱│
+;             └┼┴─┘  └─┴─┘
+;              V
+;            ┌───┐
+;            │wow│
+;            └───┘
+;
+End of input stream reached.
+Pulvis et umbra sumus.
