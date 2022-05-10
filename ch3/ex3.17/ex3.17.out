@@ -1,0 +1,71 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; member procedure
+(define (member item x)
+  (cond ((null? x) false)
+        ((equal? item (car x)) x)
+        (else (member item (cdr x)))))
+;Value: member
+
+1 ]=> ; count-pairs procedure
+(define (count-pairs x)
+  (define visited '())
+  (define (visit-pairs u)
+    (cond ((not (pair? u)) 0)
+          ((member u visited) 0)
+          (else 
+            (set! visited (cons u visited))
+            (+ (visit-pairs (car u))
+               (visit-pairs (cdr u))
+               1))))
+  (visit-pairs x))
+;Value: count-pairs
+
+1 ]=> ; unit tests
+(define x (list 'a 'b 'c))
+;Value: x
+
+1 ]=> (count-pairs x)
+;Value: 3
+
+1 ]=> (define x (list 'a 'b))
+;Value: x
+
+1 ]=> (define y (cons x (cdr x)))
+;Value: y
+
+1 ]=> (count-pairs y)
+;Value: 3
+
+1 ]=> (define x (list 'a))
+;Value: x
+
+1 ]=> (define y (cons x x))
+;Value: y
+
+1 ]=> (define z (cons y y))
+;Value: z
+
+1 ]=> (count-pairs z)
+;Value: 3
+
+1 ]=> (define x (list 'a 'b 'c))
+;Value: x
+
+1 ]=> (set-cdr! (last-pair x) x)
+;Unspecified return value
+
+1 ]=> (count-pairs x)
+;Value: 3
+
+1 ]=> 
+End of input stream reached.
+..#]^@^@^@ NO CARRIER
