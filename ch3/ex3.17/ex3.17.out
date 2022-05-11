@@ -8,20 +8,20 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 Image saved on Sunday March 7, 2021 at 3:24:56 PM
   Release 11.2 || SF || LIAR/x86-64
 
-1 ]=> ; member procedure
-(define (member item x)
+1 ]=> ; memq procedure
+(define (memq item x)
   (cond ((null? x) false)
-        ((equal? item (car x)) x)
-        (else (member item (cdr x)))))
-;Value: member
+        ((eq? item (car x)) x)
+        (else (memq item (cdr x)))))
+;Value: memq
 
 1 ]=> ; count-pairs procedure
 (define (count-pairs x)
   (define visited '())
   (define (visit-pairs u)
     (cond ((not (pair? u)) 0)
-          ((member u visited) 0)
-          (else 
+          ((memq u visited) 0)
+          (else
             (set! visited (cons u visited))
             (+ (visit-pairs (car u))
                (visit-pairs (cdr u))
@@ -68,4 +68,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> 
 End of input stream reached.
-..#]^@^@^@ NO CARRIER
+Ceterum censeo Carthaginem esse delendam.

@@ -1,16 +1,16 @@
-; member procedure
-(define (member item x)
+; memq procedure
+(define (memq item x)
   (cond ((null? x) false)
-        ((equal? item (car x)) x)
-        (else (member item (cdr x)))))
+        ((eq? item (car x)) x)
+        (else (memq item (cdr x)))))
 
 ; count-pairs procedure
 (define (count-pairs x)
   (define visited '())
   (define (visit-pairs u)
     (cond ((not (pair? u)) 0)
-          ((member u visited) 0)
-          (else 
+          ((memq u visited) 0)
+          (else
             (set! visited (cons u visited))
             (+ (visit-pairs (car u))
                (visit-pairs (cdr u))
