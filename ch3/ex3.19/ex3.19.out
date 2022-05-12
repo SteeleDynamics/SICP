@@ -1,34 +1,28 @@
-;
-; Exercise 3.18
-; #############
-;
-; Write a procedure that examines a list and determines whether it contains a
-; cycle, that is, whether a program that tried to find the end of the list by
-; taking successive cdrs would go into an infinite loop. Exercise 3.13
-; constructed such lists.
-'()
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
 
-; memq procedure
-(define (memq item x)
-  (cond ((null? x) false)
-        ((eq? item (car x)) x)
-        (else (memq item (cdr x)))))
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-; cycle? procedure
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; cycle? predicate procedure (Floyd's cycle-finding algorithm)
 (define (cycle? x)
-  (define (safe-cdr elt)
-    (if (pair? elt)
-        (cdr elt)
+  (define (safe-cdr e)
+    (if (pair? e)
+        (cdr e)
         '()))
-  (define visited '())
-  (define (iter u)
-    (cond ((null? u) false)
-          ((memq u visited) true)
-          (else (set! visited (cons u visited))
-                (iter (safe-cdr u)))))
-  (iter x))
+  (define (iter a b)
+    (cond ((null? a) false)
+          ((null? b) false)
+          ((eq? a b) true)
+          (else (iter (safe-cdr a) (safe-cdr (safe-cdr b))))))
+  (iter (safe-cdr x) (safe-cdr (safe-cdr x))))
+;Value: cycle?
 
-;
+1 ]=> ;
 ;      ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐
 ;      │a│    │b│    │c│    │e│    │f│    │g│
 ;      └─┘    └─┘    └─┘    └─┘    └─┘    └─┘
@@ -39,9 +33,12 @@
 ;
 
 (define w (list 'a 'b 'c 'e 'f 'g))
-(cycle? w)
+;Value: w
 
-;
+1 ]=> (cycle? w)
+;Value: #f
+
+1 ]=> ;
 ;      ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐
 ;      │a│    │b│    │c│    │e│    │f│    │g│
 ;      └─┘    └─┘    └─┘    └─┘    └─┘    └─┘
@@ -53,10 +50,15 @@
 ;       └──────────────────────────────────────┘
 
 (define x (list 'a 'b 'c 'e 'f 'g))
-(set-cdr! (last-pair x) x)
-(cycle? x)
+;Value: x
 
-;
+1 ]=> (set-cdr! (last-pair x) x)
+;Unspecified return value
+
+1 ]=> (cycle? x)
+;Value: #t
+
+1 ]=> ;
 ;      ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐
 ;      │a│    │b│    │c│    │e│    │f│    │g│
 ;      └─┘    └─┘    └─┘    └─┘    └─┘    └─┘
@@ -68,10 +70,15 @@
 ;                     └────────────────────────┘
 
 (define y (list 'a 'b 'c 'e 'f 'g))
-(set-cdr! (last-pair y) (cddr y))
-(cycle? y)
+;Value: y
 
-;
+1 ]=> (set-cdr! (last-pair y) (cddr y))
+;Unspecified return value
+
+1 ]=> (cycle? y)
+;Value: #t
+
+1 ]=> ;
 ;      ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐
 ;      │a│    │b│    │c│    │e│    │f│    │g│
 ;      └─┘    └─┘    └─┘    └─┘    └─┘    └─┘
@@ -83,5 +90,14 @@
 ;                                          └───┘
 
 (define z (list 'a 'b 'c 'e 'f 'g))
-(set-cdr! (last-pair z) (last-pair z))
-(cycle? z)
+;Value: z
+
+1 ]=> (set-cdr! (last-pair z) (last-pair z))
+;Unspecified return value
+
+1 ]=> (cycle? z)
+;Value: #t
+
+1 ]=> 
+End of input stream reached.
+..#]^@^@^@ NO CARRIER

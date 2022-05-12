@@ -8,6 +8,17 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 Image saved on Sunday March 7, 2021 at 3:24:56 PM
   Release 11.2 || SF || LIAR/x86-64
 
+1 ]=> ;
+; Exercise 3.18
+; #############
+;
+; Write a procedure that examines a list and determines whether it contains a
+; cycle, that is, whether a program that tried to find the end of the list by
+; taking successive cdrs would go into an infinite loop. Exercise 3.13
+; constructed such lists.
+'()
+;Value: ()
+
 1 ]=> ; memq procedure
 (define (memq item x)
   (cond ((null? x) false)
@@ -17,46 +28,47 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> ; cycle? procedure
 (define (cycle? x)
+  (define (safe-cdr elt)
+    (if (pair? elt)
+        (cdr elt)
+        '()))
   (define visited '())
-  (define (visit-pairs u)
-    (cond ((not (pair? u)) false)
+  (define (iter u)
+    (cond ((null? u) false)
           ((memq u visited) true)
-          (else
-            (set! visited (cons u visited))
-            (or (visit-pairs (car u))
-                (visit-pairs (cdr u))))))
-  (visit-pairs x))
+          (else (set! visited (cons u visited))
+                (iter (safe-cdr u)))))
+  (iter x))
 ;Value: cycle?
 
-1 ]=> ; unit tests
-(define x (list 'a 'b 'c))
-;Value: x
+1 ]=> ;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │a│    │b│    │c│    │e│    │f│    │g│
+;      └─┘    └─┘    └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;  w ─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼─>│•│╱│
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘
+;
 
-1 ]=> (cycle? x)
+(define w (list 'a 'b 'c 'e 'f 'g))
+;Value: w
+
+1 ]=> (cycle? w)
 ;Value: #f
 
-1 ]=> (define x (list 'a 'b))
-;Value: x
+1 ]=> ;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │a│    │b│    │c│    │e│    │f│    │g│
+;      └─┘    └─┘    └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;  x ─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼┐
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘│
+;       Λ                                      │
+;       └──────────────────────────────────────┘
 
-1 ]=> (define y (cons x (cdr x)))
-;Value: y
-
-1 ]=> (cycle? y)
-;Value: #t
-
-1 ]=> (define x (list 'a))
-;Value: x
-
-1 ]=> (define y (cons x x))
-;Value: y
-
-1 ]=> (define z (cons y y))
-;Value: z
-
-1 ]=> (cycle? z)
-;Value: #t
-
-1 ]=> (define x (list 'a 'b 'c))
+(define x (list 'a 'b 'c 'e 'f 'g))
 ;Value: x
 
 1 ]=> (set-cdr! (last-pair x) x)
@@ -65,18 +77,46 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 1 ]=> (cycle? x)
 ;Value: #t
 
-1 ]=> (define x (cons 'a 'b))
-;Value: x
+1 ]=> ;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │a│    │b│    │c│    │e│    │f│    │g│
+;      └─┘    └─┘    └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;  y ─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼┐
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘│
+;                     Λ                        │
+;                     └────────────────────────┘
 
-1 ]=> (define y (cons 'c 'd))
+(define y (list 'a 'b 'c 'e 'f 'g))
 ;Value: y
 
-1 ]=> (define z (cons x y))
+1 ]=> (set-cdr! (last-pair y) (cddr y))
+;Unspecified return value
+
+1 ]=> (cycle? y)
+;Value: #t
+
+1 ]=> ;
+;      ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐
+;      │a│    │b│    │c│    │e│    │f│    │g│
+;      └─┘    └─┘    └─┘    └─┘    └─┘    └─┘
+;       Λ      Λ      Λ      Λ      Λ      Λ
+;      ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐  ┌┼┬─┐
+;  z ─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼─>│•│•┼┐
+;      └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘  └─┴─┘│
+;                                          Λ   │
+;                                          └───┘
+
+(define z (list 'a 'b 'c 'e 'f 'g))
 ;Value: z
 
+1 ]=> (set-cdr! (last-pair z) (last-pair z))
+;Unspecified return value
+
 1 ]=> (cycle? z)
-;Value: #f
+;Value: #t
 
 1 ]=> 
 End of input stream reached.
-Pulvis et umbra sumus.
+..#]^@^@^@ NO CARRIER

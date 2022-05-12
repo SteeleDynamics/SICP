@@ -1,32 +1,15 @@
-;
-; Exercise 3.18
-; #############
-;
-; Write a procedure that examines a list and determines whether it contains a
-; cycle, that is, whether a program that tried to find the end of the list by
-; taking successive cdrs would go into an infinite loop. Exercise 3.13
-; constructed such lists.
-'()
-
-; memq procedure
-(define (memq item x)
-  (cond ((null? x) false)
-        ((eq? item (car x)) x)
-        (else (memq item (cdr x)))))
-
-; cycle? procedure
+; cycle? predicate procedure (Floyd's cycle-finding algorithm)
 (define (cycle? x)
-  (define (safe-cdr elt)
-    (if (pair? elt)
-        (cdr elt)
+  (define (safe-cdr e)
+    (if (pair? e)
+        (cdr e)
         '()))
-  (define visited '())
-  (define (iter u)
-    (cond ((null? u) false)
-          ((memq u visited) true)
-          (else (set! visited (cons u visited))
-                (iter (safe-cdr u)))))
-  (iter x))
+  (define (iter a b)
+    (cond ((null? a) false)
+          ((null? b) false)
+          ((eq? a b) true)
+          (else (iter (safe-cdr a) (safe-cdr (safe-cdr b))))))
+  (iter (safe-cdr x) (safe-cdr (safe-cdr x))))
 
 ;
 ;      ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐    ┌─┐
