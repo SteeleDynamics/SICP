@@ -1,0 +1,111 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; make-queue procedure
+(define (make-queue)
+  (let ((front-ptr '())
+        (rear-ptr '()))
+    (define (set-front-ptr! item) (set! front-ptr item))
+    (define (set-rear-ptr! item) (set! rear-ptr item))
+    (define (empty-queue?) (null? front-ptr))
+    (define (front-queue)
+      (if (empty-queue?)
+          (error "FRONT called with an empty queue" front-ptr)
+          (car front-ptr)))
+    (define (insert-queue! item)
+      (let ((new-pair (cons item '())))
+        (cond ((empty-queue?)
+               (set-front-ptr! new-pair)
+               (set-rear-ptr! new-pair)
+               dispatch)
+              (else
+               (set-cdr! rear-ptr new-pair)
+               (set-rear-ptr! new-pair)
+               dispatch))))
+    (define (delete-queue!)
+      (cond ((empty-queue?)
+             (error "DELETE called with an empty queue" front-ptr))
+            (else
+             (set-front-ptr! (cdr front-ptr))
+             dispatch)))
+    (define (print-queue)
+      (define (iter ptr)
+        (cond ((null? ptr)
+                newline
+                'done)
+              (else
+                (display (car ptr))
+                (display " ")
+                (iter (cdr ptr)))))
+      (newline)
+      (iter front-ptr))
+    (define (dispatch m)
+      (cond ((eq? m 'front-ptr) front-ptr)
+            ((eq? m 'rear-ptr) rear-ptr)
+            ((eq? m 'set-front-ptr!) set-front-ptr!)
+            ((eq? m 'set-rear-ptr!) set-rear-ptr!)
+            ((eq? m 'empty-queue?) empty-queue?)
+            ((eq? m 'front-queue) front-queue)
+            ((eq? m 'insert-queue!) insert-queue!)
+            ((eq? m 'delete-queue!) delete-queue!)
+            ((eq? m 'print-queue) print-queue)
+            (else (error "Undefined operation -- QUEUE" m))))
+    dispatch))
+;Value: make-queue
+
+1 ]=> (define (front-ptr q) (q 'front-ptr))
+;Value: front-ptr
+
+1 ]=> (define (rear-ptr q) (q 'rear-ptr))
+;Value: rear-ptr
+
+1 ]=> (define (set-front-ptr! q item) ((q 'set-front-ptr!) item))
+;Value: set-front-ptr!
+
+1 ]=> (define (set-rear-ptr! q item) ((q 'set-rear-ptr!) item))
+;Value: set-rear-ptr!
+
+1 ]=> (define (empty-queue? q) ((q 'empty-queue)))
+;Value: empty-queue?
+
+1 ]=> (define (front-queue q) ((q 'front-queue)))
+;Value: front-queue
+
+1 ]=> (define (insert-queue! q item) ((q 'insert-queue!) item))
+;Value: insert-queue!
+
+1 ]=> (define (delete-queue! q) ((q 'delete-queue!)))
+;Value: delete-queue!
+
+1 ]=> (define (print-queue q) ((q 'print-queue)))
+;Value: print-queue
+
+1 ]=> ; unit-tests from exercise 3.21
+(define q2 (make-queue))
+;Value: q2
+
+1 ]=> (print-queue (insert-queue! q2 'a))
+a 
+;Value: done
+
+1 ]=> (print-queue (insert-queue! q2 'b))
+a b 
+;Value: done
+
+1 ]=> (print-queue (delete-queue! q2))
+b 
+;Value: done
+
+1 ]=> (print-queue (delete-queue! q2))
+;Value: done
+
+1 ]=> 
+End of input stream reached.
+Happy happy joy joy!

@@ -1,0 +1,121 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (define (front-ptr queue) (car queue))
+;Value: front-ptr
+
+1 ]=> (define (rear-ptr queue) (cdr queue))
+;Value: rear-ptr
+
+1 ]=> (define (set-front-ptr! queue item) (set-car! queue item))
+;Value: set-front-ptr!
+
+1 ]=> (define (set-rear-ptr! queue item) (set-cdr! queue item))
+;Value: set-rear-ptr!
+
+1 ]=> (define (empty-queue? queue) (null? (front-ptr queue)))
+;Value: empty-queue?
+
+1 ]=> (define (make-queue) (cons '() '()))
+;Value: make-queue
+
+1 ]=> (define (front-queue queue)
+  (if (empty-queue? queue)
+      (error "FRONT called with an empty queue" queue)
+      (car (front-ptr queue))))
+;Value: front-queue
+
+1 ]=> (define (insert-queue! queue item)
+  (let ((new-pair (cons item '())))
+    (cond ((empty-queue? queue)
+           (set-front-ptr! queue new-pair)
+           (set-rear-ptr! queue new-pair)
+           queue)
+          (else
+           (set-cdr! (rear-ptr queue) new-pair)
+           (set-rear-ptr! queue new-pair)
+           queue))))
+;Value: insert-queue!
+
+1 ]=> (define (delete-queue! queue)
+  (cond ((empty-queue? queue)
+         (error "DELETE! called with an empty queue" queue))
+        (else
+         (set-front-ptr! queue (cdr (front-ptr queue)))
+         queue)))
+;Value: delete-queue!
+
+1 ]=> (define q1 (make-queue))
+;Value: q1
+
+1 ]=> (insert-queue! q1 'a)
+;Value: ((a) a)
+
+1 ]=> (insert-queue! q1 'b)
+;Value: ((a b) b)
+
+1 ]=> (delete-queue! q1)
+;Value: ((b) b)
+
+1 ]=> (delete-queue! q1)
+;Value: (() b)
+
+1 ]=> ;
+; Eva Lu Ator is talking about how the Lisp interpreter REPL prints lists. A
+; regular list in Lisp is a pointer. So when a list pointer is given to the REPL
+; for evaluation, the Lisp printer pretty-prints it. For our representation of a
+; queue, it is a pair of pointers. Each pointer is itself a list. Moreover, the
+; rear-ptr is a cons of the last inserted item and nil.
+;
+; So when the front-ptr is cons'ed with rear-ptr, the Lisp printer displays the
+; queue as a list of two items:
+;
+; 1. a list of the queue contents, and
+; 2. the last item inserted into the queue.
+;
+; The last item of #1 and item #2 are aliases. They represent the same item.
+;
+
+; print-queue procedure
+(define (print-queue q)
+  (define (iter ptr)
+    (cond ((null? ptr)
+            newline
+            'done)
+          (else
+            (display (car ptr))
+            (display " ")
+            (iter (cdr ptr)))))
+  (newline)
+  (iter (front-ptr q)))
+;Value: print-queue
+
+1 ]=> ; pretty-print queue
+(define q2 (make-queue))
+;Value: q2
+
+1 ]=> (print-queue (insert-queue! q2 'a))
+a 
+;Value: done
+
+1 ]=> (print-queue (insert-queue! q2 'b))
+a b 
+;Value: done
+
+1 ]=> (print-queue (delete-queue! q2))
+b 
+;Value: done
+
+1 ]=> (print-queue (delete-queue! q2))
+;Value: done
+
+1 ]=> 
+End of input stream reached.
+Moriturus te salutat.
