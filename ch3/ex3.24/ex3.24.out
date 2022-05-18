@@ -1,0 +1,84 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; make-table constructor procedure
+(define (make-table same-key?)
+  ; local-table internal state
+  (let ((local-table (list '*table*)))
+    ; assoc selector procedure (uses same-key? instead of equal?)
+    (define (assoc key records)
+      (cond ((null? records) false)
+            ((same-key? key (caar records)) (car records))
+            (else (assoc key (cdr records)))))
+    ; lookup selector procedure
+    (define (lookup key)
+      (let ((record (assoc key (cdr local-table))))
+        (if record
+            (cdr record)
+            false)))
+    ; insert! mutator procedure
+    (define (insert! key value)
+      (let ((record (assoc key (cdr local-table))))
+        (if record
+            (set-cdr! record value)
+            (set-cdr! local-table
+                      (cons (cons key value) (cdr local-table)))))
+      'ok)
+    ; dispatch message-passing procedure (represents table object)
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch))
+;Value: make-table
+
+1 ]=> ; unit-tests
+(define (same-key? k1 k2)
+  (let ((tol 0.5) (diff (- k1 k2)))
+    (and (>= diff (- tol))
+         (< diff tol))))
+;Value: same-key?
+
+1 ]=> (define tbl (make-table same-key?))
+;Value: tbl
+
+1 ]=> ((tbl 'insert-proc!) 0.42 'foo)
+;Value: ok
+
+1 ]=> ((tbl 'insert-proc!) 0.95 'bar)
+;Value: ok
+
+1 ]=> ((tbl 'insert-proc!) 1.88 'baz)
+;Value: ok
+
+1 ]=> ((tbl 'insert-proc!) 3.14 'foo)
+;Value: ok
+
+1 ]=> ((tbl 'insert-proc!) 3.27 'qux)
+;Value: ok
+
+1 ]=> ((tbl 'lookup-proc) 0)
+;Value: foo
+
+1 ]=> ((tbl 'lookup-proc) 1)
+;Value: bar
+
+1 ]=> ((tbl 'lookup-proc) 2)
+;Value: baz
+
+1 ]=> ((tbl 'lookup-proc) 3)
+;Value: qux
+
+1 ]=> ((tbl 'lookup-proc) 4)
+;Value: #f
+
+1 ]=> 
+End of input stream reached.
+Post proelium, praemium.
