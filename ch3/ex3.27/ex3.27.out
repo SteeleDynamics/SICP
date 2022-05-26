@@ -81,11 +81,11 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;Value: ()
 
 1 ]=> (with-timings (lambda () (fib 31)) receiver)
-2.92 0. 2.97
+1.83 0. 1.867
 ;Value: 1346269
 
 1 ]=> (with-timings (lambda () (memo-fib 31)) receiver)
-0. 0. 0.
+0. 0. .001
 ;Value: 1346269
 
 1 ]=> ;
@@ -533,5 +533,157 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;                             result
 ;
 ;
+; Evaluate (memo-fib 1) again:
+; ############################
+;
+;
+;           ┌───────────────────────────────────────────────────────────┐
+;           │ assoc: ...                                                │
+; global -->│ make-table: ...                                           │
+;  env      │ lookup: ...                                               │
+;           │ insert!: ...                                              │
+;           │ memoize: ...                                              │
+;           │ memo-fib: ...                                             │
+;           └───────────────────────────────────────────────────────────┘
+;                                    Λ     Λ
+;                                ┌───┴───┐ │
+;                          E1 -->│       │ │
+;                            ┌──>│ f: ─┐ │ │
+;                            │   └─────┼─┘ │
+;                            │         V   │
+;                            │    ┌───ꙨꙨ───┘
+;                            │    V
+;                            │  params: n
+;                            │  body: (cond ((= n 0) 0)
+;                            │              ((= n 1) 1)
+;                            │              (else (+ (memo-fib (- n 1))
+;                            │                       (memo-fib (- n 2)))))
+;                            │   ┌──────────────────────┐
+;                            └───┤                      │
+;                          E2 -->│ table: ────┐         │
+;                                └────────────┼─────────┘
+;                                    Λ        V
+;                          ┌─────────┘       ┌─┬─┐   ┌─┬─┐   ┌─┬─┐   ┌─┬─┐
+;                          │                 │•│•┼──>│•│•┼──>│•│•┼──>│•│╱│
+;                       ┌──┴───┐             └┼┴─┘   └┼┴─┘   └┼┴─┘   └┼┴─┘
+;                E18 -->│ x: 1 │              V       V       V       V
+;                       └──────┘          ┌───────┐  ┌─┬─┐   ┌─┬─┐   ┌─┬─┐
+;                          Λ              │*table*│  │•│•│   │•│•│   │•│•│
+;                          │              └───────┘  └┼┴┼┘   └┼┴┼┘   └┼┴┼┘
+;         ┌────────────────┴───────────────┐          │ └─┐   │ └─┐   │ └─┐
+;  E19 -->│ previously-computed-result : 1 │          V   V   V   V   V   V
+;         └────────────────────────────────┘         ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐
+;                                                    │2│ │1│ │0│ │0│ │1│ │1│
+;                                                    └─┘ └─┘ └─┘ └─┘ └─┘ └─┘
+;
+;
+;
+; Continue evaluating (memo-fib 3):
+; #################################
+;
+;
+;           ┌───────────────────────────────────────────────────────────┐
+;           │ assoc: ...                                                │
+; global -->│ make-table: ...                                           │
+;  env      │ lookup: ...                                               │
+;           │ insert!: ...                                              │
+;           │ memoize: ...                                              │
+;           │ memo-fib: ...                                             │
+;           └───────────────────────────────────────────────────────────┘
+;                                    Λ     Λ
+;                                ┌───┴───┐ │
+;                          E1 -->│       │ │
+;                            ┌──>│ f: ─┐ │ │
+;                            │   └─────┼─┘ │
+;                            │         V   │
+;                            │    ┌───ꙨꙨ───┘
+;                            │    V
+;                            │  params: n
+;                            │  body: (cond ((= n 0) 0)
+;                            │              ((= n 1) 1)
+;                            │              (else (+ (memo-fib (- n 1))
+;                            │                       (memo-fib (- n 2)))))
+;                            │   ┌──────────────────────┐
+;                            └───┤                      │
+;                          E2 -->│ table: ────┐         │
+;                                └────────────┼─────────┘
+;                                    Λ        V
+;                          ┌─────────┘       ┌─┬─┐   ┌─┬─┐   ┌─┬─┐   ┌─┬─┐
+;                          │                 │•│•┼──>│•│•┼──>│•│•┼──>│•│╱│
+;                       ┌──┴───┐             └┼┴─┘   └┼┴─┘   └┼┴─┘   └┼┴─┘
+;                 E3 -->│ x: 3 │              V       V       V       V
+;                       └──────┘          ┌───────┐  ┌─┬─┐   ┌─┬─┐   ┌─┬─┐
+;                          Λ              │*table*│  │•│•│   │•│•│   │•│•│
+;                          │              └───────┘  └┼┴┼┘   └┼┴┼┘   └┼┴┼┘
+;         ┌────────────────┴───────────────────┐      │ └─┐   │ └─┐   │ └─┐
+;   E4 -->│ previously-computed-result : false │      V   V   V   V   V   V
+;         └────────────────────────────────────┘     ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐
+;                  Λ                   Λ             │2│ │1│ │0│ │0│ │1│ │1│
+;               ┌──┴───┐         ┌─────┴─────┐       └─┘ └─┘ └─┘ └─┘ └─┘ └─┘
+;         E5 -->│ n: 2 │  E20 -->│ result: 2 │
+;               └──────┘         └───────────┘
+;                             (insert! x result table)
+;                             result
+;
+;
+;           ┌───────────────────────────────────────────────────────────┐
+;           │ assoc: ...                                                │
+; global -->│ make-table: ...                                           │
+;  env      │ lookup: ...                                               │
+;           │ insert!: ...                                              │
+;           │ memoize: ...                                              │
+;           │ memo-fib: ─┐                                              │
+;           └────────────┼──────────────────────────────────────────────┘
+;                   ┌────┘           Λ     Λ
+;                   │            ┌───┴───┐ │
+;                   │      E1 -->│       │ │
+;                   │        ┌──>│ f: ─┐ │ │
+;                   │        │   └─────┼─┘ │
+;                   │        │         V   │
+;                   │        │    ┌───ꙨꙨ───┘
+;                   │        │    V
+;                   │        │  params: n
+;                   │        │  body: (cond ((= n 0) 0)
+;                   │        │              ((= n 1) 1)
+;                   │        │              (else (+ (memo-fib (- n 1))
+;                   │        │                       (memo-fib (- n 2)))))
+;                   │        │   ┌──────────┐
+;                   │        └───┤          │
+;                   │      E2 -->│ table: ┐ │
+;                   │            └────────┼─┘
+;                   │              Λ      V
+;                   │              │     ┌─┬─┐   ┌─┬─┐   ┌─┬─┐   ┌─┬─┐   ┌─┬─┐
+;                   │              │     │•│•┼──>│•│•┼──>│•│•┼──>│•│•┼──>│•│╱│
+;                   │              │     └┼┴─┘   └┼┴─┘   └┼┴─┘   └┼┴─┘   └┼┴─┘
+;                   V              │      V       V       V       V       V
+;   ┌──────────────ꙨꙨ──────────────┘  ┌───────┐  ┌─┬─┐   ┌─┬─┐   ┌─┬─┐   ┌─┬─┐
+;   V      desugared let-syntax       │*table*│  │•│•│   │•│•│   │•│•│   │•│•│
+; params: x                           └───────┘  └┼┴┼┘   └┼┴┼┘   └┼┴┼┘   └┼┴┼┘
+; body: ((lambda (previously-computed-result)     │ └─┐   │ └─┐   │ └─┐   │ └─┐
+;          (or previously-computed-result         V   V   V   V   V   V   V   V
+;              (let ((result (f x)))             ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐
+;                (insert! x result table)        │3│ │2│ │2│ │1│ │0│ │0│ │1│ │1│
+;                result)))                       └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘
+;        (lookup x table))
+;
+;
+; (mem-fib 3) ==> 2
+;
+; Because we can assume lookup and insert! take a constant number of steps,
+; (memo-fib n) has O(n) runtime complexity since:
+;
+; 1. (f k) for all k < n are evaluated once.
+; 2. Once memoized, the second recursive call (memo-fib (- n 2)) in procedure f
+;    becomes constant and the recursion unwinds in O(n) time.
+;
+; This scheme would not have worked (O(n) time complexity) if we simply:
+;
+; (define memo-fib (memoize fib))
+;
+; because the recursive calls to fib are themselves not memoized, which means
+; (fib k) for all k < n are reevaluated multiple times, resulting in O(n²) time
+; complexity.
+;
+;
 End of input stream reached.
-Pulvis et umbra sumus.
+Ceterum censeo Carthaginem esse delendam.
