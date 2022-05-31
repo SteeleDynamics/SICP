@@ -1,4 +1,14 @@
-#|
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> #|
  | wire mutable object procedures
  |#
 
@@ -9,8 +19,9 @@
       (begin
         ((car procedures))
         (call-each (cdr procedures)))))
+;Value: call-each
 
-; make-wire constructor procedure
+1 ]=> ; make-wire constructor procedure
 (define (make-wire)
   (let ((signal-value 0) (action-procedures '()))
     (define (set-my-signal! new-value)
@@ -27,20 +38,24 @@
             ((eq? m 'add-action!) accept-action-procedure!)
             (else (error "Unknown operation -- WIRE" m))))
     dispatch))
+;Value: make-wire
 
-; get-signal selector procedure
+1 ]=> ; get-signal selector procedure
 (define (get-signal wire)
   (wire 'get-signal))
+;Value: get-signal
 
-; set-signal! mutator procedure
+1 ]=> ; set-signal! mutator procedure
 (define (set-signal! wire new-value)
   ((wire 'set-signal!) new-value))
+;Value: set-signal!
 
-; add-action! mutator procedure
+1 ]=> ; add-action! mutator procedure
 (define (add-action! wire action-procedure)
   ((wire 'add-action!) action-procedure))
+;Value: add-action!
 
-; probe procedure
+1 ]=> ; probe procedure
 (define (probe name wire)
   (add-action! wire
                (lambda ()
@@ -50,36 +65,44 @@
                  (display (current-time the-agenda))
                  (display "  New-value = ")
                  (display (get-signal wire)))))
+;Value: probe
 
-#|
+1 ]=> #|
  | queue mutable object procedures
  |#
 
 ; (helper) front-ptr selector procedure
 (define (front-ptr queue) (car queue))
+;Value: front-ptr
 
-; (helper) rear-ptr selector procedure
+1 ]=> ; (helper) rear-ptr selector procedure
 (define (rear-ptr queue) (cdr queue))
+;Value: rear-ptr
 
-; (helper) set-front-ptr! mutator procedure
+1 ]=> ; (helper) set-front-ptr! mutator procedure
 (define (set-front-ptr! queue item) (set-car! queue item))
+;Value: set-front-ptr!
 
-; (helper) set-rear-ptr! mutator procedure
+1 ]=> ; (helper) set-rear-ptr! mutator procedure
 (define (set-rear-ptr! queue item) (set-cdr! queue item))
+;Value: set-rear-ptr!
 
-; make-queue constructor procedure
+1 ]=> ; make-queue constructor procedure
 (define (make-queue) (cons '() '()))
+;Value: make-queue
 
-; empty-queue? predicate procedure
+1 ]=> ; empty-queue? predicate procedure
 (define (empty-queue? queue) (null? (front-ptr queue)))
+;Value: empty-queue?
 
-; front-queue selector procedure
+1 ]=> ; front-queue selector procedure
 (define (front-queue queue)
   (if (empty-queue? queue)
       (error "FRONT called with an empty queue" queue)
       (car (front-ptr queue))))
+;Value: front-queue
 
-; insert-queue! mutator procedure
+1 ]=> ; insert-queue! mutator procedure
 (define (insert-queue! queue item)
   (let ((new-pair (cons item '())))
     (cond ((empty-queue? queue)
@@ -90,16 +113,18 @@
            (set-cdr! (rear-ptr queue) new-pair)
            (set-rear-ptr! queue new-pair)
            queue))))
+;Value: insert-queue!
 
-; delete-queue! mutator procedure
+1 ]=> ; delete-queue! mutator procedure
 (define (delete-queue! queue)
   (cond ((empty-queue? queue)
          (error "DELETE! called with an empty queue" queue))
         (else
          (set-front-ptr! queue (cdr (front-ptr queue)))
          queue)))
+;Value: delete-queue!
 
-#|
+1 ]=> #|
  | agenda mutable object procedures
  | (a priority queue impl, not a binary heap)
  |#
@@ -107,41 +132,52 @@
 ; make-time-segment constructor procedure
 (define (make-time-segment time queue)
   (cons time queue))
+;Value: make-time-segment
 
-; segment-time selector procedure
+1 ]=> ; segment-time selector procedure
 (define (segment-time s) (car s))
+;Value: segment-time
 
-; segment-queue selector procedure
+1 ]=> ; segment-queue selector procedure
 (define (segment-queue s) (cdr s))
+;Value: segment-queue
 
-; make-agenda constructor procedure
+1 ]=> ; make-agenda constructor procedure
 (define (make-agenda) (list 0))
+;Value: make-agenda
 
-; current-time selector procedure
+1 ]=> ; current-time selector procedure
 (define (current-time agenda) (car agenda))
+;Value: current-time
 
-; set-current-time! mutator procedure
+1 ]=> ; set-current-time! mutator procedure
 (define (set-current-time! agenda time)
   (set-car! agenda time))
+;Value: set-current-time!
 
-; segments selector procedure
+1 ]=> ; segments selector procedure
 (define (segments agenda) (cdr agenda))
+;Value: segments
 
-; set-segments! mutator procedure
+1 ]=> ; set-segments! mutator procedure
 (define (set-segments! agenda segments)
   (set-cdr! agenda segments))
+;Value: set-segments!
 
-; first-segment selector procedure
+1 ]=> ; first-segment selector procedure
 (define (first-segment agenda) (car (segments agenda)))
+;Value: first-segment
 
-; rest-segments selector procedure
+1 ]=> ; rest-segments selector procedure
 (define (rest-segments agenda) (cdr (segments agenda)))
+;Value: rest-segments
 
-; empty-agenda? predicate procedure
+1 ]=> ; empty-agenda? predicate procedure
 (define (empty-agenda? agenda)
   (null? (segments agenda)))
+;Value: empty-agenda?
 
-; add-to-agenda! mutator procedure
+1 ]=> ; add-to-agenda! mutator procedure
 (define (add-to-agenda! time action agenda)
   (define (belongs-before? segments)
     (or (null? segments)
@@ -168,23 +204,26 @@
          (cons (make-new-time-segment time action)
                segments))
         (add-to-segments! segments))))
+;Value: add-to-agenda!
 
-; remove-first-agenda-item! mutator procedure
+1 ]=> ; remove-first-agenda-item! mutator procedure
 (define (remove-first-agenda-item! agenda)
   (let ((q (segment-queue (first-segment agenda))))
     (delete-queue! q)
     (if (empty-queue? q)
         (set-segments! agenda (rest-segments agenda)))))
+;Value: remove-first-agenda-item!
 
-; first-agenda-item selector procedure
+1 ]=> ; first-agenda-item selector procedure
 (define (first-agenda-item agenda)
   (if (empty-agenda? agenda)
       (error "Agenda is empty -- FIRST-AGENDA-ITEM")
       (let ((first-seg (first-segment agenda)))
         (set-current-time! agenda (segment-time first-seg))
         (front-queue (segment-queue first-seg)))))
+;Value: first-agenda-item
 
-#|
+1 ]=> #|
  | primitive function boxes (logic gates) procedures
  |#
 
@@ -193,33 +232,38 @@
   (add-to-agenda! (+ delay (current-time the-agenda))
                   action
                   the-agenda))
+;Value: after-delay
 
-; (helper) invalid-signal? predicate procedure
+1 ]=> ; (helper) invalid-signal? predicate procedure
 (define (invalid-signal? s)
   (not (or (= s 0)
            (= s 1))))
+;Value: invalid-signal?
 
-; (helper) logical-not procedure
+1 ]=> ; (helper) logical-not procedure
 (define (logical-not s)
   (cond ((invalid-signal? s) (error "Invalid signal -- LOGICAL-NOT" s))
         ((= s 0) 1)
         ((= s 1) 0)))
+;Value: logical-not
 
-; (helper) logical-and procedure
+1 ]=> ; (helper) logical-and procedure
 (define (logical-and s1 s2)
   (cond ((invalid-signal? s1) (error "Invalid signal s1 -- LOGICAL-AND" s1))
         ((invalid-signal? s2) (error "Invalid signal s2 -- LOGICAL-AND" s2))
         ((and (= s1 1) (= s2 1)) 1)
         (else 0)))
+;Value: logical-and
 
-; (helper) logical-or procedure
+1 ]=> ; (helper) logical-or procedure
 (define (logical-or s1 s2)
   (cond ((invalid-signal? s1) (error "Invalid signal s1 -- LOGICAL-OR" s1))
         ((invalid-signal? s2) (error "Invalid signal s2 -- LOGICAL-OR" s2))
         ((or (= s1 1) (= s2 1)) 1)
         (else 0)))
+;Value: logical-or
 
-; inverter constructor procedure
+1 ]=> ; inverter constructor procedure
 (define (inverter input output)
   (define (invert-input)
     (let ((new-value (logical-not (get-signal input))))
@@ -228,8 +272,9 @@
                      (set-signal! output new-value)))))
   (add-action! input invert-input)
   'ok)
+;Value: inverter
 
-; and-gate constructor procedure
+1 ]=> ; and-gate constructor procedure
 (define (and-gate a1 a2 output)
   (define (and-action-procedure)
     (let ((new-value
@@ -240,8 +285,9 @@
   (add-action! a1 and-action-procedure)
   (add-action! a2 and-action-procedure)
   'ok)
+;Value: and-gate
 
-; or-gate constructor procedure
+1 ]=> ; or-gate constructor procedure
 (define (or-gate o1 o2 output)
   (define (or-action-procedure)
     (let ((new-value
@@ -252,8 +298,9 @@
   (add-action! o1 or-action-procedure)
   (add-action! o2 or-action-procedure)
   'ok)
+;Value: or-gate
 
-#|
+1 ]=> #|
  | driver for digital circuits simulator
  |#
 
@@ -265,8 +312,9 @@
         (first-item)
         (remove-first-agenda-item! the-agenda)
         (propagate))))
+;Value: propagate
 
-#|
+1 ]=> #|
  | add'l digital circuits
  |#
 
@@ -299,8 +347,9 @@
     (inverter c e)
     (and-gate d e s)
     'ok))
+;Value: half-adder
 
-;
+1 ]=> ;
 ;           full-adder
 ;        ┌──────────────────────────────────────────────────┐
 ;        │                    ┌────────┐                    │
@@ -326,8 +375,9 @@
     (half-adder a s sum c2)
     (or-gate c1 c2 c-out)
     'ok))
+;Value: full-adder
 
-;
+1 ]=> ;
 ;           ripple-carry-adder
 ;        ┌─────────────────────────────────────────────┐
 ;        │     ┌────────┐                              │
@@ -372,41 +422,91 @@
              (iter (cdr as) (cdr bs) (cdr ss) (make-wire) c-in))
           (else 'ok)))
   (iter as bs ss (make-wire) c-out))
+;Value: ripple-carry-adder
 
-#|
+1 ]=> #|
  | unit tests
  |#
 
 ; define the-agenda and delays for logic gates
 (define the-agenda (make-agenda))
-(define inverter-delay 2)
-(define and-gate-delay 3)
-(define or-gate-delay 5)
+;Value: the-agenda
 
-; define 4-bit numbers As, Bs, Ss; and carry-bit C
+1 ]=> (define inverter-delay 2)
+;Value: inverter-delay
+
+1 ]=> (define and-gate-delay 3)
+;Value: and-gate-delay
+
+1 ]=> (define or-gate-delay 5)
+;Value: or-gate-delay
+
+1 ]=> ; define 4-bit numbers As, Bs, Ss; and carry-bit C
 (define As (list (make-wire) (make-wire) (make-wire) (make-wire)))
-(define Bs (list (make-wire) (make-wire) (make-wire) (make-wire)))
-(define Ss (list (make-wire) (make-wire) (make-wire) (make-wire)))
-(define C (make-wire))
+;Value: as
 
-; wire up 4-bit ripple-carry-adder
+1 ]=> (define Bs (list (make-wire) (make-wire) (make-wire) (make-wire)))
+;Value: bs
+
+1 ]=> (define Ss (list (make-wire) (make-wire) (make-wire) (make-wire)))
+;Value: ss
+
+1 ]=> (define C (make-wire))
+;Value: c
+
+1 ]=> ; wire up 4-bit ripple-carry-adder
 (ripple-carry-adder As Bs Ss C)
+;Value: ok
 
-; put probes on Ss
+1 ]=> ; put probes on Ss
 (probe 's1 (cadddr Ss))
-(probe 's2 (caddr Ss))
-(probe 's3 (cadr Ss))
-(probe 's4 (car Ss))
-(probe 'c C)
+s1 0  New-value = 0
+;Unspecified return value
 
-; As ==> 6 decimal or 0110 binary
+1 ]=> (probe 's2 (caddr Ss))
+s2 0  New-value = 0
+;Unspecified return value
+
+1 ]=> (probe 's3 (cadr Ss))
+s3 0  New-value = 0
+;Unspecified return value
+
+1 ]=> (probe 's4 (car Ss))
+s4 0  New-value = 0
+;Unspecified return value
+
+1 ]=> (probe 'c C)
+c 0  New-value = 0
+;Unspecified return value
+
+1 ]=> ; As ==> 6 decimal or 0110 binary
 (set-signal! (caddr As) 1)
-(set-signal! (cadr As) 1)
+;Value: done
 
-; Bs ==> 7 decimal or 0111 binary
+1 ]=> (set-signal! (cadr As) 1)
+;Value: done
+
+1 ]=> ; Bs ==> 7 decimal or 0111 binary
 (set-signal! (cadddr Bs) 1)
-(set-signal! (caddr Bs) 1)
-(set-signal! (cadr Bs) 1)
+;Value: done
 
-; run simulation ==> resulting in 1101 binary
+1 ]=> (set-signal! (caddr Bs) 1)
+;Value: done
+
+1 ]=> (set-signal! (cadr Bs) 1)
+;Value: done
+
+1 ]=> ; run simulation ==> resulting in 1101 binary
 (propagate)
+s2 8  New-value = 1
+s3 8  New-value = 1
+s1 16  New-value = 1
+s2 16  New-value = 0
+s3 16  New-value = 0
+s4 32  New-value = 1
+s3 32  New-value = 1
+;Value: done
+
+1 ]=> 
+End of input stream reached.
+Post proelium, praemium.
