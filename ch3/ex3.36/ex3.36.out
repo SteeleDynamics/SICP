@@ -1,4 +1,14 @@
-; make-connector constructor procedure
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; make-connector constructor procedure
 (define (make-connector)
   (let ((value false) (informant false) (constraints '()))
     (define (set-my-value newval setter)
@@ -35,8 +45,9 @@
             (else (error "Unknown operation -- CONNECTOR"
                          request))))
     me))
+;Value: make-connector
 
-; for-each-except helper procedure
+1 ]=> ; for-each-except helper procedure
 (define (for-each-except exception procedure list)
   (define (loop items)
     (cond ((null? items) 'done)
@@ -44,36 +55,44 @@
           (else (procedure (car items))
                 (loop (cdr items)))))
   (loop list))
+;Value: for-each-except
 
-; inform-about-value helper procedure
+1 ]=> ; inform-about-value helper procedure
 (define (inform-about-value constraint)
   (constraint 'I-have-a-value))
+;Value: inform-about-value
 
-; inform-about-no-value helper procedure
+1 ]=> ; inform-about-no-value helper procedure
 (define (inform-about-no-value constraint)
   (constraint 'I-lost-my-value))
+;Value: inform-about-no-value
 
-; has-value? predicate procedure
+1 ]=> ; has-value? predicate procedure
 (define (has-value? connector)
   (connector 'has-value?))
+;Value: has-value?
 
-; get-value selector procedure
+1 ]=> ; get-value selector procedure
 (define (get-value connector)
   (connector 'value))
+;Value: get-value
 
-; set-value! mutator procedure
+1 ]=> ; set-value! mutator procedure
 (define (set-value! connector new-value informant)
   ((connector 'set-value!) new-value informant))
+;Value: set-value!
 
-; forget-value! mutator procedure
+1 ]=> ; forget-value! mutator procedure
 (define (forget-value! connector retractor)
   ((connector 'forget) retractor))
+;Value: forget-value!
 
-; connect (mutator?) procedure
+1 ]=> ; connect (mutator?) procedure
 (define (connect connector new-constraint)
   ((connector 'connect) new-constraint))
+;Value: connect
 
-;
+1 ]=> ;
 ;           ┌───────────────────────────────────────────────────────────────┐
 ;           │ inform-about-value: ...       set-value!: ...                 │
 ;           │ inform-about-no-value: ...    forget-value!: ...              │
@@ -109,8 +128,9 @@
 ;
 
 (define a (make-connector))
+;Value: a
 
-;
+1 ]=> ;
 ;           ┌───────────────────────────────────────────────────────────────┐
 ;           │ inform-about-value: ...       set-value!: ...                 │
 ;           │ inform-about-no-value: ...    forget-value!: ...              │
@@ -178,8 +198,9 @@
 ;
 
 (define b (make-connector))
+;Value: b
 
-;
+1 ]=> ;
 ;           ┌───────────────────────────────────────────────────────────────┐
 ;           │ inform-about-value: ...       set-value!: ...                 │
 ;           │ inform-about-no-value: ...    forget-value!: ...              │
@@ -209,8 +230,9 @@
 ;
 
 (set-value! a 10 'user)
+;Value: done
 
-;
+1 ]=> ;
 ;           ┌─────────────────────────────────────────────────────────────────┐
 ;           │ inform-about-value: ...       set-value!: ...                   │
 ;           │ inform-about-no-value: ...    forget-value!: ...                │
@@ -271,3 +293,5 @@
 ;            (else 'ignored))
 ;      ==> ??
 ;
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
