@@ -112,6 +112,35 @@ gjs
 foo
 ;Unspecified return value
 
-1 ]=> 
+1 ]=> ; Give all possibles values of x that can result from executing:
+(begin (define x 10)
+       (parallel-execute (lambda () (set! x (* x x)))
+                         (lambda () (set! x (* x x x))))
+       (sleep-current-thread 256)
+       x)
+;Value: 1000000
+
+1 ]=> ;
+; 1000000:  serial order of P1 then P2
+;  100000:  P2 accesses x once, P1 sets x to 100, P2 accesses x twice more
+;   10000:  P2 accesses x twice, P1 sets x to 100, P2 accesses x once more
+;    1000:  P2 accesses x thrice, P1 sets x to 100, P2 sets x to 1000
+; 1000000:  serial order of P2 then P1
+;   10000:  P1 accesses x once, P2 sets x to 1000, P1 accesses x once more
+;     100:  P1 accesses x twice, P2 sets x to 1000, P1 sets x to 100
+;
+
+(begin (define x 10)
+       (define s (make-serializer))
+       (parallel-execute (s (lambda () (set! x (* x x))))
+                         (s (lambda () (set! x (* x x x)))))
+       (sleep-current-thread 256)
+       x)
+;Value: 1000000
+
+1 ]=> ;
+; 1000000:  serial order of P1 then P2
+; 1000000:  serial order of P2 then P1
+;
 End of input stream reached.
-Happy happy joy joy!
+Moriturus te salutat.
