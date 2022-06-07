@@ -1,0 +1,123 @@
+#|
+ | Exercise 3.38
+ |
+ | Suppose that Peter, Paul, and Mary share a joint bank account that initially
+ | contains $100. Concurrently, Peter deposits $10, Paul withdraws $20, and Mary
+ | withdraws half the money in the account, by executing the following commands:
+ |
+ | Peter:	(set! balance (+ balance 10))
+ | Paul:	(set! balance (- balance 20))
+ | Mary:	(set! balance (- balance (/ balance 2)))
+ |
+ | a. List all the different possible values for balance after these three
+ |    transactions have been completed, assuming that the banking system forces
+ |    the three processes to run sequentially in some order.
+ |
+ | b. What are some other values that could be produced if the system allows the
+ |    processes to be interleaved? Draw timing diagrams like the one in figure
+ |    3.29 to explain how these values can occur.
+ |
+ |
+ | Answer
+ |
+ | a. See the table below for the set of possible values when the banking system
+ |    forces the three processes to run sequentially in some order.
+ |
+ |     order              │ balance
+ |    ════════════════════╪══════════
+ |     Peter, Paul, Mary  │ 45
+ |     Peter, Mary, Paul  │ 35
+ |     Paul, Peter, Mary  │ 45
+ |     Paul, Mary, Peter  │ 50
+ |     Mary, Peter, Paul  │ 40
+ |     Mary, Paul, Peter  │ 40
+ |
+ |    set of possible values: {35, 40, 45, 50}
+ |
+ |
+ | b. See the timing diagrams below for some other values of balance that could
+ |    be produced if the banking system allows the processes to be interleaved.
+ |
+ |    Time      Bank            Peter           Paul            Mary
+ |
+ |     │      ┌──────┐
+ |     │      │ $100 ├───────────┬────────────────┬───────────────┐
+ |     │      └──────┘           V                V               │
+ |     │                 ┌───────────────┐ ┌───────────────┐      │
+ |     │                 │ read bal: 100 │ │ read bal: 100 │      │
+ |     │                 └───────┬───────┘ └───────┬───────┘      │
+ |     │                         V                 │              │
+ |     │      ┌──────┐   ┌────────────────┐        │              │
+ |     │      │ $110 │<──┤ write bal: 110 │        │              │
+ |     │      └──────┘   └────────────────┘        │              V
+ |     │                                           │        ┌───────────────┐
+ |     │                                           │        │ read bal: 110 │
+ |     │                                           │        └───────┬───────┘
+ |     │      ┌──────┐                     ┌───────────────┐        │
+ |     │      │ $ 80 │<────────────────────┤ write bal: 80 │        │
+ |     │      └──────┘                     └───────────────┘        V
+ |     │                                                    ┌───────────────┐
+ |     │                                                    │ read bal: 80  │
+ |     │                                                    └───────┬───────┘
+ |     │                                                            V
+ |     │      ┌──────┐                                      ┌───────────────┐
+ |     │      │ $ 70 │<─────────────────────────────────────┤ write bal: 70 │
+ |     │      └──────┘                                      └───────────────┘
+ |     V
+ |
+ |
+ |    Time      Bank            Peter           Paul            Mary
+ |
+ |     │      ┌──────┐
+ |     │      │ $100 ├───────────┬────────────────┬───────────────┐
+ |     │      └──────┘           │                V               │
+ |     │                         │         ┌───────────────┐      │
+ |     │                         │         │ read bal: 100 │      │
+ |     │                         V         └───────┬───────┘      V
+ |     │                 ┌───────────────┐         │        ┌───────────────┐
+ |     │                 │ read bal: 100 │         │        │ read bal: 100 │
+ |     │                 └───────┬───────┘         │        └───────┬───────┘
+ |     │                         V                 │                │
+ |     │      ┌──────┐   ┌────────────────┐        │                │
+ |     │      │ $110 │<──┤ write bal: 110 │        │                │
+ |     │      └──────┘   └────────────────┘        V                │
+ |     │      ┌──────┐                     ┌───────────────┐        │
+ |     │      │ $ 80 │<────────────────────┤ write bal: 80 │        │
+ |     │      └──────┘                     └───────────────┘        V
+ |     │                                                    ┌───────────────┐
+ |     │                                                    │ read bal: 80  │
+ |     │                                                    └───────┬───────┘
+ |     │                                                            V
+ |     │      ┌──────┐                                      ┌───────────────┐
+ |     │      │ $ 60 │<─────────────────────────────────────┤ write bal: 60 │
+ |     │      └──────┘                                      └───────────────┘
+ |     V
+ |
+ |
+ |    Time      Bank            Peter           Paul            Mary
+ |
+ |     │      ┌──────┐
+ |     │      │ $100 ├───────────┬────────────────┬───────────────┐
+ |     │      └──────┘           │                V               │
+ |     │                         │         ┌───────────────┐      │
+ |     │                         │         │ read bal: 100 │      │
+ |     │                         V         └───────┬───────┘      V
+ |     │                 ┌───────────────┐         │        ┌───────────────┐
+ |     │                 │ read bal: 100 │         │        │ read bal: 100 │
+ |     │                 └───────┬───────┘         │        └───────┬───────┘
+ |     │                         V                 │                │
+ |     │      ┌──────┐   ┌────────────────┐        │                │
+ |     │      │ $110 │<──┤ write bal: 110 │        │                │
+ |     │      └──────┘   └────────────────┘        │                V
+ |     │                                           │        ┌───────────────┐
+ |     │                                           │        │ read bal: 110 │
+ |     │                                           V        └───────┬───────┘
+ |     │      ┌──────┐                     ┌───────────────┐        │
+ |     │      │ $ 80 │<────────────────────┤ write bal: 80 │        │
+ |     │      └──────┘                     └───────────────┘        │
+ |     │                                                            V
+ |     │      ┌──────┐                                      ┌───────────────┐
+ |     │      │ $ 45 │<─────────────────────────────────────┤ write bal: 45 │
+ |     │      └──────┘                                      └───────────────┘
+ |     V
+ |#
