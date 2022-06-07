@@ -1,14 +1,26 @@
-; disallow-preempt-current-thread procedure
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; disallow-preempt-current-thread procedure
 (define disallow-preempt-current-thread
   (access disallow-preempt-current-thread
           (->environment '(runtime thread))))
+;Value: disallow-preempt-current-thread
 
-; allow-preempt-current-thread procedure
+1 ]=> ; allow-preempt-current-thread procedure
 (define allow-preempt-current-thread
   (access allow-preempt-current-thread
           (->environment '(runtime thread))))
+;Value: allow-preempt-current-thread
 
-; kill-thread procedure
+1 ]=> ; kill-thread procedure
 (define (kill-thread thread)
   (let ((event (lambda () (exit-current-thread 'RIP))))
     (without-interrupts
@@ -17,8 +29,9 @@
           ((STOPPED) (restart-thread thread #t event))
           ((DEAD) unspecific)
           (else (signal-thread-event thread event)))))))
+;Value: kill-thread
 
-; parallel-execute procedure
+1 ]=> ; parallel-execute procedure
 (define (parallel-execute . thunks)
   (let ((my-threads '()))
     (define (terminator)
@@ -37,8 +50,9 @@
                    thunks))
         unspecific))
     terminator))
+;Value: parallel-execute
 
-; make-serializer constructor procedure
+1 ]=> ; make-serializer constructor procedure
 (define (make-serializer)
   (let ((mutex (make-thread-mutex)))
     (define (serialized f)
@@ -49,23 +63,28 @@
             (apply f args))))
       serialized-f)
     serialized))
+;Value: make-serializer
 
-; output serializer (IO system is not completely interlocked)
+1 ]=> ; output serializer (IO system is not completely interlocked)
 (define output-serialized (make-serializer))
+;Value: output-serialized
 
-; write-line procedure (serialized)
+1 ]=> ; write-line procedure (serialized)
 (define write-line
   (output-serialized write-line))
+;Value: write-line
 
-; display procedure (serialized)
+1 ]=> ; display procedure (serialized)
 (define display
   (output-serialized display))
+;Value: display
 
-; write procedure (serialized)
+1 ]=> ; write procedure (serialized)
 (define write
   (output-serialized write))
+;Value: write
 
-; try procedure
+1 ]=> ; try procedure
 (define (try n)
   (parallel-execute
     (lambda ()
@@ -80,10 +99,19 @@
         (if (< i n)
             (loop (1+ i))))
       (write-line 'foo))))
+;Value: try
 
-; show interleaved processes/thunks
+1 ]=> ; show interleaved processes/thunks
 (begin (define foo (try 262141))
        (newline)
        (sleep-current-thread 1024)
        (foo))
+hi
+there
+gjs
+foo
+;Unspecified return value
 
+1 ]=> 
+End of input stream reached.
+Happy happy joy joy!

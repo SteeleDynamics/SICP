@@ -62,7 +62,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  |     │      └──────┘   └────────────────┘        │              V
  |     │                                           │        ┌───────────────┐
  |     │                                           │        │ read bal: 110 │
- |     │                                           │        └───────┬───────┘
+ |     │                                           V        └───────┬───────┘
  |     │      ┌──────┐                     ┌───────────────┐        │
  |     │      │ $ 80 │<────────────────────┤ write bal: 80 │        │
  |     │      └──────┘                     └───────────────┘        V
@@ -132,4 +132,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  |     V
  |#
 End of input stream reached.
-Happy happy joy joy!
+Ceterum censeo Carthaginem esse delendam.
