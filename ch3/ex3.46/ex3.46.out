@@ -1,0 +1,90 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> #|
+ | Exercise 3.46
+ |
+ | Suppose that we implement test-and-set! using an ordinary procedure as
+ | shown in the text, without attempting to make the operation atomic. Draw
+ | a timing diagram like the one in figure 3.29 to demonstrate how the mutex
+ | implementation can fail by allowing two processes to acquire the mutex at
+ | the same time.
+ |
+ |
+ | Answer
+ |
+ | (define (make-serializer)
+ |   (let ((mutex (make-mutex)))
+ |     (lambda (p)
+ |       (define (serialized-p . args)
+ |         (mutex 'acquire)
+ |         (let ((val (apply p args)))
+ |           (mutex 'release)
+ |           val))
+ |       serialized-p)))
+ |
+ | (define (make-mutex)
+ |   (let ((cell (list false)))
+ |     (define (the-mutex m)
+ |       (cond ((eq? m 'acquire)
+ |              (if (test-and-set! cell)
+ |                  (the-mutex 'acquire)))
+ |             ((eq? m 'release) (clear! cell))))
+ |     the-mutex))
+ |
+ | (define (clear! cell)
+ |   (set-car! cell false))
+ |
+ | (define (test-and-set! cell)
+ |   (if (car cell)
+ |       true
+ |       (begin (set-car! cell true)
+ |              false)))
+ |
+ | (define val 3)
+ | (define incr (lambda (x) (+ x 1)))
+ | (define sq (lambda (x) (* x x)))
+ | (define s (make-serializer))
+ | (parallel-execute (lambda () (set! val ((s incr) val)))  ; process P1
+ |                   (lambda () (set! val ((s sq) val))))   ; process P2
+ |
+ |
+ | The timing diagram below shows the point of execution where both P1 and P2
+ | are evaluating '(test-and-set! cell)'. If 'test-and-set!' isn't atomic,
+ | then both P1 and P2 can acquire the mutex at the same time.
+ |
+ |
+ |    Time      val       cell              P1                     P2
+ |
+ |     │     ┌───────┐  ┌───────┐
+ |     │     │   3   ├─>│(false)├────────────┬──────────────────────┐
+ |     │     └───────┘  └───────┘            V                      │
+ |     │                           ┌───────────────────┐            │
+ |     │                           │ (car cell)        │            │
+ |     │                           │ ==> false         │            │
+ |     │                           └─────────┬─────────┘            V
+ |     │                                     │            ┌───────────────────┐
+ |     │                                     │            │ (car cell)        │
+ |     │                                     │            │ ==> false         │
+ |     │                                     V            └─────────┬─────────┘
+ |     │           ⎧               ┌───────────────────┐            │
+ |     │           ⎪    ┌───────┐  │ (set-car! cell    │            │
+ |     │           ⎪    │(true) │<─┤           true)   │            │
+ |     │ s mutex   ⎪    └───────┘  │ ==> unspecified   │            │
+ |     │ acquired  ⎨               └─────────┬─────────┘            V
+ |     │ P1 and P2 ⎪                         │            ┌───────────────────┐
+ |     │           ⎪    ┌───────┐            │            │ (set-car! cell    │
+ |     │           ⎪    │(true) │<───────────┼────────────┤           true)   │
+ |     │           ⎩    └───────┘            │            │ ==> unspecified   │
+ |     │                                     │            └─────────┬─────────┘
+ |     V                                     V                      V
+ |#
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
