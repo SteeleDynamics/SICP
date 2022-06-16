@@ -1,0 +1,53 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> #|
+ | Exercise 3.49
+ |
+ | Give a scenario where the deadlock-avoidance mechanism described above does
+ | not work. (Hint: In the exchange problem, each process knows in advance which
+ | accounts it will need to get access to. Consider a situation where a process
+ | must get access to some shared resources before it can know which additional
+ | shared resources it will require.)
+ |
+ |
+ | Answer
+ |
+ | There is an implicit assumption that serialized-exchange is evaluated in a
+ | context where both account serializers are released. Suppose:
+ |
+ | 1. Each account maintains a queue of pending transactions called
+ |    'pending'.
+ | 2. Each account has local procedures 'empty-pending?', 'front-pending',
+ |    'insert-pending!, and 'delete-pending!' and are dispatched accordingly.
+ | 3. Each account has a local procedure 'process-pending' that processes all
+ |    pending transactions, and is dispatched accordingly.
+ | 4. Like all account procedures, these procedures must be evaluated using its
+ |    serializer that is exported via dispatch.
+ | 5. Let tbl be a table whose key-value pairs are ids and dispatch procedures
+ |    respectively.
+ | 6. Let transactions be symbolic expression that can be evaluated using
+ |    a 'cond' expression. Let the transaction '(exchange 1) have semantics
+ |    such that process-pending evaluates
+ |
+ |        (serialized-exchange dispatch (lookup 1 tbl))
+ |    ==> (serialized-exchange dispatch a1)
+ |
+ | Let a0 and a1 be accounts. When we evaluate the following:
+ |
+ | (parallel-execute (lambda () ((a0 'serializer) (a0 'process-pending)))
+ |                   (lambda () ((a1 'serializer) (a1 'process-pending))))
+ |
+ | The serializers for each account are already acqired for process-pending
+ | evaluations. If either process evaluates an exchange transaction with the
+ | other account, this violates the implicit assumption and causes deadlock.
+ |#
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
