@@ -1,4 +1,14 @@
-; memo-proc procedure
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; memo-proc procedure
 (define (memo-proc proc)
   (let ((already-run? false) (result false))
     (lambda ()
@@ -7,8 +17,9 @@
                  (set! already-run? true)
                  result)
           result))))
+;Value: memo-proc
 
-#|
+1 ]=> #|
  | §3.5.1 Footnote 56:
  |
  | Although stream-car and stream-cdr can be defined as procedures, cons-stream
@@ -25,35 +36,43 @@
 (define-syntax delay
   (syntax-rules ()
     ((delay ?expr) (memo-proc (lambda () ?expr)))))
+;Value: delay
 
-; force procedure -- evaluate thunk
+1 ]=> ; force procedure -- evaluate thunk
 (define (force delayed-expr) (delayed-expr))
+;Value: force
 
-; the-empty-stream defn
+1 ]=> ; the-empty-stream defn
 (define the-empty-stream '())
+;Value: the-empty-stream
 
-; cons-stream constructor procedure
+1 ]=> ; cons-stream constructor procedure
 ; (define (cons-stream a b) (cons a (delay b)))
 (define-syntax cons-stream
   (syntax-rules ()
     ((cons-stream a b) (cons a (delay b)))))
+;Value: cons-stream
 
-; stream-car selector procedure
+1 ]=> ; stream-car selector procedure
 (define (stream-car stream) (car stream))
+;Value: stream-car
 
-; stream-cdr selector procedure
+1 ]=> ; stream-cdr selector procedure
 (define (stream-cdr stream) (force (cdr stream)))
+;Value: stream-cdr
 
-; stream-null? predicate procedure
+1 ]=> ; stream-null? predicate procedure
 (define (stream-null? stream) (null? stream))
+;Value: stream-null?
 
-; stream-ref procedure
+1 ]=> ; stream-ref procedure
 (define (stream-ref s n)
   (if (= n 0)
       (stream-car s)
       (stream-ref (stream-cdr s) (- n 1))))
+;Value: stream-ref
 
-#|
+1 ]=> #|
  | ; stream-map procedure
  | (define (stream-map proc s)
  |   (if (stream-null? s)
@@ -68,7 +87,9 @@
       'done
       (begin (proc (stream-car s))
              (stream-for-each proc (stream-cdr s)))))
-#|
+;Value: stream-for-each
+
+1 ]=> #|
  | ; display-stream procedure
  | (define (display-stream s)
  |   (stream-for-each display-line s))
@@ -91,16 +112,18 @@
       (newline)
       (display "[")
       (iter stream ""))))
+;Value: display-stream
 
-; stream-enumerate-interval procedure
+1 ]=> ; stream-enumerate-interval procedure
 (define (stream-enumerate-interval low high)
   (if (> low high)
       the-empty-stream
       (cons-stream
        low
        (stream-enumerate-interval (+ low 1) high))))
+;Value: stream-enumerate-interval
 
-; stream-filter procedure
+1 ]=> ; stream-filter procedure
 (define (stream-filter pred stream)
   (cond ((stream-null? stream) the-empty-stream)
         ((pred (stream-car stream))
@@ -108,8 +131,9 @@
                       (stream-filter pred
                                      (stream-cdr stream))))
         (else (stream-filter pred (stream-cdr stream)))))
+;Value: stream-filter
 
-; stream-map procedure
+1 ]=> ; stream-map procedure
 (define (stream-map proc . argstreams)
   (if (stream-null? (car argstreams))
       the-empty-stream
@@ -117,9 +141,75 @@
         (apply proc (map stream-car argstreams))
         (apply stream-map
           (cons proc (map stream-cdr argstreams))))))
+;Value: stream-map
 
-; unit-test -- §2.2.3 footnote 12
-(define s1 (cons-stream 1 (cons-stream 2 (cons-stream 3 the-empty-stream))))
-(define s2 (cons-stream 40 (cons-stream 50 (cons-stream 60 the-empty-stream))))
-(define s3 (cons-stream 700 (cons-stream 800 (cons-stream 900 the-empty-stream))))
-(display-stream (stream-map + s1 s2 s3))
+1 ]=> #|
+ | Exercise 3.52
+ |
+ | Consider the sequence of expressions
+ |
+ | (define sum 0)
+ | (define (accum x)
+ |   (set! sum (+ x sum))
+ |   sum)
+ | (define seq (stream-map accum (stream-enumerate-interval 1 20)))
+ | (define y (stream-filter even? seq))
+ | (define z (stream-filter (lambda (x) (= (remainder x 5) 0)) seq))
+ | (stream-ref y 7)
+ | (display-stream z)
+ |
+ | What is the value of sum after each of the above expressions is evaluated?
+ | What is the printed response to evaluating the stream-ref and display-stream
+ | expressions? Would these responses differ if we had implemented (delay <exp>)
+ | simply as (lambda () <exp>) without using the optimization provided by
+ | memo-proc ? Explain.
+ |#
+
+(define sum 0)
+;Value: sum
+
+1 ]=> sum
+;Value: 0
+
+1 ]=> (define (accum x)
+  (set! sum (+ x sum))
+  sum)
+;Value: accum
+
+1 ]=> sum
+;Value: 0
+
+1 ]=> (define seq (stream-map accum (stream-enumerate-interval 1 20)))
+;Value: seq
+
+1 ]=> sum
+;Value: 1
+
+1 ]=> (define y (stream-filter even? seq))
+;Value: y
+
+1 ]=> sum
+;Value: 6
+
+1 ]=> (define z (stream-filter (lambda (x) (= (remainder x 5) 0)) seq))
+;Value: z
+
+1 ]=> sum
+;Value: 10
+
+1 ]=> (stream-ref y 7)
+;Value: 136
+
+1 ]=> sum
+;Value: 136
+
+1 ]=> (display-stream z)
+[10 15 45 55 105 120 190 210]
+;Unspecified return value
+
+1 ]=> sum
+;Value: 210
+
+1 ]=> 
+End of input stream reached.
+..#]^@^@^@ NO CARRIER

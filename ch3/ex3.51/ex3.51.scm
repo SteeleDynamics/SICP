@@ -72,12 +72,12 @@
  | ; display-stream procedure
  | (define (display-stream s)
  |   (stream-for-each display-line s))
- |
- | ; display-line procedure
- | (define (display-line x)
- |   (newline)
- |   (display x))
  |#
+
+; display-line procedure
+(define (display-line x)
+  (newline)
+  (display x))
 
 ; display-stream procedure (instructor's manual, augmented)
 (define display-stream
@@ -118,8 +118,22 @@
         (apply stream-map
           (cons proc (map stream-cdr argstreams))))))
 
-; unit-test -- §2.2.3 footnote 12
-(define s1 (cons-stream 1 (cons-stream 2 (cons-stream 3 the-empty-stream))))
-(define s2 (cons-stream 40 (cons-stream 50 (cons-stream 60 the-empty-stream))))
-(define s3 (cons-stream 700 (cons-stream 800 (cons-stream 900 the-empty-stream))))
-(display-stream (stream-map + s1 s2 s3))
+#|
+ | Exercise 3.51
+ |
+ | In order to take a closer look at delayed evaluation, we will use the
+ | following procedure, which simply returns its argument after printing it:
+ |#
+
+(define (show x)
+  (display-line x)
+  x)
+
+#|
+ | What does the interpreter print in response to evaluating each expression in
+ | the following sequence?
+ |#
+
+(define x (stream-map show (stream-enumerate-interval 0 10)))
+(stream-ref x 5)
+(stream-ref x 7)

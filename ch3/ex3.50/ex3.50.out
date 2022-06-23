@@ -19,9 +19,23 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
           result))))
 ;Value: memo-proc
 
-1 ]=> ; delay procedure -- create thunk
+1 ]=> #|
+ | §3.5.1 Footnote 56:
+ |
+ | Although stream-car and stream-cdr can be defined as procedures, cons-stream
+ | must be a special form. If cons-stream were a procedure, then, according to
+ | our model of evaluation, evaluating (cons-stream <a> <b>) would automatically
+ | cause <b> to be evaluated, which is precisely what we do not want to happen.
+ | For the same reason, delay must be a special form, though force can be an
+ | ordinary procedure.
+ |#
+
+; delay procedure -- create thunk
 ; (define (delay expr) (lambda () expr))
-(define (delay expr) (memo-proc (lambda () expr)))
+; (define (delay expr) (memo-proc (lambda () expr)))
+(define-syntax delay
+  (syntax-rules ()
+    ((delay ?expr) (memo-proc (lambda () ?expr)))))
 ;Value: delay
 
 1 ]=> ; force procedure -- evaluate thunk
@@ -33,7 +47,10 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;Value: the-empty-stream
 
 1 ]=> ; cons-stream constructor procedure
-(define (cons-stream a b) (cons a (delay b)))
+; (define (cons-stream a b) (cons a (delay b)))
+(define-syntax cons-stream
+  (syntax-rules ()
+    ((cons-stream a b) (cons a (delay b)))))
 ;Value: cons-stream
 
 1 ]=> ; stream-car selector procedure

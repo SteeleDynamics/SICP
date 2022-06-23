@@ -24,7 +24,7 @@
 ; (define (delay expr) (memo-proc (lambda () expr)))
 (define-syntax delay
   (syntax-rules ()
-    ((delay ?expr) (memo-proc (lambda () ?expr)))))
+    ((delay ?expr) (lambda () ?expr))))
 
 ; force procedure -- evaluate thunk
 (define (force delayed-expr) (delayed-expr))
@@ -118,8 +118,41 @@
         (apply stream-map
           (cons proc (map stream-cdr argstreams))))))
 
-; unit-test -- §2.2.3 footnote 12
-(define s1 (cons-stream 1 (cons-stream 2 (cons-stream 3 the-empty-stream))))
-(define s2 (cons-stream 40 (cons-stream 50 (cons-stream 60 the-empty-stream))))
-(define s3 (cons-stream 700 (cons-stream 800 (cons-stream 900 the-empty-stream))))
-(display-stream (stream-map + s1 s2 s3))
+#|
+ | Exercise 3.52
+ |
+ | Consider the sequence of expressions
+ |
+ | (define sum 0)
+ | (define (accum x)
+ |   (set! sum (+ x sum))
+ |   sum)
+ | (define seq (stream-map accum (stream-enumerate-interval 1 20)))
+ | (define y (stream-filter even? seq))
+ | (define z (stream-filter (lambda (x) (= (remainder x 5) 0)) seq))
+ | (stream-ref y 7)
+ | (display-stream z)
+ |
+ | What is the value of sum after each of the above expressions is evaluated?
+ | What is the printed response to evaluating the stream-ref and display-stream
+ | expressions? Would these responses differ if we had implemented (delay <exp>)
+ | simply as (lambda () <exp>) without using the optimization provided by
+ | memo-proc ? Explain.
+ |#
+
+(define sum 0)
+sum
+(define (accum x)
+  (set! sum (+ x sum))
+  sum)
+sum
+(define seq (stream-map accum (stream-enumerate-interval 1 20)))
+sum
+(define y (stream-filter even? seq))
+sum
+(define z (stream-filter (lambda (x) (= (remainder x 5) 0)) seq))
+sum
+(stream-ref y 7)
+sum
+(display-stream z)
+sum
