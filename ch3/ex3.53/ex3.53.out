@@ -157,7 +157,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
   (cons-stream n (integers-starting-from (+ n 1))))
 ;Value: integers-starting-from
 
-1 ]=> ; divisible predicate procedure
+1 ]=> ; divisible? predicate procedure
 (define (divisible? x y) (= (remainder x y) 0))
 ;Value: divisible?
 
@@ -231,4 +231,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> 
 End of input stream reached.
-Ceterum censeo Carthaginem esse delendam.
+Happy happy joy joy!

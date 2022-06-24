@@ -145,12 +145,6 @@
 ; (Sieve of Eratosthenes) primes stream
 (define primes (sieve (integers-starting-from 2)))
 
-; 51st prime number ==> 233
-(stream-ref primes 50)
-
-; list of the first 51 prime numbers
-(stream-take primes 51)
-
 ; ones stream
 (define ones (cons-stream 1 ones))
 
@@ -170,21 +164,21 @@
   (stream-map (lambda (x) (* x factor)) stream))
 
 #|
- | Exercise 3.53
+ | Exercise 3.54
  |
- | Without running the program, describe the elements of the stream defined by
+ | Define a procedure mul-streams, analogous to add-streams, that produces the
+ | elementwise product of its two input streams. Use this together with the
+ | stream of integers to complete the following definition of the stream whose
+ | nth element (counting from 0) is n + 1 factorial:
  |
- | (define s (cons-stream 1 (add-streams s s)))
- |
- |
- | Answer
- |
- |     1   2   4   8  16  32 ... = s
- |     1   2   4   8  16  32 ... = s
- | ─────────────────────────────────
- | 1   2   4   8  16  32  64 ... = s
- |
+ | (define factorials (cons-stream 1 (mul-streams <??> <??>)))
  |#
 
-(define s (cons-stream 1 (add-streams s s)))
-(stream-take s 32)
+; mul-streams procedure
+(define (mul-streams s1 s2)
+  (stream-map * s1 s2))
+
+; factorials stream
+(define factorials
+  (cons-stream 1 (mul-streams factorials (stream-cdr integers))))
+(stream-take factorials 8)
