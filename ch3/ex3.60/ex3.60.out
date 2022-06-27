@@ -295,28 +295,21 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 ; mul-series procedure
 (define (mul-series s1 s2)
-  (cons-stream (* (stream-car s1) (stream-car s2))
-               (add-streams
-                (add-streams
-                 (scale-stream (stream-cdr s2)
-                               (stream-car s1))
-                 (scale-stream (stream-cdr s1)
-                               (stream-car s2)))
-                (mul-series (stream-cdr s1)
-                            (stream-cdr s2)))))
+  (cons-stream
+    (* (stream-car s1) (stream-car s2))
+    (add-streams (add-streams (scale-stream (stream-cdr s2) (stream-car s1))
+                              (scale-stream (stream-cdr s1) (stream-car s2)))
+                (cons-stream 0 (mul-series (stream-cdr s1) (stream-cdr s2))))))
 ;Value: mul-series
 
 1 ]=> ; cos²x + sin²x = 1
 (stream-take
- (scale-stream
-  (partial-sums
-   (add-streams
+  (add-streams
     (mul-series cosine-series cosine-series)
-    (mul-series sine-series sine-series)))
-  1.0)
- 20)
-;Value: (1. 2. 1.25 .9444444444444444 .9878472222222222 1.0018055555555556 1.0003028549382715 .9999688995968757 .9999956997049398 1.0000003374343922 1.000000039648655 .9999999974874098 .9999999997433617 1.0000000000136262 1.0000000000012308 .9999999999999438 .9999999999999954 1.0000000000000002 1. 1.)
+    (mul-series sine-series sine-series))
+  8)
+;Value: (1 0 0 0 0 0 0 0)
 
 1 ]=> 
 End of input stream reached.
-Post proelium, praemium.
+..#]^@^@^@ NO CARRIER
