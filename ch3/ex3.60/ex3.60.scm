@@ -234,18 +234,15 @@
  | Answer
  |
  | (a₀ + a₁x + a₂x²+ a₃x³ + ···)(b₀ + b₁x + b₂x²+ b₃x³ + ···) =
- | <a₀b₀> + <a₀·(b₁x + b₂x²+ b₃x³ + ···) + b₀·(a₁x + a₂x²+ a₃x³ + ···)>
- |          <(a₁x + a₂x²+ a₃x³ + ···)(b₁x + b₂x²+ b₃x³ + ···)>
+ | <a₀b₀> +
+ | <a₀·(b₁x + b₂x²+ b₃x³ + ···) + b₀·(a₁x + a₂x²+ a₃x³ + ···)> +
+ | <0x + (a₁x + a₂x²+ a₃x³ + ···)(b₁x + b₂x²+ b₃x³ + ···)>
  | ==>
- | (cons-stream (* (stream-car as) (stream-car bs))
- |              (add-streams
- |               (add-streams
- |                (scale-stream (stream-cdr bs)
- |                              (stream-car as))
- |                (scale-stream (stream-cdr as)
- |                              (stream-car bs)))
- |               (mul-series (stream-cdr as)
- |                           (stream-cdr bs))))
+ | (cons-stream
+ |   (* (stream-car as) (stream-car bs))
+ |   (add-streams (add-streams (scale-stream (stream-cdr bs) (stream-car as))
+ |                             (scale-stream (stream-cdr as)(stream-car bs)))
+ |                (cons-stream 0 (mul-series (stream-cdr as) (stream-cdr bs))))
  |#
 
 ; mul-series procedure
@@ -254,7 +251,7 @@
     (* (stream-car s1) (stream-car s2))
     (add-streams (add-streams (scale-stream (stream-cdr s2) (stream-car s1))
                               (scale-stream (stream-cdr s1) (stream-car s2)))
-                (cons-stream 0 (mul-series (stream-cdr s1) (stream-cdr s2))))))
+                 (cons-stream 0 (mul-series (stream-cdr s1) (stream-cdr s2))))))
 
 ; cos²x + sin²x = 1
 (stream-take
