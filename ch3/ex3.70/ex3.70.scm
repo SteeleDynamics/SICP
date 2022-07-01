@@ -338,8 +338,9 @@
  |
  | §3.5.3 Footnote 69:
  |
- | We will require that the weighting function be such that the weight of a pair | increases as we move out along a row or down along a column of the array of
- | pairs.
+ | We will require that the weighting function be such that the weight of a
+ | pair increases as we move out along a row or down along a column of the
+ | array of pairs.
  |#
 
 ; merge-weighted procedure

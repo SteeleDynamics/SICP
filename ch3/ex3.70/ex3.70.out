@@ -398,8 +398,9 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  |
  | §3.5.3 Footnote 69:
  |
- | We will require that the weighting function be such that the weight of a pair | increases as we move out along a row or down along a column of the array of
- | pairs.
+ | We will require that the weighting function be such that the weight of a
+ | pair increases as we move out along a row or down along a column of the
+ | array of pairs.
  |#
 
 ; merge-weighted procedure
@@ -464,4 +465,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> 
 End of input stream reached.
-Moriturus te salutat.
+Happy happy joy joy!
