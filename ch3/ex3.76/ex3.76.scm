@@ -1,14 +1,4 @@
-MIT/GNU Scheme running under GNU/Linux
-Type `^C' (control-C) followed by `H' to obtain information about interrupts.
-
-Copyright (C) 2020 Massachusetts Institute of Technology
-This is free software; see the source for copying conditions. There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-Image saved on Sunday March 7, 2021 at 3:24:56 PM
-  Release 11.2 || SF || LIAR/x86-64
-
-1 ]=> ; memo-proc procedure
+; memo-proc procedure
 (define (memo-proc proc)
   (let ((already-run? false) (result false))
     (lambda ()
@@ -17,9 +7,8 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
                  (set! already-run? true)
                  result)
           result))))
-;Value: memo-proc
 
-1 ]=> #|
+#|
  | §3.5.1 Footnote 56:
  |
  | Although stream-car and stream-cdr can be defined as procedures, cons-stream
@@ -36,43 +25,35 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 (define-syntax delay
   (syntax-rules ()
     ((delay ?expr) (memo-proc (lambda () ?expr)))))
-;Value: delay
 
-1 ]=> ; force procedure -- evaluate thunk
+; force procedure -- evaluate thunk
 (define (force delayed-expr) (delayed-expr))
-;Value: force
 
-1 ]=> ; the-empty-stream defn
+; the-empty-stream defn
 (define the-empty-stream '())
-;Value: the-empty-stream
 
-1 ]=> ; cons-stream constructor procedure
+; cons-stream constructor procedure
 ; (define (cons-stream a b) (cons a (delay b)))
 (define-syntax cons-stream
   (syntax-rules ()
     ((cons-stream a b) (cons a (delay b)))))
-;Value: cons-stream
 
-1 ]=> ; stream-car selector procedure
+; stream-car selector procedure
 (define (stream-car stream) (car stream))
-;Value: stream-car
 
-1 ]=> ; stream-cdr selector procedure
+; stream-cdr selector procedure
 (define (stream-cdr stream) (force (cdr stream)))
-;Value: stream-cdr
 
-1 ]=> ; stream-null? predicate procedure
+; stream-null? predicate procedure
 (define (stream-null? stream) (null? stream))
-;Value: stream-null?
 
-1 ]=> ; stream-ref procedure
+; stream-ref procedure
 (define (stream-ref s n)
   (if (= n 0)
       (stream-car s)
       (stream-ref (stream-cdr s) (- n 1))))
-;Value: stream-ref
 
-1 ]=> #|
+#|
  | ; stream-map procedure
  | (define (stream-map proc s)
  |   (if (stream-null? s)
@@ -87,9 +68,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
       'done
       (begin (proc (stream-car s))
              (stream-for-each proc (stream-cdr s)))))
-;Value: stream-for-each
-
-1 ]=> #|
+#|
  | ; display-stream procedure
  | (define (display-stream s)
  |   (stream-for-each display-line s))
@@ -112,18 +91,16 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
       (newline)
       (display "[")
       (iter stream ""))))
-;Value: display-stream
 
-1 ]=> ; stream-enumerate-interval procedure
+; stream-enumerate-interval procedure
 (define (stream-enumerate-interval low high)
   (if (> low high)
       the-empty-stream
       (cons-stream
        low
        (stream-enumerate-interval (+ low 1) high))))
-;Value: stream-enumerate-interval
 
-1 ]=> ; stream-filter procedure
+; stream-filter procedure
 (define (stream-filter pred stream)
   (cond ((stream-null? stream) the-empty-stream)
         ((pred (stream-car stream))
@@ -131,9 +108,8 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
                       (stream-filter pred
                                      (stream-cdr stream))))
         (else (stream-filter pred (stream-cdr stream)))))
-;Value: stream-filter
 
-1 ]=> ; stream-map procedure
+; stream-map procedure
 (define (stream-map proc . argstreams)
   (if (stream-null? (car argstreams))
       the-empty-stream
@@ -141,27 +117,23 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
         (apply proc (map stream-car argstreams))
         (apply stream-map
           (cons proc (map stream-cdr argstreams))))))
-;Value: stream-map
 
-1 ]=> ; stream-take procedure
+; stream-take procedure
 (define (stream-take s n)
   (cond ((< n 0) (error "Subscript"))
         ((= n 0) '())
         ((stream-null? s) (error "Subscript"))
         (else (cons (stream-car s)
                     (stream-take (stream-cdr s) (- n 1))))))
-;Value: stream-take
 
-1 ]=> ; integers-starting-from procedure
+; integers-starting-from procedure
 (define (integers-starting-from n)
   (cons-stream n (integers-starting-from (+ n 1))))
-;Value: integers-starting-from
 
-1 ]=> ; divisible? predicate procedure
+; divisible? predicate procedure
 (define (divisible? x y) (= (remainder x y) 0))
-;Value: divisible?
 
-1 ]=> ; (Sieve of Eratosthenes) sieve procedure
+; (Sieve of Eratosthenes) sieve procedure
 (define (sieve stream)
   (cons-stream
    (stream-car stream)
@@ -169,46 +141,37 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
            (lambda (x)
              (not (divisible? x (stream-car stream))))
            (stream-cdr stream)))))
-;Value: sieve
 
-1 ]=> ; (Sieve of Eratosthenes) primes stream
+; (Sieve of Eratosthenes) primes stream
 (define primes (sieve (integers-starting-from 2)))
-;Value: primes
 
-1 ]=> ; ones stream
+; ones stream
 (define ones (cons-stream 1 ones))
-;Value: ones
 
-1 ]=> ; add-streams procedure
+; add-streams procedure
 (define (add-streams s1 s2)
   (stream-map + s1 s2))
-;Value: add-streams
 
-1 ]=> ; integers stream
+; integers stream
 (define integers (cons-stream 1 (add-streams ones integers)))
-;Value: integers
 
-1 ]=> ; fibs stream
+; fibs stream
 (define fibs
   (cons-stream 0 (cons-stream 1 (add-streams (stream-cdr fibs) fibs))))
-;Value: fibs
 
-1 ]=> ; scale-stream procedure
+; scale-stream procedure
 (define (scale-stream stream factor)
   (stream-map (lambda (x) (* x factor)) stream))
-;Value: scale-stream
 
-1 ]=> ; mul-streams procedure
+; mul-streams procedure
 (define (mul-streams s1 s2)
   (stream-map * s1 s2))
-;Value: mul-streams
 
-1 ]=> ; partial-sums procedure
+; partial-sums procedure
 (define (partial-sums s)
   (add-streams s (cons-stream 0 (partial-sums s))))
-;Value: partial-sums
 
-1 ]=> ; merge procedure
+; merge procedure
 (define (merge s1 s2)
   (cond ((stream-null? s1) s2)
         ((stream-null? s2) s1)
@@ -223,84 +186,71 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
                   (cons-stream s1car
                                (merge (stream-cdr s1)
                                       (stream-cdr s2)))))))))
-;Value: merge
 
-1 ]=> ; Hamming stream
+; Hamming stream
 (define S (cons-stream 1 (merge (scale-stream S 2)
                                 (merge (scale-stream S 3)
                                        (scale-stream S 5)))))
-;Value: s
 
-1 ]=> ; expand procedure
+; expand procedure
 (define (expand num den radix)
   (cons-stream
    (quotient (* num radix) den)
    (expand (remainder (* num radix) den) den radix)))
-;Value: expand
 
-1 ]=> ; harmonic-series stream
+; harmonic-series stream
 (define harmonic-series
   (stream-map / integers))
-;Value: harmonic-series
 
-1 ]=> ; integrate series procedure
+; integrate series procedure
 (define (integrate-series as)
   (mul-streams harmonic-series as))
-;Value: integrate-series
 
-1 ]=> ; exp-series stream (e^x)
+; exp-series stream (e^x)
 (define exp-series
   (cons-stream 1 (integrate-series exp-series)))
-;Value: exp-series
 
-1 ]=> ; cosine-series stream (cos x)
+; cosine-series stream (cos x)
 (define cosine-series
   (cons-stream 1 (integrate-series (scale-stream sine-series -1))))
-;Value: cosine-series
 
-1 ]=> ; sine-series stream (sin x)
+; sine-series stream (sin x)
 (define sine-series
   (cons-stream 0 (integrate-series cosine-series)))
-;Value: sine-series
 
-1 ]=> ; mul-series procedure
+; mul-series procedure
 (define (mul-series s1 s2)
   (cons-stream
     (* (stream-car s1) (stream-car s2))
     (add-streams (add-streams (scale-stream (stream-cdr s2) (stream-car s1))
                               (scale-stream (stream-cdr s1) (stream-car s2)))
                  (cons-stream 0 (mul-series (stream-cdr s1) (stream-cdr s2))))))
-;Value: mul-series
 
-1 ]=> ; invert-unit-series procedure
+; invert-unit-series procedure
 (define (invert-unit-series s)
   (cons-stream 1 (scale-stream
                    (mul-series (stream-cdr s)
                                (invert-unit-series s))
                    -1)))
-;Value: invert-unit-series
 
-1 ]=> ; div-series procedure
+; div-series procedure
 (define (div-series s1 s2)
   (let ((c (stream-car s2)))
     (if (eq? c 0)
         (error "Denominator has zero constant term -- DIV-SERIES" c))
         (mul-series (scale-stream s1 (/ c))
                     (invert-unit-series (scale-stream s2 (/ c))))))
-;Value: div-series
 
-1 ]=> ; tangent-series stream (tan x)
+; tangent-series stream (tan x)
 (define tangent-series (div-series sine-series cosine-series))
-;Value: tangent-series
 
-1 ]=> ; stream-limit procedure
+; stream-limit procedure
 (define (stream-limit s tol)
   (if (< (abs (- (stream-ref s 1) (stream-ref s 0))) tol)
       (stream-ref s 1)
       (stream-limit (stream-cdr s) tol)))
-;Value: stream-limit
 
-1 ]=> ; euler-transform procedure
+; euler-transform procedure
 (define (euler-transform s)
   (let ((s0 (stream-ref s 0))
         (s1 (stream-ref s 1))
@@ -308,30 +258,25 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
     (cons-stream (- s2 (/ (square (- s2 s1))
                           (+ s0 (* -2 s1) s2)))
                  (euler-transform (stream-cdr s)))))
-;Value: euler-transform
 
-1 ]=> ; make-tableau procedure
+; make-tableau procedure
 (define (make-tableau transform s)
   (cons-stream s
                (make-tableau transform
                              (transform s))))
-;Value: make-tableau
 
-1 ]=> ; acclerated-sequence procedure
+; acclerated-sequence procedure
 (define (accelerated-sequence transform s)
   (stream-map stream-car
               (make-tableau transform s)))
-;Value: accelerated-sequence
 
-1 ]=> ; interleave procedure
+; interleave procedure
 (define (interleave s1 s2)
   (if (stream-null? s1)
       s2
       (cons-stream (stream-car s1)
                    (interleave s2 (stream-cdr s1)))))
-;Value: interleave
-
-1 ]=> ; pairs procedure
+; pairs procedure
 (define (pairs s t)
   (cons-stream
    (list (stream-car s) (stream-car t))
@@ -339,22 +284,19 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
     (stream-map (lambda (x) (list (stream-car s) x))
                 (stream-cdr t))
     (pairs (stream-cdr s) (stream-cdr t)))))
-;Value: pairs
 
-1 ]=> ; pairs-stream def'n
+; pairs-stream def'n
 (define pairs-stream (pairs integers integers))
-;Value: pairs-stream
 
-1 ]=> ; pairs-ref procedure
+; pairs-ref procedure
 (define (pairs-ref i j)
   (let ((kii (- (expt 2 i) 2))
         (cij (expt 2 i)))
     (if (eq? i j)
         kii
         (+ kii (- (/ cij 2)) (* (- j i) cij)))))
-;Value: pairs-ref
 
-1 ]=> ; triples procedure
+; triples procedure
 (define (triples s t u)
   (cons-stream
     (list (stream-car s) (stream-car t) (stream-car u))
@@ -362,16 +304,14 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
       (stream-map (lambda (x) (cons (stream-car s) x))
                   (stream-cdr (pairs t u)))
       (triples (stream-cdr s) (stream-cdr t) (stream-cdr u)))))
-;Value: triples
 
-1 ]=> ; pythagorean? predicate procedure
+; pythagorean? predicate procedure
 (define (pythagorean? x)
   (let ((x2 (map square x)))
     (let ((i2 (car x2)) (j2 (cadr x2)) (k2 (caddr x2)))
       (eq? (+ i2 j2) k2))))
-;Value: pythagorean?
 
-1 ]=> ; merge-weighted procedure
+; merge-weighted procedure
 (define (merge-weighted weight s1 s2)
   (cond ((stream-null? s1) s2)
         ((stream-null? s2) s1)
@@ -383,10 +323,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
                 (else
                  (cons-stream
                    (stream-car s2)
-                   (merge-weighted weight s1 (stream-cdr s2))))))))
-;Value: merge-weighted
-
-1 ]=> )
+                   (merge-weighted weight s1 (stream-cdr s2)))))))))
 
 ; weighted-pairs
 (define (weighted-pairs weight s1 s2)
@@ -396,9 +333,8 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
       weight
       (stream-map (lambda (x) (list (stream-car s1) x)) (stream-cdr s2))
       (weighted-pairs weight (stream-cdr s1) (stream-cdr s2)))))
-;Value: weighted-pairs
 
-1 ]=> ; ramanujan-numbers procedure (stream)
+; ramanujan-numbers procedure (stream)
 (define (ramanujan-numbers)
   (define (weight x)
     (fold-right + 0 (map cube x)))
@@ -410,23 +346,20 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
           (cons-stream a1 (rec a2 (stream-cdr ord)))
           (rec a2 (stream-cdr ord)))))
   (rec 0 ord))
-;Value: ramanujan-numbers
 
-1 ]=> ; integral procedure
+; integral procedure
 (define (integral integrand initial-value dt)
   (define int
     (cons-stream initial-value
                  (add-streams (scale-stream integrand dt)
                               int)))
   int)
-;Value: integral
 
-1 ]=> ; square-wave-gen procedure
+; square-wave-gen procedure
 (define (square-wave-gen a b c d)
   (lambda (x) (+ (* a (expt -1 (integer-floor (* 2 (- x b)) c))) d)))
-;Value: square-wave-gen
 
-1 ]=> #|
+#|
  | Exercise 3.75
  |
  | Unfortunately, Alyssa's zero-crossing detector in exercise 3.74 proves to
@@ -454,48 +387,37 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 (define (random-in-range low high)
   (let ((range (- high low)))
     (+ low (random range))))
-;Value: random-in-range
 
-1 ]=> ; random-in-range-stream procedure
+; random-in-range-stream procedure
 (define (random-in-range-stream low high)
   (cons-stream (random-in-range low high)
                (random-in-range-stream low high)))
-;Value: random-in-range-stream
 
-1 ]=> ; sense-data def'n
+; sense-data def'n
 (define sense-data (random-in-range-stream -512 513))
-;Value: sense-data
 
-1 ]=> ; sign-change-detector procedure
+; sign-change-detector procedure
 (define (sign-change-detector a d)
   (cond ((and (>= a 0) (>= d 0)) 0)
         ((>= a 0) -1)
         ((>= d 0) 1)
         (else 0)))
-;Value: sign-change-detector
 
-1 ]=> ; make-zero-crossings procedure (corrected)
-(define (make-zero-crossings input-stream last-value last-input)
-  (let ((avpt (/ (+ (stream-car input-stream) last-input) 2)))
-    (cons-stream (sign-change-detector last-value avpt)
-                 (make-zero-crossings (stream-cdr input-stream)
-                                      avpt
-                                      (stream-car input-stream)))))
-;Value: make-zero-crossings
+; smooth procedure
+(define (smooth input-stream)
+  (stream-map
+    (lambda (x) (integer-floor x 2))
+    (add-streams input-stream (stream-cdr input-stream))))
 
-1 ]=> (define zero-crossings
-  (make-zero-crossings
-    sense-data
-    (stream-car sense-data)
-    (stream-car sense-data)))
-;Value: zero-crossings
+; make-zero-crossings procedure (refactored)
+(define (make-zero-crossings input-stream smooth)
+  (let ((smoothed (smooth input-stream)))
+    (stream-map
+      sign-change-detector
+      smoothed
+      (stream-cdr smoothed))))
 
-1 ]=> (stream-take sense-data 64)
-;Value: (389 499 -302 435 66 227 280 76 192 35 -243 112 -469 -378 -45 190 103 -212 186 -462 386 172 446 -354 280 24 -318 -360 205 469 -306 -11 -510 -142 245 -3 -90 -36 -24 -21 -194 41 354 388 82 4 -371 427 414 273 -132 87 390 273 16 -465 141 35 402 -80 -409 459 -305 70)
-
-1 ]=> (stream-take zero-crossings 63)
-;Value: (0 0 0 0 0 0 0 0 0 0 -1 0 0 0 0 1 0 -1 0 0 0 1 0 0 -1 1 -1 0 0 1 0 -1 0 0 1 0 -1 0 0 0 0 0 1 0 0 0 -1 1 0 0 0 -1 1 0 0 -1 0 1 0 0 -1 1 0)
-
-1 ]=> 
-End of input stream reached.
-Fortitudine vincimus.
+(define zero-crossings (make-zero-crossings sense-data smooth))
+(stream-take sense-data 64)
+(stream-take (smooth sense-data) 63)
+(stream-take zero-crossings 62)

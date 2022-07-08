@@ -474,28 +474,34 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
         (else 0)))
 ;Value: sign-change-detector
 
-1 ]=> ; make-zero-crossings procedure (corrected)
-(define (make-zero-crossings input-stream last-value last-input)
-  (let ((avpt (/ (+ (stream-car input-stream) last-input) 2)))
-    (cons-stream (sign-change-detector last-value avpt)
-                 (make-zero-crossings (stream-cdr input-stream)
-                                      avpt
-                                      (stream-car input-stream)))))
+1 ]=> ; smooth procedure
+(define (smooth input-stream)
+  (stream-map
+    (lambda (x) (integer-floor x 2))
+    (add-streams input-stream (stream-cdr input-stream))))
+;Value: smooth
+
+1 ]=> ; make-zero-crossings procedure (refactored)
+(define (make-zero-crossings input-stream smooth)
+  (let ((smoothed (smooth input-stream)))
+    (stream-map
+      sign-change-detector
+      smoothed
+      (stream-cdr smoothed))))
 ;Value: make-zero-crossings
 
-1 ]=> (define zero-crossings
-  (make-zero-crossings
-    sense-data
-    (stream-car sense-data)
-    (stream-car sense-data)))
+1 ]=> (define zero-crossings (make-zero-crossings sense-data smooth))
 ;Value: zero-crossings
 
 1 ]=> (stream-take sense-data 64)
 ;Value: (389 499 -302 435 66 227 280 76 192 35 -243 112 -469 -378 -45 190 103 -212 186 -462 386 172 446 -354 280 24 -318 -360 205 469 -306 -11 -510 -142 245 -3 -90 -36 -24 -21 -194 41 354 388 82 4 -371 427 414 273 -132 87 390 273 16 -465 141 35 402 -80 -409 459 -305 70)
 
-1 ]=> (stream-take zero-crossings 63)
-;Value: (0 0 0 0 0 0 0 0 0 0 -1 0 0 0 0 1 0 -1 0 0 0 1 0 0 -1 1 -1 0 0 1 0 -1 0 0 1 0 -1 0 0 0 0 0 1 0 0 0 -1 1 0 0 0 -1 1 0 0 -1 0 1 0 0 -1 1 0)
+1 ]=> (stream-take (smooth sense-data) 63)
+;Value: (444 98 66 250 146 253 178 134 113 -104 -66 -179 -424 -212 72 146 -55 -13 -138 -38 279 309 46 -37 152 -147 -339 -78 337 81 -159 -261 -326 51 121 -47 -63 -30 -23 -108 -77 197 371 235 43 -184 28 420 343 70 -23 238 331 144 -225 -162 88 218 161 -245 25 77 -118)
+
+1 ]=> (stream-take zero-crossings 62)
+;Value: (0 0 0 0 0 0 0 0 -1 0 0 0 0 1 0 -1 0 0 0 1 0 0 -1 1 -1 0 0 1 0 -1 0 0 1 0 -1 0 0 0 0 0 1 0 0 0 -1 1 0 0 0 -1 1 0 0 -1 0 1 0 0 -1 1 0 -1)
 
 1 ]=> 
 End of input stream reached.
-Fortitudine vincimus.
+Post proelium, praemium.

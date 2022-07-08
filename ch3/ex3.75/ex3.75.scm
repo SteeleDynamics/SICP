@@ -406,7 +406,7 @@
 ; make-zero-crossings procedure (corrected)
 (define (make-zero-crossings input-stream last-value last-input)
   (let ((avpt (/ (+ (stream-car input-stream) last-input) 2)))
-    (cons-stream (sign-change-detector avpt last-value)
+    (cons-stream (sign-change-detector last-value avpt)
                  (make-zero-crossings (stream-cdr input-stream)
                                       avpt
                                       (stream-car input-stream)))))
