@@ -355,7 +355,7 @@
                 (else
                  (cons-stream
                    (stream-car s2)
-                   (merge-weighted weight s1 (stream-cdr s2)))))))))
+                   (merge-weighted weight s1 (stream-cdr s2))))))))
 
 ; weighted-pairs
 (define (weighted-pairs weight s1 s2)

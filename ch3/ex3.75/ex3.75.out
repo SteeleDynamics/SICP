@@ -386,9 +386,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
                    (merge-weighted weight s1 (stream-cdr s2))))))))
 ;Value: merge-weighted
 
-1 ]=> )
-
-; weighted-pairs
+1 ]=> ; weighted-pairs
 (define (weighted-pairs weight s1 s2)
   (cons-stream
     (list (stream-car s1) (stream-car s2))
@@ -498,4 +496,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> 
 End of input stream reached.
-Fortitudine vincimus.
+Happy happy joy joy!
