@@ -537,6 +537,41 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  | appropriate syntax procedures and evaluation procedures 'eval-and' and
  | 'eval-or'. Alternatively, show how to implement 'and' and 'or' as derived
  | expressions.
+ |
+ | Answer
+ |
+ | [| Instructor's Manual |]
+ | §4.1.2 Representing Expressions -> Derived expressions
+ |
+ |    In exercise 4.4, implementing 'and' and 'or' as derived expressions has
+ |    some subtleties. The most straightforward transformation has the flaw
+ |    that it evaluates subexpressions more than once (to test the truth of a
+ |    subexpression and then return its value). Students can be expected to
+ |    notice this and avoid this duplicate evaluation by introducing 'let'
+ |    into the transformed expression. But this will introduce a variable
+ |    name, which might capture a free variable in the user's expression. We
+ |    have not given students tools to avoid this by generating unique
+ |    variable names, and would not expect them to note the name-capture
+ |    problem in their solution.
+ |
+ |    A very clever transformation is given in the Scheme standard (section
+ |    7.6) which uses 'let' to avoid duplicate evaluation and yet cannot
+ |    capture the user's free-variables: '(or <e1> <e2> ... <en>)' is
+ |    transformed to
+ |
+ |    (let ((first-exp <e1>)
+ |          (rest-of-or (lambda () (or <e2> ... <en>))))
+ |      (if first-exp first-exp (rest-of-or)))
+ |
+ |    and '(and <e1> <e2> ... <en>)' is transformed to
+ |
+ |    (let ((first-exp <e1>)
+ |          (rest-of-and (lambda () (and <e2> ... <en>))))
+ |      (if first-exp (rest-of-and) first-exp))
+ |
+ |
+ | TODO: Implement 'and' and 'or' as derived expressions after implementing
+ | 'let' to avoid the name-capture problem
  |#
 
 ; and? predicate procedure
@@ -667,6 +702,8 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;Value: and->if
 
 1 ]=> ; expand-and procedure (recursively construct nested 'if' expr)
+; TODO: Implement 'and' and 'or' as derived expressions after implementing
+; 'let' to avoid the name-capture problem
 (define (expand-and pred-seq)
   (if (null? pred-seq)
       'true
@@ -718,6 +755,8 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;Value: or->if
 
 1 ]=> ; expand-or procedure (recursively construct nested 'if' expr)
+; TODO: Implement 'and' and 'or' as derived expressions after implementing
+; 'let' to avoid the name-capture problem
 (define (expand-or pred-seq)
   (if (null? pred-seq)
       'false
@@ -775,4 +814,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> 
 End of input stream reached.
-Moriturus te salutat.
+Fortitudine vincimus.
