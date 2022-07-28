@@ -516,6 +516,12 @@
 ; rest-preds selector procedure
 (define (rest-preds pred-seq) (cdr pred-seq))
 
+; make-and constructor procedure
+(define (make-and pred-seq) (cons 'and pred-seq))
+
+; make-or constructor procedure
+(define (make-or pred-seq) (cons 'or pred-seq))
+
 ; and->let procedure
 (define (and->let exp)                                  ;!
   (let ((pred-seq (logic-preds exp)))
@@ -527,7 +533,7 @@
               first
               (make-let
                (zip '(first-exp rest-of-and)
-                    (list first (make-lambda '() (list (cons 'and rest)))))
+                    (list first (make-lambda '() (list (make-and rest)))))
                (list (make-if 'first-exp '(rest-of-and) 'first-exp))))))))
 
 ; or->let procedure
@@ -541,7 +547,7 @@
               first
               (make-let
                (zip '(first-exp rest-of-or)
-                    (list first (make-lambda '() (list (cons 'or rest)))))
+                    (list first (make-lambda '() (list (make-or rest)))))
                (list (make-if 'first-exp 'first-exp '(rest-of-or)))))))))
 
 #|
