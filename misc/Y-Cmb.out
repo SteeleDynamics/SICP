@@ -1,0 +1,33 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; Y-Combinator procedure
+(define Y
+  (lambda (f)
+    ((lambda (x) (f (lambda (a) ((x x) a))))
+     (lambda (x) (f (lambda (a) ((x x) a)))))))
+;Value: y
+
+1 ]=> ; F procedure whose fixed-point solution is fact
+(define F
+  (lambda (g)
+    (lambda (x)
+      (if (< x 2)
+          x
+          (* x (g (- x 1)))))))
+;Value: f
+
+1 ]=> ; ((Y F) 6) ==> 720
+((Y F) 6)
+;Value: 720
+
+1 ]=> 
+End of input stream reached.
+Happy happy joy joy!
