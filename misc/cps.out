@@ -1,0 +1,78 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; fact-cps procedure
+(define fact-cps
+  (lambda (n)
+    (lambda (sc)
+      (lambda (fc)
+        (cond ((> n 0)
+               (((fact-cps (- n 1)) (lambda (res) (sc (* n res)))) fc))
+              ((= n 0)
+               (sc 1))
+              (else
+                (fc)))))))
+;Value: fact-cps
+
+1 ]=> ; exp-cps procedure
+(define exp-cps
+  (lambda (n)
+    (lambda (sc)
+      (lambda (fc)
+        (cond ((> n 0)
+               (((exp-cps (- n 1)) (lambda (res) (sc (* 2 res)))) fc))
+              ((= n 0)
+               (sc 1))
+              (else
+                (fc)))))))
+;Value: exp-cps
+
+1 ]=> ; success and failure continuation procedures
+(define (sc x) (list 'SOME x))
+;Value: sc
+
+1 ]=> (define (fc) (list 'NONE))
+;Value: fc
+
+1 ]=> ; fact-cps unit tests
+(((fact-cps 6) sc) fc)
+;Value: (some 720)
+
+1 ]=> (((fact-cps 0) sc) fc)
+;Value: (some 1)
+
+1 ]=> (((fact-cps -1) sc) fc)
+;Value: (none)
+
+1 ]=> ; exp-cps unit tests
+(((exp-cps 16) sc) fc)
+;Value: (some 65536)
+
+1 ]=> (((exp-cps 8) sc) fc)
+;Value: (some 256)
+
+1 ]=> (((exp-cps -1) sc) fc)
+;Value: (none)
+
+1 ]=> #|
+ | Let n = 3 and sc = (lambda (x) x):
+ |
+ |     (((fact-cps 3) (lambda (x) x)) fc)
+ | ==> (((fact-cps 2) (lambda (res) ((lambda (x) x) (* 3 res)))) fc)
+ | ==> (((fact-cps 1) (lambda (res) ((lambda (res) ((lambda (x) x) (* 3 res))) (* 2 res)))) fc)
+ | ==> (((fact-cps 0) (lambda (res) ((lambda (res) ((lambda (res) ((lambda (x) x) (* 3 res))) (* 2 res))) (* 1 res)))) fc)
+ | ==> ((lambda (res) ((lambda (res) ((lambda (res) ((lambda (x) x) (* 3 res))) (* 2 res))) (* 1 res))) 1)
+ | ==> ((lambda (res) ((lambda (res) ((lambda (x) x) (* 3 res))) (* 2 res))) (* 1 1))
+ | ==> ((lambda (res) ((lambda (x) x) (* 3 res))) (* 2 1))
+ | ==> ((lambda (x) x) (* 3 2))
+ | ==> 6
+ |#
+End of input stream reached.
+Ceterum censeo Carthaginem esse delendam.
