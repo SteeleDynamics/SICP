@@ -678,6 +678,9 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 1 ]=> (eval '(begin (set! foo 11) foo) E0)
 ;Value: 11
 
+1 ]=> (eval '(begin (define foo 13) foo) E0)
+;Value: 13
+
 1 ]=> 
 End of input stream reached.
-Happy happy joy joy!
+Pulvis et umbra sumus.

@@ -553,3 +553,4 @@
 (eval exp E0)
 (eval '(begin (define foo 7) foo) E0)
 (eval '(begin (set! foo 11) foo) E0)
+(eval '(begin (define foo 13) foo) E0)
