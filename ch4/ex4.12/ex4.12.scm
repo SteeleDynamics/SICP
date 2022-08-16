@@ -414,7 +414,6 @@
    (lambda (vals) (set-car! vals val))
    (lambda () (error "Unbound variable -- SET!" var))))
 
-
 ; define-variable! mutator procedure
 (define (define-variable! var val env)            ;!
   (let ((frame (first-frame env)))
