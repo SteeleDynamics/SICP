@@ -590,4 +590,6 @@
 (eval 'foo E0)
 (eval '(define bar 4) E0)
 (eval 'bar E0)
+(define exp '(let* ((x 3) (y (+ x 2)) (z (+ x y 5))) (+ (* x z) foo)))
+(eval exp E0)
 E0

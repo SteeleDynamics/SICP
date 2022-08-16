@@ -738,9 +738,15 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 1 ]=> (eval 'bar E0)
 ;Value: 4
 
+1 ]=> (define exp '(let* ((x 3) (y (+ x 2)) (z (+ x y 5))) (+ (* x z) foo)))
+;Value: exp
+
+1 ]=> (eval exp E0)
+;Value: 42
+
 1 ]=> E0
 ;Value: (((bar foo false true * + - / = assoc car cadr cdr cons null?) 4 3 #f #t (primitive #[arity-dispatched-procedure 12]) (primitive #[arity-dispatched-procedure 13]) (primitive #[arity-dispatched-procedure 14]) (primitive #[arity-dispatched-procedure 15]) (primitive #[arity-dispatched-procedure 16]) (primitive #[compiled-procedure 17 ("list" #x91) #x1c #xe2b794]) (primitive #[compiled-procedure 18 ("list" #x1) #x1c #xe0f67c]) (primitive #[compiled-procedure 19 ("list" #x29) #x1c #xe13844]) (primitive #[compiled-procedure 20 ("list" #x2) #x1c #xe0f6f4]) (primitive #[compiled-procedure 21 ("list" #x3) #x1c #xe0f76c]) (primitive #[compiled-procedure 22 ("list" #x5) #x1c #xe0f81c])))
 
 1 ]=> 
 End of input stream reached.
-Post proelium, praemium.
+Fortitudine vincimus.
