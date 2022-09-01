@@ -15,7 +15,7 @@
         ((if? exp) (eval-if exp env))
         ((lambda? exp)
          (make-procedure (lambda-parameters exp)
-                         (list (sequence->exp (lambda-body exp))) ;!
+                         (lambda-body exp)
                          env))
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
@@ -403,7 +403,10 @@
   (env-lookup-cps
    var
    env
-   (lambda (vals) (car vals))
+   (lambda (vals)                                 ;!
+     (if (eq? (car vals) '*unassigned*)
+         (error "Unbound variable" var)
+         (car vals)))
    (lambda () (error "Unbound variable" var))))
 
 ; set-variable-value! mutator procedure
@@ -585,22 +588,26 @@
  |#
 
 #|
- | According to R5RS §4.1.4 'Procedures', a lambda expression with syntax
- | (lambda <formals> <body>) requires <body> to be a sequence of one or more
- | expressions. Calling the resulting procedure value will sequentially
- | evaluate the expressions of <body> in the extended environment. The result
- | of the last expression in <body> will be returned as the result of the
- | procedure call.
+ | Within the apply procedure, the following clause calls eval-sequence to
+ | evaluate the sequence of expressions in the procedure body:
  |
- | The following procedures were updated (!) and/or unit tested:
+ | ((compound-procedure? procedure)
+ |  (eval-sequence
+ |   (procedure-body procedure)
+ |   (extend-environment
+ |    (procedure-parameters procedure)
+ |    arguments
+ |    (procedure-environment procedure))))
  |
- | 1. (!) eval, ((lambda? exp) ...) clause
- | 2. (!) let-body
- | 3. (!) let->combination
- | 4. (!) expand->let*
- | 5. expand-clauses
- | 6. and->let
- | 7. or->let
+ | The procedure let-body was corrected to return the sequence of one or more
+ | expressions. The following procedures were updated (!) and/or unit-tested:
+ |
+ | 1. (!) let-body
+ | 2. (!) let->combination
+ | 3. (!) expand-let*
+ | 4. expand-clauses
+ | 5. and->let
+ | 6. or->let
  |#
 
 (define E0 (setup-environment))
@@ -641,3 +648,11 @@
 (define exp7 '(or 0 '()))
 (or->let exp7)
 (eval exp7 E0)
+
+#|
+ | unit tests for scan-out-defines
+ |#
+
+(define exp8 '((lambda (x) x) '*unassigned*))
+(eval exp8 E0)
+(restart 1)

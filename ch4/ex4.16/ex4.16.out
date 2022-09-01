@@ -26,7 +26,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
         ((if? exp) (eval-if exp env))
         ((lambda? exp)
          (make-procedure (lambda-parameters exp)
-                         (list (sequence->exp (lambda-body exp))) ;!
+                         (lambda-body exp)
                          env))
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
@@ -495,7 +495,10 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
   (env-lookup-cps
    var
    env
-   (lambda (vals) (car vals))
+   (lambda (vals)                                 ;!
+     (if (eq? (car vals) '*unassigned*)
+         (error "Unbound variable" var)
+         (car vals)))
    (lambda () (error "Unbound variable" var))))
 ;Value: lookup-variable-value
 
@@ -704,22 +707,26 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  |#
 
 #|
- | According to R5RS §4.1.4 'Procedures', a lambda expression with syntax
- | (lambda <formals> <body>) requires <body> to be a sequence of one or more
- | expressions. Calling the resulting procedure value will sequentially
- | evaluate the expressions of <body> in the extended environment. The result
- | of the last expression in <body> will be returned as the result of the
- | procedure call.
+ | Within the apply procedure, the following clause calls eval-sequence to
+ | evaluate the sequence of expressions in the procedure body:
  |
- | The following procedures were updated (!) and/or unit tested:
+ | ((compound-procedure? procedure)
+ |  (eval-sequence
+ |   (procedure-body procedure)
+ |   (extend-environment
+ |    (procedure-parameters procedure)
+ |    arguments
+ |    (procedure-environment procedure))))
  |
- | 1. (!) eval, ((lambda? exp) ...) clause
- | 2. (!) let-body
- | 3. (!) let->combination
- | 4. (!) expand->let*
- | 5. expand-clauses
- | 6. and->let
- | 7. or->let
+ | The procedure let-body was corrected to return the sequence of one or more
+ | expressions. The following procedures were updated (!) and/or unit-tested:
+ |
+ | 1. (!) let-body
+ | 2. (!) let->combination
+ | 3. (!) expand-let*
+ | 4. expand-clauses
+ | 5. and->let
+ | 6. or->let
  |#
 
 (define E0 (setup-environment))
@@ -755,8 +762,9 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;Value: ((lambda ()))
 
 1 ]=> (eval exp2 E0)
-;Unknown expression type -- EVAL ()
+;The object (), passed as the first argument to cdr, is not the correct type.
 ;To continue, call RESTART with an option number:
+; (RESTART 2) => Specify an argument to use in its place.
 ; (RESTART 1) => Return to read-eval-print level 1.
 
 2 error> (restart 1)
@@ -804,6 +812,21 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 1 ]=> (eval exp7 E0)
 ;Value: 0
 
+1 ]=> #|
+ | unit tests for scan-out-defines
+ |#
+
+(define exp8 '((lambda (x) x) '*unassigned*))
+;Value: exp8
+
+1 ]=> (eval exp8 E0)
+;Unbound variable x
+;To continue, call RESTART with an option number:
+; (RESTART 1) => Return to read-eval-print level 1.
+
+2 error> (restart 1)
+;Abort!
+
 1 ]=> 
 End of input stream reached.
-Moriturus te salutat.
+Fortitudine vincimus.
