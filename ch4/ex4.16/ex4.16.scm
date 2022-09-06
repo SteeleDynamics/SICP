@@ -268,10 +268,10 @@
 ; let*->nested-lets procedure
 (define (let*->nested-lets exp) (expand-let* (let-bindings exp) (let-body exp)))
 
-; expand-let* proceudre
+; expand-let* procedure
 (define (expand-let* bindings body)               ;!
-  (if (null? (cdr bindings))
-      (make-let (list (car bindings)) body)
+  (if (null? bindings)
+      (make-let bindings body)
       (make-let (list (car bindings))
                 (list (expand-let* (cdr bindings) body)))))
 
@@ -681,17 +681,21 @@
 (let*->nested-lets exp4)
 (eval exp4 E0)
 
-(define exp5 '(cond ((assoc 'b '((a 1) (b 2))) => cadr) (else false)))
-(cond->if exp5)
+(define exp5 '(let* () (* 13 17)))
+(let*->nested-lets exp5)
 (eval exp5 E0)
 
-(define exp6 '(and 0 '()))
-(and->let exp6)
+(define exp6 '(cond ((assoc 'b '((a 1) (b 2))) => cadr) (else false)))
+(cond->if exp6)
 (eval exp6 E0)
 
-(define exp7 '(or 0 '()))
-(or->let exp7)
+(define exp7 '(and 0 '()))
+(and->let exp7)
 (eval exp7 E0)
+
+(define exp8 '(or 0 '()))
+(or->let exp8)
+(eval exp8 E0)
 
 #|
  | Unit tests for scan-out-defines:
@@ -701,8 +705,8 @@
  | 3. Internal defn with *unassigned* value expr ==> Error
  |#
 
-(define exp8 '((lambda (x) x) '*unassigned*))
-(eval exp8 E0)
+(define exp9 '((lambda (x) x) '*unassigned*))
+(eval exp9 E0)
 (restart 1)
 
 (define seq0 '((define (f x) x) (+ 1 2) (define a 3) (define b 4) (* 5 6)))
@@ -713,18 +717,18 @@
 (assign-defns (car res0))
 (scan-out-defines seq0)
 
-(define exp9
+(define exp10
   '(define (cont-frac-iter n d k)
      (define (iter i acc)
        (if (= i 0)
            acc
            (iter (- i 1) (/ (n i) (+ (d i) acc)))))
      (iter k 0)))
-(define exp10 '(cont-frac-iter (lambda (x) 1.0) (lambda (x) 1.0) 11))
-(eval exp9 E0)
+(define exp11 '(cont-frac-iter (lambda (x) 1.0) (lambda (x) 1.0) 11))
 (eval exp10 E0)
+(eval exp11 E0)
 
-(define exp11
+(define exp12
   '(define (f x)
      (define (even? n)
        (if (= n 0)
@@ -735,18 +739,18 @@
            false
            (even? (- n 1))))
      (even? x)))
-(define exp12 '(f 6))
-(define exp13 '(f 7))
-(eval exp11 E0)
+(define exp13 '(f 6))
+(define exp14 '(f 7))
 (eval exp12 E0)
 (eval exp13 E0)
+(eval exp14 E0)
 
-(define exp14
+(define exp15
   '(let ((a 1))
      (define (f x)
        (define b (+ a x))
        (define a 5)
        (+ a b))
      (f 10)))
-(eval exp14 E0)
+(eval exp15 E0)
 (restart 1)
