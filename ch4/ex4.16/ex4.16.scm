@@ -334,9 +334,53 @@
 ; false? predicate procedure
 (define (false? x) (eq? x false))
 
+; unassigned? predicate procedure
+(define (unassigned? x)                           ;!
+  (eq? x '*unassigned*))
+
+; scan-out-defines procedure
+(define (scan-out-defines body)                   ;!
+  (let ((res (partition-defns body)))
+    (let ((defns (car res))
+          (exprs (cdr res)))
+      (if (null? defns)                           ; prevents infinite loop!
+          exprs
+          (let ((binds (bind-defns defns))
+                (assigns (assign-defns defns)))
+            (list (make-let binds (append assigns exprs))))))))
+
+; partition-defns procedure
+(define (partition-defns body)                    ;!
+  (if (null? body)
+      (cons '() '())
+      (let ((hd (car body))
+            (res (partition-defns (cdr body))))
+        (let ((defns (car res))
+              (exprs (cdr res)))
+          (if (definition? hd)
+              (cons (cons hd defns) exprs)
+              (cons defns (cons hd exprs)))))))
+
+; bind-defns procedure
+(define (bind-defns defns)                        ;!
+  (if (null? defns)
+      '()
+      (cons (list (definition-variable (car defns))
+                  ''*unassigned*)                 ; note double-quote
+            (bind-defns (cdr defns)))))
+
+; assign-defns procedure
+(define (assign-defns defns)                      ;!
+  (if (null? defns)
+      '()
+      (cons (list 'set!
+                  (definition-variable (car defns))
+                  (definition-value (car defns)))
+            (assign-defns (cdr defns)))))
+
 ; make-procedure constructor procedure
-(define (make-procedure parameters body env)
-  (list 'procedure parameters body env))
+(define (make-procedure parameters body env)      ;!
+  (list 'procedure parameters (scan-out-defines body) env))
 
 ; compound-procedure? predicate procedure
 (define (compound-procedure? p) (tagged-list? p 'procedure))
@@ -404,7 +448,7 @@
    var
    env
    (lambda (vals)                                 ;!
-     (if (eq? (car vals) '*unassigned*)
+     (if (unassigned? (car vals))
          (error "Unbound variable" var)
          (car vals)))
    (lambda () (error "Unbound variable" var))))
@@ -650,9 +694,59 @@
 (eval exp7 E0)
 
 #|
- | unit tests for scan-out-defines
+ | Unit tests for scan-out-defines:
+ |
+ | 1. Single recursively-defined procedure ==> OK
+ | 2. Two mutually-recursive procedures ==> OK
+ | 3. Internal defn with *unassigned* value expr ==> Error
  |#
 
 (define exp8 '((lambda (x) x) '*unassigned*))
 (eval exp8 E0)
+(restart 1)
+
+(define seq0 '((define (f x) x) (+ 1 2) (define a 3) (define b 4) (* 5 6)))
+(define res0 (partition-defns seq0))
+(car res0)
+(cdr res0)
+(bind-defns (car res0))
+(assign-defns (car res0))
+(scan-out-defines seq0)
+
+(define exp9
+  '(define (cont-frac-iter n d k)
+     (define (iter i acc)
+       (if (= i 0)
+           acc
+           (iter (- i 1) (/ (n i) (+ (d i) acc)))))
+     (iter k 0)))
+(define exp10 '(cont-frac-iter (lambda (x) 1.0) (lambda (x) 1.0) 11))
+(eval exp9 E0)
+(eval exp10 E0)
+
+(define exp11
+  '(define (f x)
+     (define (even? n)
+       (if (= n 0)
+           true
+           (odd? (- n 1))))
+     (define (odd? n)
+       (if (= n 0)
+           false
+           (even? (- n 1))))
+     (even? x)))
+(define exp12 '(f 6))
+(define exp13 '(f 7))
+(eval exp11 E0)
+(eval exp12 E0)
+(eval exp13 E0)
+
+(define exp14
+  '(let ((a 1))
+     (define (f x)
+       (define b (+ a x))
+       (define a 5)
+       (+ a b))
+     (f 10)))
+(eval exp14 E0)
 (restart 1)
