@@ -334,10 +334,13 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> ; expand-let* procedure
 (define (expand-let* bindings body)               ;!
-  (if (null? bindings)
-      (make-let bindings body)
-      (make-let (list (car bindings))
-                (list (expand-let* (cdr bindings) body)))))
+  (cond ((null? bindings)
+         (make-let bindings body))
+        ((null? (cdr bindings))
+         (make-let (list (car bindings)) body))
+        (else
+         (make-let (list (car bindings))
+                   (list (expand-let* (cdr bindings) body))))))
 ;Value: expand-let*
 
 1 ]=> ; cond? predicate procedure
@@ -829,7 +832,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;Value: exp4
 
 1 ]=> (let*->nested-lets exp4)
-;Value: (let ((x 3)) (let ((y (+ x 2))) (let ((z (+ x y 5))) (let () (* x z)))))
+;Value: (let ((x 3)) (let ((y (+ x 2))) (let ((z (+ x y 5))) (* x z))))
 
 1 ]=> (eval exp4 E0)
 ;Value: 39
@@ -975,4 +978,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> 
 End of input stream reached.
-Ceterum censeo Carthaginem esse delendam.
+Pulvis et umbra sumus.

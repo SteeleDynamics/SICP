@@ -270,10 +270,13 @@
 
 ; expand-let* procedure
 (define (expand-let* bindings body)               ;!
-  (if (null? bindings)
-      (make-let bindings body)
-      (make-let (list (car bindings))
-                (list (expand-let* (cdr bindings) body)))))
+  (cond ((null? bindings)
+         (make-let bindings body))
+        ((null? (cdr bindings))
+         (make-let (list (car bindings)) body))
+        (else
+         (make-let (list (car bindings))
+                   (list (expand-let* (cdr bindings) body))))))
 
 ; cond? predicate procedure
 (define (cond? exp) (tagged-list? exp 'cond))
