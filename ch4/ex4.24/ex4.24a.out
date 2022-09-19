@@ -1,0 +1,821 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; apply-in-underlying-scheme procedure (§4.1.4 Footnote 17)
+(define apply-in-underlying-scheme apply)
+;Value: apply-in-underlying-scheme
+
+1 ]=> #|
+ | §4.1.1 'The Core of the Evaluator'
+ |#
+
+; eval procedure
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp)
+         (make-procedure (lambda-parameters exp)
+                         (lambda-body exp)
+                         env))
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((let? exp) (eval (let->combination exp) env))
+        ((let*? exp) (eval (let*->nested-lets exp) env))
+        ((letrec? exp) (eval (letrec->let exp) env))
+        ((cond? exp) (eval (cond->if exp) env))
+        ((and? exp) (eval (and->let exp) env))
+        ((or? exp) (eval (or->let exp) env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else
+         (error "Unknown expression type -- EVAL" exp))))
+;Value: eval
+
+1 ]=> ; apply procedure
+(define (apply procedure arguments)
+  (cond ((primitive-procedure? procedure)
+         (apply-primitive-procedure procedure arguments))
+        ((compound-procedure? procedure)
+         (eval-sequence
+           (procedure-body procedure)
+           (extend-environment
+             (procedure-parameters procedure)
+             arguments
+             (procedure-environment procedure))))
+        (else
+         (error
+          "Unknown procedure type -- APPLY" procedure))))
+;Value: apply
+
+1 ]=> ; list-of-values procedure
+(define (list-of-values exps env)
+  (if (no-operands? exps)
+      '()
+      (cons (eval (first-operand exps) env)
+            (list-of-values (rest-operands exps) env))))
+;Value: list-of-values
+
+1 ]=> ; eval-if procedure
+(define (eval-if exp env)
+  (if (true? (eval (if-predicate exp) env))
+      (eval (if-consequent exp) env)
+      (eval (if-alternative exp) env)))
+;Value: eval-if
+
+1 ]=> ; eval-sequence procedure
+(define (eval-sequence exps env)
+  (cond ((last-exp? exps) (eval (first-exp exps) env))
+        (else (eval (first-exp exps) env)
+              (eval-sequence (rest-exps exps) env))))
+;Value: eval-sequence
+
+1 ]=> ; eval-assignment procedure
+(define (eval-assignment exp env)
+  (set-variable-value! (assignment-variable exp)
+                       (eval (assignment-value exp) env)
+                       env)
+  'ok)
+;Value: eval-assignment
+
+1 ]=> ; eval-definition procedure
+(define (eval-definition exp env)
+  (define-variable! (definition-variable exp)
+                    (eval (definition-value exp) env)
+                    env)
+  'ok)
+;Value: eval-definition
+
+1 ]=> #|
+ | §4.1.2 'Representing Expressions'
+ |#
+
+; self-evaluating? predicate procedure
+(define (self-evaluating? exp)
+  (cond ((number? exp) true)
+        ((string? exp) true)
+        (else false)))
+;Value: self-evaluating?
+
+1 ]=> ; variable? predicate procedure
+(define (variable? exp) (symbol? exp))
+;Value: variable?
+
+1 ]=> ; quoted? predicate procedure
+(define (quoted? exp) (tagged-list? exp 'quote))
+;Value: quoted?
+
+1 ]=> ; text-of-quotation selector procedure
+(define (text-of-quotation exp) (cadr exp))
+;Value: text-of-quotation
+
+1 ]=> ; tagged-list? predicate procedure
+(define (tagged-list? exp tag)
+  (if (pair? exp)
+      (eq? (car exp) tag)
+      false))
+;Value: tagged-list?
+
+1 ]=> ; assignment? predicate procedure
+(define (assignment? exp) (tagged-list? exp 'set!))
+;Value: assignment?
+
+1 ]=> ; assignment-variable selector procedure
+(define (assignment-variable exp) (cadr exp))
+;Value: assignment-variable
+
+1 ]=> ; assignment-value selector procedure
+(define (assignment-value exp) (caddr exp))
+;Value: assignment-value
+
+1 ]=> ; definition predicate procedure
+(define (definition? exp) (tagged-list? exp 'define))
+;Value: definition?
+
+1 ]=> ; definition-variable selector procedure
+(define (definition-variable exp)
+  (if (symbol? (cadr exp))
+      (cadr exp)
+      (caadr exp)))
+;Value: definition-variable
+
+1 ]=> ; definition-value selector procedure
+(define (definition-value exp)
+  (if (symbol? (cadr exp))
+      (caddr exp)
+      (make-lambda (cdadr exp)   ; formal parameters
+                   (cddr exp))))
+;Value: definition-value
+
+1 ]=> ; body
+
+; make-definition constructor procedure
+(define (make-definition variable value) (cons 'define (cons variable value)))
+;Value: make-definition
+
+1 ]=> ; lambda? predicate procedure
+(define (lambda? exp) (tagged-list? exp 'lambda))
+;Value: lambda?
+
+1 ]=> ; lambda-parameters selector procedure
+(define (lambda-parameters exp) (cadr exp))
+;Value: lambda-parameters
+
+1 ]=> ; lambda-body selector procedure
+(define (lambda-body exp) (cddr exp))
+;Value: lambda-body
+
+1 ]=> ; make-lambda constructor procedure
+(define (make-lambda parameters body) (cons 'lambda (cons parameters body)))
+;Value: make-lambda
+
+1 ]=> ; if? predicate procedure
+(define (if? exp) (tagged-list? exp 'if))
+;Value: if?
+
+1 ]=> ; if-predicate selector procedure
+(define (if-predicate exp) (cadr exp))
+;Value: if-predicate
+
+1 ]=> ; if-consequent selector procedure
+(define (if-consequent exp) (caddr exp))
+;Value: if-consequent
+
+1 ]=> ; if-alternative selector procedure
+(define (if-alternative exp)
+  (if (not (null? (cdddr exp)))
+      (cadddr exp)
+      'false))
+;Value: if-alternative
+
+1 ]=> ; make-if constructor procedure
+(define (make-if predicate consequent alternative)
+  (list 'if predicate consequent alternative))
+;Value: make-if
+
+1 ]=> ; begin? predicate procedure
+(define (begin? exp) (tagged-list? exp 'begin))
+;Value: begin?
+
+1 ]=> ; begin-actions selector procedure
+(define (begin-actions exp) (cdr exp))
+;Value: begin-actions
+
+1 ]=> ; last-exp? predicate procedure
+(define (last-exp? seq) (null? (cdr seq)))
+;Value: last-exp?
+
+1 ]=> ; first-exp selector procedure
+(define (first-exp seq) (car seq))
+;Value: first-exp
+
+1 ]=> ; rest-exps selector procedure
+(define (rest-exps seq) (cdr seq))
+;Value: rest-exps
+
+1 ]=> ; sequence->exp procedure
+(define (sequence->exp seq)
+  (cond ((null? seq) seq)
+        ((last-exp? seq) (first-exp seq))
+        (else (make-begin seq))))
+;Value: sequence->exp
+
+1 ]=> ; make-begin constructor procedure
+(define (make-begin seq) (cons 'begin seq))
+;Value: make-begin
+
+1 ]=> ; application? predicate procedure
+(define (application? exp) (pair? exp))
+;Value: application?
+
+1 ]=> ; operator selector procedure
+(define (operator exp) (car exp))
+;Value: operator
+
+1 ]=> ; operands selector procedure
+(define (operands exp) (cdr exp))
+;Value: operands
+
+1 ]=> ; no-operands? predicate procedure
+(define (no-operands? ops) (null? ops))
+;Value: no-operands?
+
+1 ]=> ; first-operand selector procedure
+(define (first-operand ops) (car ops))
+;Value: first-operand
+
+1 ]=> ; rest-operands selector procedure
+(define (rest-operands ops) (cdr ops))
+;Value: rest-operands
+
+1 ]=> ; let? predicate procedure
+(define (let? exp) (tagged-list? exp 'let))
+;Value: let?
+
+1 ]=> ; named-let? predicate procedure
+(define (named-let? exp)
+  (symbol? (cadr exp)))
+;Value: named-let?
+
+1 ]=> ; let-bindings selector procedure
+(define (let-bindings exp)
+  (if (named-let? exp)
+      (caddr exp)
+      (cadr exp)))
+;Value: let-bindings
+
+1 ]=> ; let-body selector procedure
+(define (let-body exp)
+  (if (named-let? exp)
+      (cdddr exp)
+      (cddr exp)))
+;Value: let-body
+
+1 ]=> ; zip procedure
+(define (zip xs ys)
+  (cond ((and (null? xs) (null? ys))
+         '())
+        ((or (null? xs) (null? ys))
+         (error "Unequal lengths -- ZIP" (list xs ys)))
+        (else
+         (cons (list (car xs) (car ys))
+               (zip (cdr xs) (cdr ys))))))
+;Value: zip
+
+1 ]=> ; unzip procedure
+(define (unzip zs)
+  (if (null? zs)
+      (list '() '())
+      (let ((res (unzip (cdr zs))))
+        (let ((xs (car res))
+              (ys (cadr res)))
+          (list (cons (caar zs) xs)
+                (cons (cadar zs) ys))))))
+;Value: unzip
+
+1 ]=> ; let->combination procedure
+(define (let->combination exp)
+  (let ((bindings (let-bindings exp))
+        (body (let-body exp)))
+    (let ((res (unzip bindings)))
+      (if (named-let? exp)
+          (make-begin
+           (list (make-definition
+                  (cons (cadr exp) (car res))
+                  body)
+                 (cons (cadr exp) (cadr res))))
+          (cons (make-lambda
+                 (car res)
+                 body)
+                (cadr res))))))
+;Value: let->combination
+
+1 ]=> ; make-let constructor procedure
+(define (make-let bindings body) (cons 'let (cons bindings body)))
+;Value: make-let
+
+1 ]=> ; let*? predicate procedure
+(define (let*? exp) (tagged-list? exp 'let*))
+;Value: let*?
+
+1 ]=> ; let*->nested-lets procedure
+(define (let*->nested-lets exp) (expand-let* (let-bindings exp) (let-body exp)))
+;Value: let*->nested-lets
+
+1 ]=> ; expand-let* procedure
+(define (expand-let* bindings body)
+  (cond ((null? bindings)
+         (make-let bindings body))
+        ((null? (cdr bindings))
+         (make-let (list (car bindings)) body))
+        (else
+         (make-let (list (car bindings))
+                   (list (expand-let* (cdr bindings) body))))))
+;Value: expand-let*
+
+1 ]=> ; letrec? predicate procedure
+(define (letrec? exp) (tagged-list? exp 'letrec))
+;Value: letrec?
+
+1 ]=> ; letrec-bindings selector procedure
+(define (letrec-bindings exp) (cadr exp))
+;Value: letrec-bindings
+
+1 ]=> ; letrec-body selector procedure
+(define (letrec-body exp) (cddr exp))
+;Value: letrec-body
+
+1 ]=> ; letrec-decl procedure
+(define (letrec-decl bindings)
+  (if (null? bindings)
+      '()
+      (cons (list (caar bindings) ''*unassigned*) ; note double quote
+            (letrec-decl (cdr bindings)))))
+;Value: letrec-decl
+
+1 ]=> ; letrec-setv procedure
+(define (letrec-setv bindings)
+  (if (null? bindings)
+      '()
+      (cons (cons 'set! (car bindings))
+            (letrec-setv (cdr bindings)))))
+;Value: letrec-setv
+
+1 ]=> ; letrec->let procedure
+(define (letrec->let exp)
+  (let ((bindings (letrec-bindings exp))
+        (body (letrec-body exp)))
+    (let ((decls (letrec-decl bindings))
+          (setvs (letrec-setv bindings)))
+      (make-let decls (append setvs body)))))
+;Value: letrec->let
+
+1 ]=> ; cond? predicate procedure
+(define (cond? exp) (tagged-list? exp 'cond))
+;Value: cond?
+
+1 ]=> ; cond-clauses selector procedure
+(define (cond-clauses exp) (cdr exp))
+;Value: cond-clauses
+
+1 ]=> ; cond-else-clause? predicate procedure
+(define (cond-else-clause? clause) (eq? (cond-predicate clause) 'else))
+;Value: cond-else-clause?
+
+1 ]=> ; cond-predicate selector procedure
+(define (cond-predicate clause) (car clause))
+;Value: cond-predicate
+
+1 ]=> ; cond-actions selector procedure
+(define (cond-actions clause) (cdr clause))
+;Value: cond-actions
+
+1 ]=> ; cond-arrow? predicate procedure
+(define (cond-arrow? clause) (eq? (cadr clause) '=>))
+;Value: cond-arrow?
+
+1 ]=> ; cond-test selector procedure
+(define (cond-test clause) (car clause))
+;Value: cond-test
+
+1 ]=> ; cond-recipient selector procedure
+(define (cond-recipient clause) (caddr clause))
+;Value: cond-recipient
+
+1 ]=> ; cond->if procedure
+(define (cond->if exp) (expand-clauses (cond-clauses exp)))
+;Value: cond->if
+
+1 ]=> ; expand-clauses procedure
+(define (expand-clauses clauses)
+  (if (null? clauses)
+      'false                          ; no else clause
+      (let ((first (car clauses))
+            (rest (cdr clauses)))
+        (if (cond-else-clause? first)
+            (if (null? rest)
+                (sequence->exp (cond-actions first))
+                (error "ELSE clause isn't last -- COND->IF"
+                       clauses))
+            (if (cond-arrow? first)
+                (make-let
+                 (zip '(test recipient)
+                      (list (cond-test first) (cond-recipient first)))
+                 (list (make-if 'test
+                                '(recipient test)
+                                (expand-clauses rest))))
+                (make-if (cond-predicate first)
+                         (sequence->exp (cond-actions first))
+                         (expand-clauses rest)))))))
+;Value: expand-clauses
+
+1 ]=> #|
+ | §4.1.3 'Evaluator Data Structures'
+ |#
+
+; true? predicate procedure
+(define (true? x) (not (eq? x false)))
+;Value: true?
+
+1 ]=> ; false? predicate procedure
+(define (false? x) (eq? x false))
+;Value: false?
+
+1 ]=> ; unassigned? predicate procedure
+(define (unassigned? x)
+  (eq? x '*unassigned*))
+;Value: unassigned?
+
+1 ]=> ; scan-out-defines procedure
+(define (scan-out-defines body)
+  (let ((res (partition-defns body)))
+    (let ((defns (car res))
+          (exprs (cdr res)))
+      (if (null? defns)                           ; prevents infinite loop!
+          exprs
+          (let ((binds (bind-defns defns))
+                (assigns (assign-defns defns)))
+            (list (make-let binds (append assigns exprs))))))))
+;Value: scan-out-defines
+
+1 ]=> ; partition-defns procedure
+(define (partition-defns body)
+  (if (null? body)
+      (cons '() '())
+      (let ((hd (car body))
+            (res (partition-defns (cdr body))))
+        (let ((defns (car res))
+              (exprs (cdr res)))
+          (if (definition? hd)
+              (cons (cons hd defns) exprs)
+              (cons defns (cons hd exprs)))))))
+;Value: partition-defns
+
+1 ]=> ; bind-defns procedure
+(define (bind-defns defns)
+  (if (null? defns)
+      '()
+      (cons (list (definition-variable (car defns))
+                  ''*unassigned*)                 ; note double-quote
+            (bind-defns (cdr defns)))))
+;Value: bind-defns
+
+1 ]=> ; assign-defns procedure
+(define (assign-defns defns)
+  (if (null? defns)
+      '()
+      (cons (list 'set!
+                  (definition-variable (car defns))
+                  (definition-value (car defns)))
+            (assign-defns (cdr defns)))))
+;Value: assign-defns
+
+1 ]=> ; make-procedure constructor procedure
+(define (make-procedure parameters body env)
+  (list 'procedure parameters (scan-out-defines body) env))
+;Value: make-procedure
+
+1 ]=> ; compound-procedure? predicate procedure
+(define (compound-procedure? p) (tagged-list? p 'procedure))
+;Value: compound-procedure?
+
+1 ]=> ; procedure-parameters selector procedure
+(define (procedure-parameters p) (cadr p))
+;Value: procedure-parameters
+
+1 ]=> ; procedure-body selector procedure
+(define (procedure-body p) (caddr p))
+;Value: procedure-body
+
+1 ]=> ; procedure-environment selector procedure
+(define (procedure-environment p) (cadddr p))
+;Value: procedure-environment
+
+1 ]=> ; enclosing-environment selector procedure
+(define (enclosing-environment env) (cdr env))
+;Value: enclosing-environment
+
+1 ]=> ; first-frame selector procedure
+(define (first-frame env) (car env))
+;Value: first-frame
+
+1 ]=> ; the-empty-environment def'n
+(define the-empty-environment '())
+;Value: the-empty-environment
+
+1 ]=> ; make-frame constructor procedure
+(define (make-frame variables values) (cons variables values))
+;Value: make-frame
+
+1 ]=> ; frame-variables selector procedure
+(define (frame-variables frame) (car frame))
+;Value: frame-variables
+
+1 ]=> ; frame-values selector procedure
+(define (frame-values frame) (cdr frame))
+;Value: frame-values
+
+1 ]=> ; add-binding-to-frame! mutator procedure
+(define (add-binding-to-frame! var val frame)
+  (set-car! frame (cons var (car frame)))
+  (set-cdr! frame (cons val (cdr frame))))
+;Value: add-binding-to-frame!
+
+1 ]=> ; extend-enviroment constructor procedure
+(define (extend-environment vars vals base-env)
+  (if (= (length vars) (length vals))
+      (cons (make-frame vars vals) base-env)
+      (if (< (length vars) (length vals))
+          (error "Too many arguments supplied" vars vals)
+          (error "Too few arguments supplied" vars vals))))
+;Value: extend-environment
+
+1 ]=> ; frame-lookup-cps procedure
+(define (frame-lookup-cps var vars vals sc fc)
+  (cond ((null? vars) (fc))
+        ((eq? var (car vars)) (sc vals))
+        (else (frame-lookup-cps var (cdr vars) (cdr vals) sc fc))))
+;Value: frame-lookup-cps
+
+1 ]=> ; env-lookup-cps procedure
+(define (env-lookup-cps var env sc fc)
+  (if (eq? env the-empty-environment)
+      (fc)
+      (let ((frame (first-frame env)))
+        (let ((vars (frame-variables frame))
+              (vals (frame-values frame))
+              (enc (enclosing-environment env)))
+          (let ((fc (lambda () (env-lookup-cps var enc sc fc))))
+            (frame-lookup-cps var vars vals sc fc))))))
+;Value: env-lookup-cps
+
+1 ]=> ; lookup-variable-value procedure
+(define (lookup-variable-value var env)
+  (env-lookup-cps
+   var
+   env
+   (lambda (vals)
+     (if (unassigned? (car vals))
+         (error "Unbound variable" var)
+         (car vals)))
+   (lambda () (error "Unbound variable" var))))
+;Value: lookup-variable-value
+
+1 ]=> ; set-variable-value! mutator procedure
+(define (set-variable-value! var val env)
+  (env-lookup-cps
+   var
+   env
+   (lambda (vals) (set-car! vals val))
+   (lambda () (error "Unbound variable -- SET!" var))))
+;Value: set-variable-value!
+
+1 ]=> ; define-variable! mutator procedure
+(define (define-variable! var val env)
+  (let ((frame (first-frame env)))
+    (let ((vars (frame-variables frame))
+          (vals (frame-values frame)))
+      (frame-lookup-cps
+        var
+        vars
+        vals
+        (lambda (vals) (set-car! vals val))
+        (lambda () (add-binding-to-frame! var val frame))))))
+;Value: define-variable!
+
+1 ]=> #|
+ | §4.1.4 'Running the Evaluator as a Program'
+ |#
+
+; setup-environment side-effect procedure
+(define (setup-environment)
+  (let ((initial-env
+         (extend-environment (primitive-procedure-names)
+                             (primitive-procedure-objects)
+                             the-empty-environment)))
+    (define-variable! 'true true initial-env)
+    (define-variable! 'false false initial-env)
+    initial-env))
+;Value: setup-environment
+
+1 ]=> ; primitive-procedure? predicate procedure
+(define (primitive-procedure? proc) (tagged-list? proc 'primitive))
+;Value: primitive-procedure?
+
+1 ]=> ; primitive-implementation selector procedure
+(define (primitive-implementation proc) (cadr proc))
+;Value: primitive-implementation
+
+1 ]=> ; primitive-procedures list def'n
+(define primitive-procedures
+  (list (list '* *)
+        (list '+ +)
+        (list '- -)
+        (list '/ /)
+        (list '< <)                               ;!
+        (list '= =)
+        (list '> >)                               ;!
+        (list 'assoc assoc)
+        (list 'car car)
+        (list 'cadr cadr)
+        (list 'cdr cdr)
+        (list 'cons cons)
+        (list 'null? null?)
+;;      more primitives
+        ))
+;Value: primitive-procedures
+
+1 ]=> ; primitive-procedure-names selector procedure
+(define (primitive-procedure-names) (map car primitive-procedures))
+;Value: primitive-procedure-names
+
+1 ]=> ; primitive-procedure-objects selector procedure
+(define (primitive-procedure-objects)
+  (map (lambda (proc) (list 'primitive (cadr proc))) primitive-procedures))
+;Value: primitive-procedure-objects
+
+1 ]=> ; apply-primitive-procedure procedure
+(define (apply-primitive-procedure proc args)
+  (apply-in-underlying-scheme (primitive-implementation proc) args))
+;Value: apply-primitive-procedure
+
+1 ]=> ; input-prompt def'n
+(define input-prompt ";;; M-Eval input:")
+;Value: input-prompt
+
+1 ]=> ; output-prompt def'n
+(define output-prompt ";;; M-Eval value:")
+;Value: output-prompt
+
+1 ]=> ; driver-loop procedure (REPL)
+(define (driver-loop)
+  (prompt-for-input input-prompt)
+  (let ((input (read)))
+    (let ((output (eval input the-global-environment)))
+      (announce-output output-prompt)
+      (user-print output)))
+  (driver-loop))
+;Value: driver-loop
+
+1 ]=> ; prompt-for-input procedure
+(define (prompt-for-input string)
+  (newline) (newline) (display string) (newline))
+;Value: prompt-for-input
+
+1 ]=> ; announce-output procedure
+(define (announce-output string)
+  (newline) (display string) (newline))
+;Value: announce-output
+
+1 ]=> ; user-print procedure
+(define (user-print object)
+  (if (compound-procedure? object)
+      (display (list 'compound-procedure
+                     (procedure-parameters object)
+                     (procedure-body object)
+                     '<procedure-env>))
+      (display object)))
+;Value: user-print
+
+1 ]=> ; the-global-environment def'n
+; (define the-global-environment (setup-environment))
+
+; start REPL
+; (driver-loop)
+
+; and? predicate procedure
+(define (and? exp) (tagged-list? exp 'and))
+;Value: and?
+
+1 ]=> ; or? predicate procedure
+(define (or? exp) (tagged-list? exp 'or))
+;Value: or?
+
+1 ]=> ; logic-preds selector procedure
+(define (logic-preds exp) (cdr exp))
+;Value: logic-preds
+
+1 ]=> ; no-preds? predicate procedure
+(define (no-preds? pred-seq) (null? pred-seq))
+;Value: no-preds?
+
+1 ]=> ; last-pred? predicate procedure
+(define (last-pred? pred-seq) (null? (cdr pred-seq)))
+;Value: last-pred?
+
+1 ]=> ; first-pred selector procedure
+(define (first-pred pred-seq) (car pred-seq))
+;Value: first-pred
+
+1 ]=> ; rest-preds selector procedure
+(define (rest-preds pred-seq) (cdr pred-seq))
+;Value: rest-preds
+
+1 ]=> ; make-and constructor procedure
+(define (make-and pred-seq) (cons 'and pred-seq))
+;Value: make-and
+
+1 ]=> ; make-or constructor procedure
+(define (make-or pred-seq) (cons 'or pred-seq))
+;Value: make-or
+
+1 ]=> ; and->let procedure
+(define (and->let exp)
+  (let ((pred-seq (logic-preds exp)))
+    (if (null? pred-seq)
+        'true
+        (let ((first (first-pred pred-seq))
+              (rest (rest-preds pred-seq)))
+          (if (null? rest)
+              first
+              (make-let
+               (zip '(first-exp rest-of-and)
+                    (list first (make-lambda '() (list (make-and rest)))))
+               (list (make-if 'first-exp '(rest-of-and) 'first-exp))))))))
+;Value: and->let
+
+1 ]=> ; or->let procedure
+(define (or->let exp)
+  (let ((pred-seq (logic-preds exp)))
+    (if (null? pred-seq)
+        'false
+        (let ((first (first-pred pred-seq))
+              (rest (rest-preds pred-seq)))
+          (if (null? rest)
+              first
+              (make-let
+               (zip '(first-exp rest-of-or)
+                    (list first (make-lambda '() (list (make-or rest)))))
+               (list (make-if 'first-exp 'first-exp '(rest-of-or)))))))))
+;Value: or->let
+
+1 ]=> #|
+ | Exercise 4.24
+ |
+ | Design and carry out some experiments to compare the speed of the original
+ | metacircular evaluator with the version in this section. Use your results to
+ | estimate the fraction of time that is spent in analysis versus execution for
+ | various procedures.
+ |#
+
+; receiver procedure
+(define (receiver run-time gc-time real-time)
+    (newline)
+    (write (internal-time/ticks->seconds run-time))
+    (write-char #\space)
+    (write (internal-time/ticks->seconds gc-time))
+    (write-char #\space)
+    (write (internal-time/ticks->seconds real-time)))
+;Value: receiver
+
+1 ]=> (define E0 (setup-environment))
+;Value: e0
+
+1 ]=> (define exp0
+  '(let ((f
+          (lambda (f x)
+            (if (< x 2)
+                x
+                (+ (f f (- x 1))
+                   (f f (- x 2)))))))
+     (f f 17)))
+;Value: exp0
+
+1 ]=> (with-timings (lambda () (eval exp0 E0)) receiver)
+.65 0. .66
+;Value: 1597
+
+1 ]=> 
+End of input stream reached.
+Moriturus te salutat.
