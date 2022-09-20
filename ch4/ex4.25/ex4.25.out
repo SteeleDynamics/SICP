@@ -1,0 +1,70 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> #|
+ | Exercise 4.25
+ |
+ | Suppose that (in ordinary applicative-order Scheme) we define unless as shown
+ | above and then define factorial in terms of unless as
+ |
+ | (define (factorial n)
+ |   (unless (= n 1)
+ |           (* n (factorial (- n 1)))
+ |           1))
+ |
+ | What happens if we attempt to evaluate (factorial 5)? Will our definitions
+ | work in a normal-order language?
+ |
+ | Answer:
+ |
+ | If we evaluate (factorial 5) in ordinary applicative-order Scheme, then each
+ | operand expression will be evaluated prior to the condition check of the 'if'
+ | expression. This will result in an infinite number of evaluations of the
+ | 'usual-value' operand expression (* n (factorial (- n 1))), causing Scheme to
+ | exceed its maximum recursion depth.
+ |
+ | However, these definitions WILL work in a normal-order language.
+ |#
+
+; unless procedure (applicative-order)
+(define (unless condition usual-value exceptional-value)
+  (if condition exceptional-value usual-value))
+;Value: unless
+
+1 ]=> ; factorial procedure (applicative-order)
+(define (factorial n)
+  (unless (= n 1)
+          (* n (factorial (- n 1)))
+          1))
+;Value: factorial
+
+1 ]=> (factorial 5)
+;Aborting!: maximum recursion depth exceeded
+
+1 ]=> ; unless special form (normal-order)
+(define-syntax unless
+  (syntax-rules ()
+    ((unless condition usual-value exceptional-value)
+     (if condition exceptional-value usual-value))))
+;Value: unless
+
+1 ]=> ; factorial procedure (normal-order)
+(define (factorial n)
+  (unless (= n 1)
+          (* n (factorial (- n 1)))
+          1))
+;Value: factorial
+
+1 ]=> (factorial 5)
+;Value: 120
+
+1 ]=> 
+End of input stream reached.
+Moriturus te salutat.
