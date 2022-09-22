@@ -503,7 +503,8 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> ; make-procedure constructor procedure
 (define (make-procedure parameters body env)
-  (list 'procedure parameters (scan-out-defines body) env))
+  ; (list 'procedure parameters (scan-out-defines body) env))   ;!
+  (list 'procedure parameters body env))
 ;Value: make-procedure
 
 1 ]=> ; compound-procedure? predicate procedure
@@ -965,4 +966,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> 
 End of input stream reached.
-Fortitudine vincimus.
+Pulvis et umbra sumus.

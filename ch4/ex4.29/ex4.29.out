@@ -503,7 +503,8 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> ; make-procedure constructor procedure
 (define (make-procedure parameters body env)
-  (list 'procedure parameters (scan-out-defines body) env))
+  ; (list 'procedure parameters (scan-out-defines body) env))   ;!
+  (list 'procedure parameters body env))
 ;Value: make-procedure
 
 1 ]=> ; compound-procedure? predicate procedure
@@ -998,7 +999,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;Value: ok
 
 1 ]=> (with-timings (lambda () (actual-value exp1 E0)) receiver)
-.72 0. .75
+.85 0. .879
 ;Value: 1597
 
 1 ]=> (actual-value exp2 E0)
@@ -1034,7 +1035,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;Value: ok
 
 1 ]=> (with-timings (lambda () (actual-value exp1 E1)) receiver)
-3.38 .05 3.549
+3.6 .04 3.786
 ;Value: 1597
 
 1 ]=> (actual-value exp2 E1)

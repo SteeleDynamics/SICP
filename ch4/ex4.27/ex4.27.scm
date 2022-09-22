@@ -415,7 +415,8 @@
 
 ; make-procedure constructor procedure
 (define (make-procedure parameters body env)
-  (list 'procedure parameters (scan-out-defines body) env))
+  ; (list 'procedure parameters (scan-out-defines body) env))   ;!
+  (list 'procedure parameters body env))
 
 ; compound-procedure? predicate procedure
 (define (compound-procedure? p) (tagged-list? p 'procedure))
