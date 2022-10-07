@@ -29,29 +29,20 @@
  | the only value that is explored. Neither 'i' nor 'j' are explored because 'k'
  | will increment forever. This is nearly identical to the problem explored in
  | §3.5.3 'Exploiting the Stream Paradigm' -- 'Infinite streams of pairs'.
+ |
+ | See exercise 4.38 for an implementation of the ambiguous evaluator. The
+ | following procedures would be evaluated within the ambiguous evaluator.
  |#
+
+; require procedure
+(define (require p)
+  (if (not p) (amb)))
 
 ; an-integer-starting-from ambiguous procedure
 (define (an-integer-starting-from n)
   (amb n (an-integer-starting-from (+ n 1))))
 
-; interleave ambiguous procedure
-(define (interleave a1 a2)
-  (amb a1 (interleave a2 a1)))
-
-; a-pair-starting-from ambiguous procedure
-(define (a-pair-starting-from n)
-  (interleave (list n (an-integer-starting-from n))
-              (a-pair-starting-from (+ n 1))))
-
-; a-triple-starting-from ambiguous procedure
-(define (a-triple-starting-from n)
-  (interleave (cons n (a-pair-starting-from n))
-              (a-triple-starting-from (+ n 1))))
-
-; a-pythagorean-triple-starting-from ambiguous procedure
-(define (a-pythagorean-triple-starting-from n)
-  (let ((t (a-triple-starting-from n)))
-    (let ((i (car t)) (j (cadr t)) (k (caddr t)))
-      (require (= (+ (* i i) (* j j)) (* k k)))
-      t)))
+; an-integer-between ambiguous procedure
+(define (an-integer-between low high)
+  (require (<= low high))
+  (amb low (an-integer-between (+ low 1) high)))
