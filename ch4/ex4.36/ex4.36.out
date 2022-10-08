@@ -1,0 +1,106 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is
+NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (load "ex4.38.scm")
+
+;Loading "ex4.38.scm"...
+
+;;; Amb-Eval input:
+(define (require p)
+  (if (not p) (amb)))
+
+;;; Starting a new problem
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+(define (an-integer-starting-from n)
+  (amb n (an-integer-starting-from (+ n 1))))
+
+;;; Starting a new problem
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+(define (an-integer-between low high)
+  (require (>= high low))
+  (amb low (an-integer-between (+ low 1) high)))
+
+;;; Starting a new problem
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+(define (a-pythagorean-triple-starting-from n)
+  (let ((k (an-integer-starting-from n)))
+    (let ((j (an-integer-between 1 k)))
+      (let ((i (an-integer-between 1 j)))
+        (require (= (+ (* i i) (* j j)) (* k k)))
+        (list i j k)))))
+
+;;; Starting a new problem
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+(a-pythagorean-triple-starting-from 1)
+
+;;; Starting a new problem
+;;; Amb-Eval value:
+(3 4 5)
+
+;;; Amb-Eval input:
+try-again
+
+;;; Amb-Eval value:
+(6 8 10)
+
+;;; Amb-Eval input:
+try-again
+
+;;; Amb-Eval value:
+(5 12 13)
+
+;;; Amb-Eval input:
+try-again
+
+;;; Amb-Eval value:
+(9 12 15)
+
+;;; Amb-Eval input:
+try-again
+
+;;; Amb-Eval value:
+(8 15 17)
+
+;;; Amb-Eval input:
+try-again
+
+;;; Amb-Eval value:
+(12 16 20)
+
+;;; Amb-Eval input:
+try-again
+
+;;; Amb-Eval value:
+(15 20 25)
+
+;;; Amb-Eval input:
+try-again
+
+;;; Amb-Eval value:
+(7 24 25)
+
+;;; Amb-Eval input:
+End of input stream reached.
+;... aborted
+
+Ceterum censeo Carthaginem esse delendam.

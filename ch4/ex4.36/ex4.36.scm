@@ -32,6 +32,16 @@
  |
  | See exercise 4.38 for an implementation of the ambiguous evaluator. The
  | following procedures would be evaluated within the ambiguous evaluator.
+ |
+ | IDEA: We must create a traversal strategy to iterate over all ordered pairs
+ | (i, j) such that 0 < i <= j. We can do this by traversing all of the ordered
+ | pairs in a column-major order (denoted by the alphabetical labels below). A
+ | similar strategy will work for ordered triples.
+ |
+ | A:(1,1)  B:(1,2)   D:(1,3)   G:(1,4)
+ |          C:(2,2)   E:(2,3)   H:(2,4)   ...
+ |                    F:(3,3)   I:(3,4)
+ |                              J:(4,4)
  |#
 
 ; require procedure
@@ -44,5 +54,13 @@
 
 ; an-integer-between ambiguous procedure
 (define (an-integer-between low high)
-  (require (<= low high))
+  (require (>= high low))
   (amb low (an-integer-between (+ low 1) high)))
+
+; a-pythagorean-triple-starting-from ambiguous procedure
+(define (a-pythagorean-triple-starting-from n)
+  (let ((k (an-integer-starting-from n)))
+    (let ((j (an-integer-between 1 k)))
+      (let ((i (an-integer-between 1 j)))
+        (require (= (+ (* i i) (* j j)) (* k k)))
+        (list i j k)))))
