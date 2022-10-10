@@ -1,0 +1,78 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is
+NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> (load "ex4.39.scm")
+
+;Loading "ex4.39.scm"...
+
+;;; Amb-Eval input:
+(define (require p)
+  (if (not p) (amb)))
+
+;;; Starting a new problem
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+(define (distinct? items)
+  (cond ((null? items) true)
+        ((null? (cdr items)) true)
+        ((member (car items) (cdr items)) false)
+        (else (distinct? (cdr items)))))
+
+;;; Starting a new problem
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+(define (multiple-dwelling)
+  (let ((baker (amb 1 2 3 4 5))
+        (cooper (amb 1 2 3 4 5))
+        (fletcher (amb 1 2 3 4 5))
+        (miller (amb 1 2 3 4 5))
+        (smith (amb 1 2 3 4 5)))
+    (require
+     (distinct? (list baker cooper fletcher miller smith)))
+    (require (> miller cooper))
+    (require (not (= (abs (- smith fletcher)) 1)))
+    (require (not (= (abs (- fletcher cooper)) 1)))
+    (require (not (= fletcher 5)))
+    (require (not (= fletcher 1)))
+    (require (not (= baker 5)))
+    (require (not (= cooper 1)))
+    (list (list 'baker baker)
+          (list 'cooper cooper)
+          (list 'fletcher fletcher)
+          (list 'miller miller)
+          (list 'smith smith))))
+
+;;; Starting a new problem
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+(multiple-dwelling)
+
+;;; Starting a new problem
+;;; Amb-Eval value:
+((baker 3) (cooper 2) (fletcher 4) (miller 5) (smith 1))
+
+;;; Amb-Eval input:
+try-again
+
+;;; There are no more values of
+(multiple-dwelling)
+
+;;; Amb-Eval input:
+End of input stream reached.
+;... aborted
+
+Post proelium, praemium.
