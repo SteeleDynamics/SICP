@@ -792,10 +792,8 @@
  |
  | The order of the restrictions does not matter since all possible choices are
  | searched using CPS backtracking. However, changing the order of restrictions
- | can reduce the number of possible choices searched. By placing restrictions
- | up front that eliminate more choices, the search space of possible choices
- | becomes smaller and more efficient. In other words, do the largest amount of
- | tree-pruning first.
+ | can reduce the amount of work done by 'distinct?' which has a runtime
+ | complexity of O(n²).
  |
  | (define (multiple-dwelling)
  |   (let ((baker (amb 1 2 3 4 5))
@@ -803,15 +801,15 @@
  |         (fletcher (amb 1 2 3 4 5))
  |         (miller (amb 1 2 3 4 5))
  |         (smith (amb 1 2 3 4 5)))
- |     (require
- |      (distinct? (list baker cooper fletcher miller smith)))
- |     (require (> miller cooper))
- |     (require (not (= (abs (- smith fletcher)) 1)))
- |     (require (not (= (abs (- fletcher cooper)) 1)))
  |     (require (not (= fletcher 5)))
  |     (require (not (= fletcher 1)))
  |     (require (not (= baker 5)))
  |     (require (not (= cooper 1)))
+ |     (require (> miller cooper))
+ |     (require (not (= (abs (- smith fletcher)) 1)))
+ |     (require (not (= (abs (- fletcher cooper)) 1)))
+ |     (require
+ |      (distinct? (list baker cooper fletcher miller smith)))
  |     (list (list 'baker baker)
  |           (list 'cooper cooper)
  |           (list 'fletcher fletcher)
@@ -819,7 +817,7 @@
  |           (list 'smith smith))))
  |
  | See ex4.39.out for Amb-Eval output. The above implementation was informally
- | observed to be faster.
+ | observed to be more efficient.
  |#
 
 (define the-global-environment (setup-environment))
