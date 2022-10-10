@@ -3,7 +3,7 @@
 (define apply-in-underlying-scheme apply)
 
 #|
- | §4.1.1 ''
+ | §4.1.1 'The Core of the Evaluator'
  |#
 
 ; eval procedure
@@ -77,7 +77,7 @@
   'ok)
 
 #|
- | §4.1.2 ''
+ | §4.1.2 'Representing Expressions'
  |#
 
 ; self-evaluating? predicate procedure
@@ -233,7 +233,7 @@
                      (expand-clauses rest))))))
 
 #|
- | §4.1.3 ''
+ | §4.1.3 'Evaluator Data Structures'
  |#
 
 ; true? predicate procedure
@@ -334,7 +334,7 @@
           (frame-values frame))))
 
 #|
- | §4.1.4 ''
+ | §4.1.4 'Running the Evaluator as a Program'
  |#
 
 ; setup-environment procedure
@@ -414,7 +414,7 @@
 ;(driver-loop)
 
 #|
- | §4.3.3 '' (modified as needed to run it)
+ | §4.3.3 'Implementing the 'Amb' Evaluator' (modified as needed to run it)
  |#
 
 ; amb? predicate procedure
@@ -601,7 +601,7 @@
           proc))))
 
 #|
- | amb expressions
+ | Evaluating 'amb' expressions
  |#
 
 ; analyze-amb procedure
@@ -658,7 +658,7 @@
 
 
 #|
- | Support for let expression (as noted in footnote 56, p.428)
+ | Support for 'let' expression (as noted in footnote 56, p.428)
  |#
 
 ; let? predicate procedure
@@ -763,6 +763,20 @@
  |
  | Although this simple procedure works, it is very slow. Exercises 4.39 and
  | 4.40 discuss some possible improvements.
+ |
+ | §4.3.1 Footnote 48:
+ |
+ | Our program uses the following procedure to determine if the elements of a
+ | list are distinct:
+ |
+ | (define (distinct? items)
+ |   (cond ((null? items) true)
+ |         ((null? (cdr items)) true)
+ |         ((member (car items) (cdr items)) false)
+ |         (else (distinct? (cdr items)))))
+ |
+ | 'Member' is like 'memq' except that it uses 'equal?' instead of 'eq?' to test
+ | for equality.
  |#
 
 #|
@@ -771,6 +785,11 @@
  | Modify the multiple-dwelling procedure to omit the requirement that Smith and
  | Fletcher do not live on adjacent floors. How many solutions are there to this
  | modified puzzle?
+ |
+ | Answer
+ |
+ | There are five solutions when we omit the requirement that Smith and Fletcher
+ | do not live on adjacent floors. See ex4.38.out for Amb-Eval output.
  |#
 
 (define the-global-environment (setup-environment))
