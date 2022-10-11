@@ -14,30 +14,30 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  | Write an ordinary Scheme program to solve the multiple dwelling puzzle.
  |#
 
-; enumerate-interval procedure
-(define (enumerate-interval low high)
-  (if (> low high)
-      '()
-      (cons low (enumerate-interval (+ low 1) high))))
-;Value: enumerate-interval
-
-1 ]=> ; flatmap procedure
+; flatmap procedure
 (define (flatmap proc seq)
   (fold-right append '() (map proc seq)))
 ;Value: flatmap
 
+1 ]=> ; permutations procedure
+(define (permutations seqs)
+  (if (null? seqs)
+      '(())
+      (flatmap
+        (lambda (x)
+          (map
+            (lambda (y) (cons x y))
+            (permutations (cdr seqs))))
+        (car seqs))))
+;Value: permutations
+
 1 ]=> ; choices definition
 (define choices
-  (flatmap (lambda (a)
-    (flatmap (lambda (b)
-      (flatmap (lambda (c)
-        (flatmap (lambda (d)
-          (map (lambda (e) (list a b c d e))
-               (enumerate-interval 1 5)))
-          (enumerate-interval 1 5)))
-        (enumerate-interval 1 5)))
-      (enumerate-interval 1 5)))
-    (enumerate-interval 1 5)))
+  (permutations '((1 2 3 4 5)
+                  (1 2 3 4 5)
+                  (1 2 3 4 5)
+                  (1 2 3 4 5)
+                  (1 2 3 4 5))))
 ;Value: choices
 
 1 ]=> ; baker selector procedure
@@ -86,4 +86,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> 
 End of input stream reached.
-Post proelium, praemium.
+Ceterum censeo Carthaginem esse delendam.

@@ -4,28 +4,28 @@
  | Write an ordinary Scheme program to solve the multiple dwelling puzzle.
  |#
 
-; enumerate-interval procedure
-(define (enumerate-interval low high)
-  (if (> low high)
-      '()
-      (cons low (enumerate-interval (+ low 1) high))))
-
 ; flatmap procedure
 (define (flatmap proc seq)
   (fold-right append '() (map proc seq)))
 
+; permutations procedure
+(define (permutations seqs)
+  (if (null? seqs)
+      '(())
+      (flatmap
+        (lambda (x)
+          (map
+            (lambda (y) (cons x y))
+            (permutations (cdr seqs))))
+        (car seqs))))
+
 ; choices definition
 (define choices
-  (flatmap (lambda (a)
-    (flatmap (lambda (b)
-      (flatmap (lambda (c)
-        (flatmap (lambda (d)
-          (map (lambda (e) (list a b c d e))
-               (enumerate-interval 1 5)))
-          (enumerate-interval 1 5)))
-        (enumerate-interval 1 5)))
-      (enumerate-interval 1 5)))
-    (enumerate-interval 1 5)))
+  (permutations '((1 2 3 4 5)
+                  (1 2 3 4 5)
+                  (1 2 3 4 5)
+                  (1 2 3 4 5)
+                  (1 2 3 4 5))))
 
 ; baker selector procedure
 (define (baker choice) (car choice))
