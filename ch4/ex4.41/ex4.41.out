@@ -1,0 +1,89 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> #|
+ | Exercise 4.41
+ |
+ | Write an ordinary Scheme program to solve the multiple dwelling puzzle.
+ |#
+
+; enumerate-interval procedure
+(define (enumerate-interval low high)
+  (if (> low high)
+      '()
+      (cons low (enumerate-interval (+ low 1) high))))
+;Value: enumerate-interval
+
+1 ]=> ; flatmap procedure
+(define (flatmap proc seq)
+  (fold-right append '() (map proc seq)))
+;Value: flatmap
+
+1 ]=> ; choices definition
+(define choices
+  (flatmap (lambda (a)
+    (flatmap (lambda (b)
+      (flatmap (lambda (c)
+        (flatmap (lambda (d)
+          (map (lambda (e) (list a b c d e))
+               (enumerate-interval 1 5)))
+          (enumerate-interval 1 5)))
+        (enumerate-interval 1 5)))
+      (enumerate-interval 1 5)))
+    (enumerate-interval 1 5)))
+;Value: choices
+
+1 ]=> ; baker selector procedure
+(define (baker choice) (car choice))
+;Value: baker
+
+1 ]=> ; cooper selector procedure
+(define (cooper choice) (cadr choice))
+;Value: cooper
+
+1 ]=> ; fletcher selector procedure
+(define (fletcher choice) (caddr choice))
+;Value: fletcher
+
+1 ]=> ; miller selector procedure
+(define (miller choice) (cadddr choice))
+;Value: miller
+
+1 ]=> ; smith selector procedure
+(define (smith choice) (car (cddddr choice)))
+;Value: smith
+
+1 ]=> ; distinct? predicate procedure
+(define (distinct? items)
+  (cond ((null? items) true)
+        ((null? (cdr items)) true)
+        ((member (car items) (cdr items)) false)
+        (else (distinct? (cdr items)))))
+;Value: distinct?
+
+1 ]=> ; pred predicate procedure
+(define (pred choice)
+  (and (distinct? choice)
+       (not (= (baker choice) 5))
+       (not (= (cooper choice) 1))
+       (not (= (fletcher choice) 5))
+       (not (= (fletcher choice) 1))
+       (> (miller choice) (cooper choice))
+       (not (= (abs (- (smith choice) (fletcher choice))) 1))
+       (not (= (abs (- (fletcher choice) (cooper choice))) 1))))
+;Value: pred
+
+1 ]=> ; filter valid solution(s) using pred
+(filter pred choices)
+;Value: ((3 2 4 5 1))
+
+1 ]=> 
+End of input stream reached.
+Post proelium, praemium.
