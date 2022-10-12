@@ -914,5 +914,10 @@ ok
 ((betty 3) (ethel 5) (joan 2) (kitty 1) (mary 4))
 
 ;;; Amb-Eval input:
+try-again
+;;; There are no more values of
+(liars)
+
+;;; Amb-Eval input:
 End of input stream reached.
 Ceterum censeo Carthaginem esse delendam.
