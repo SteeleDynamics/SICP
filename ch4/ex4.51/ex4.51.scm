@@ -827,3 +827,15 @@
   (list x y count))
 
 try-again
+
+; switching from permanent-set! to set!...
+
+(define count1 0)
+
+(let ((x (an-element-of '(a b c)))
+      (y (an-element-of '(a b c))))
+  (set! count1 (+ count1 1))
+  (require (not (eq? x y)))
+  (list x y count1))
+
+try-again

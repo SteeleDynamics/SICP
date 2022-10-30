@@ -974,5 +974,28 @@ try-again
 (a c 3)
 
 ;;; Amb-Eval input:
+; switching from permanent-set! to set!...
+
+(define count1 0)
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+(let ((x (an-element-of '(a b c)))
+      (y (an-element-of '(a b c))))
+  (set! count1 (+ count1 1))
+  (require (not (eq? x y)))
+  (list x y count1))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+(a b 1)
+
+;;; Amb-Eval input:
+try-again
+;;; Amb-Eval value:
+(a c 1)
+
+;;; Amb-Eval input:
 End of input stream reached.
-Post proelium, praemium.
+Ceterum censeo Carthaginem esse delendam.
