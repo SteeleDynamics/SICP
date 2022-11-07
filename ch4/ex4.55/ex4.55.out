@@ -1,0 +1,28 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> #|
+ | Exercise 4.55
+ |
+ | Give simple queries that retrieve the following information from the data
+ | base:
+ |
+ | a. all people supervised by Ben Bitdiddle;
+ | b. the names and jobs of all people in the accounting division;
+ | c. the names and addresses of all people who live in Slumerville.
+ |
+ | Answer
+ |
+ | a. (supervisor ?x (Bitdiddle Ben))
+ | b. (job ?x (accounting . ?y))
+ | c. (address ?x (Slumerville . ?y))
+ |#
+End of input stream reached.
+Post proelium, praemium.
