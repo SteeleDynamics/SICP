@@ -33,9 +33,10 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  | (rule (same ?x ?x))
  |
  | (rule (can-replace ?person-1 ?person-2)
- |       (and (job ?person-1 ?job-1)
- |            (or (job ?person-2 ?job-1)
- |                (and (job ?person-2 ?job-2)
+ |       (and (or (and (job ?person-1 ?same-job)
+ |                     (job ?person-2 ?same-job))
+ |                (and (job ?person-1 ?job-1)
+ |                     (job ?person-2 ?job-2)
  |                     (can-do-job ?job-1 ?job-2)))
  |            (not (same ?person-1 ?person-2))))
  |
@@ -47,4 +48,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  |         (lisp-value < ?salary-1 ?salary-2))
  |#
 End of input stream reached.
-Pulvis et umbra sumus.
+Moriturus te salutat.
