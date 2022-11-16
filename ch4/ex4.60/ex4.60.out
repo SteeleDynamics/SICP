@@ -1,0 +1,895 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> #|
+ | §4.4.4.1 - The Driver Loop and Instantiation
+ |#
+
+; input-prompt string definition
+(define input-prompt ";;; Query input:")
+;Value: input-prompt
+
+1 ]=> ; output-prompt string definition
+(define output-prompt ";;; Query results:")
+;Value: output-prompt
+
+1 ]=> ; query-driver-loop procedure
+(define (query-driver-loop)
+  (prompt-for-input input-prompt)
+  (let ((q (query-syntax-process (read))))
+    (cond ((assertion-to-be-added? q)
+           (add-rule-or-assertion! (add-assertion-body q))
+           (newline)
+           (display "Assertion added to data base.")
+           (query-driver-loop))
+          (else
+           (newline)
+           (display output-prompt)
+           ;; [extra newline at end] (announce-output output-prompt)
+           (display-stream
+            (stream-map
+             (lambda (frame)
+               (instantiate q
+                            frame
+                            (lambda (v f)
+                              (contract-question-mark v))))
+             (qeval q (singleton-stream '()))))
+           (query-driver-loop)))))
+;Value: query-driver-loop
+
+1 ]=> ; instantiate procedure
+(define (instantiate exp frame unbound-var-handler)
+  (define (copy exp)
+    (cond ((var? exp)
+           (let ((binding (binding-in-frame exp frame)))
+             (if binding
+                 (copy (binding-value binding))
+                 (unbound-var-handler exp frame))))
+          ((pair? exp)
+           (cons (copy (car exp)) (copy (cdr exp))))
+          (else exp)))
+  (copy exp))
+;Value: instantiate
+
+1 ]=> #|
+ | §4.4.4.2 - The Evaluator
+ |#
+
+; qeval procedure
+(define (qeval query frame-stream)
+  (let ((qproc (get (type query) 'qeval)))
+    (if qproc
+        (qproc (contents query) frame-stream)
+        (simple-query query frame-stream))))
+;Value: qeval
+
+1 ]=> ; simple-query procedure
+(define (simple-query query-pattern frame-stream)
+  (stream-flatmap
+   (lambda (frame)
+     (stream-append-delayed
+      (find-assertions query-pattern frame)
+      (delay (apply-rules query-pattern frame))))
+   frame-stream))
+;Value: simple-query
+
+1 ]=> ; conjoin procedure
+(define (conjoin conjuncts frame-stream)
+  (if (empty-conjunction? conjuncts)
+      frame-stream
+      (conjoin (rest-conjuncts conjuncts)
+               (qeval (first-conjunct conjuncts)
+                      frame-stream))))
+;Value: conjoin
+
+1 ]=> ;;(put 'and 'qeval conjoin)
+
+; disjoin procedure
+(define (disjoin disjuncts frame-stream)
+  (if (empty-disjunction? disjuncts)
+      the-empty-stream
+      (interleave-delayed
+       (qeval (first-disjunct disjuncts) frame-stream)
+       (delay (disjoin (rest-disjuncts disjuncts)
+                       frame-stream)))))
+;Value: disjoin
+
+1 ]=> ;;(put 'or 'qeval disjoin)
+
+; negate procedure
+(define (negate operands frame-stream)
+  (stream-flatmap
+   (lambda (frame)
+     (if (stream-null? (qeval (negated-query operands)
+                              (singleton-stream frame)))
+         (singleton-stream frame)
+         the-empty-stream))
+   frame-stream))
+;Value: negate
+
+1 ]=> ;;(put 'not 'qeval negate)
+
+; lisp-value procedure
+(define (lisp-value call frame-stream)
+  (stream-flatmap
+   (lambda (frame)
+     (if (execute
+          (instantiate
+           call
+           frame
+           (lambda (v f)
+             (error "Unknown pat var -- LISP-VALUE" v))))
+         (singleton-stream frame)
+         the-empty-stream))
+   frame-stream))
+;Value: lisp-value
+
+1 ]=> ;;(put 'lisp-value 'qeval lisp-value)
+
+; execute procedure
+(define (execute exp)
+  (apply (eval (predicate exp) user-initial-environment)
+         (args exp)))
+;Value: execute
+
+1 ]=> ; always-true procedure
+(define (always-true ignore frame-stream) frame-stream)
+;Value: always-true
+
+1 ]=> ;;(put 'always-true 'qeval always-true)
+
+#|
+ | §4.4.4.3 - Finding Assertions by Pattern Matching
+ |#
+
+; find-assertions procedure
+(define (find-assertions pattern frame)
+  (stream-flatmap (lambda (datum)
+                    (check-an-assertion datum pattern frame))
+                  (fetch-assertions pattern frame)))
+;Value: find-assertions
+
+1 ]=> ; check-an-assertion procedure
+(define (check-an-assertion assertion query-pat query-frame)
+  (let ((match-result
+         (pattern-match query-pat assertion query-frame)))
+    (if (eq? match-result 'failed)
+        the-empty-stream
+        (singleton-stream match-result))))
+;Value: check-an-assertion
+
+1 ]=> ; pattern-match procedure
+(define (pattern-match pat dat frame)
+  (cond ((eq? frame 'failed) 'failed)
+        ((equal? pat dat) frame)
+        ((var? pat) (extend-if-consistent pat dat frame))
+        ((and (pair? pat) (pair? dat))
+         (pattern-match (cdr pat)
+                        (cdr dat)
+                        (pattern-match (car pat)
+                                       (car dat)
+                                       frame)))
+        (else 'failed)))
+;Value: pattern-match
+
+1 ]=> ; extend-if-consistent procedure
+(define (extend-if-consistent var dat frame)
+  (let ((binding (binding-in-frame var frame)))
+    (if binding
+        (pattern-match (binding-value binding) dat frame)
+        (extend var dat frame))))
+;Value: extend-if-consistent
+
+1 ]=> #|
+ | §4.4.4.4 - Rules and Unification
+ |#
+
+; apply-rules procedure
+(define (apply-rules pattern frame)
+  (stream-flatmap (lambda (rule)
+                    (apply-a-rule rule pattern frame))
+                  (fetch-rules pattern frame)))
+;Value: apply-rules
+
+1 ]=> ; apply-a-rule procedure
+(define (apply-a-rule rule query-pattern query-frame)
+  (let ((clean-rule (rename-variables-in rule)))
+    (let ((unify-result
+           (unify-match query-pattern
+                        (conclusion clean-rule)
+                        query-frame)))
+      (if (eq? unify-result 'failed)
+          the-empty-stream
+          (qeval (rule-body clean-rule)
+                 (singleton-stream unify-result))))))
+;Value: apply-a-rule
+
+1 ]=> ; rename-variables-in procedure
+(define (rename-variables-in rule)
+  (let ((rule-application-id (new-rule-application-id)))
+    (define (tree-walk exp)
+      (cond ((var? exp)
+             (make-new-variable exp rule-application-id))
+            ((pair? exp)
+             (cons (tree-walk (car exp))
+                   (tree-walk (cdr exp))))
+            (else exp)))
+    (tree-walk rule)))
+;Value: rename-variables-in
+
+1 ]=> ; unify-match procedure
+(define (unify-match p1 p2 frame)
+  (cond ((eq? frame 'failed) 'failed)
+        ((equal? p1 p2) frame)
+        ((var? p1) (extend-if-possible p1 p2 frame))
+        ((var? p2) (extend-if-possible p2 p1 frame)) ; ***
+        ((and (pair? p1) (pair? p2))
+         (unify-match (cdr p1)
+                      (cdr p2)
+                      (unify-match (car p1)
+                                   (car p2)
+                                   frame)))
+        (else 'failed)))
+;Value: unify-match
+
+1 ]=> ; extend-if-possible procedure
+(define (extend-if-possible var val frame)
+  (let ((binding (binding-in-frame var frame)))
+    (cond (binding
+           (unify-match
+            (binding-value binding) val frame))
+          ((var? val)                     ; ***
+           (let ((binding (binding-in-frame val frame)))
+             (if binding
+                 (unify-match
+                  var (binding-value binding) frame)
+                 (extend var val frame))))
+          ((depends-on? val var frame)    ; ***
+           'failed)
+          (else (extend var val frame)))))
+;Value: extend-if-possible
+
+1 ]=> ; depends-on? predicate procedure
+(define (depends-on? exp var frame)
+  (define (tree-walk e)
+    (cond ((var? e)
+           (if (equal? var e)
+               true
+               (let ((b (binding-in-frame e frame)))
+                 (if b
+                     (tree-walk (binding-value b))
+                     false))))
+          ((pair? e)
+           (or (tree-walk (car e))
+               (tree-walk (cdr e))))
+          (else false)))
+  (tree-walk exp))
+;Value: depends-on?
+
+1 ]=> #|
+ | §4.4.4.5 - Maintaining the Data Base
+ |#
+
+; THE-ASSERTIONS stream definition
+(define THE-ASSERTIONS the-empty-stream)
+;Value: the-assertions
+
+1 ]=> ; fetch-assertions procedure
+(define (fetch-assertions pattern frame)
+  (if (use-index? pattern)
+      (get-indexed-assertions pattern)
+      (get-all-assertions)))
+;Value: fetch-assertions
+
+1 ]=> ; get-all-assertions procedure
+(define (get-all-assertions) THE-ASSERTIONS)
+;Value: get-all-assertions
+
+1 ]=> ; get-indexed-assertions procedure
+(define (get-indexed-assertions pattern)
+  (get-stream (index-key-of pattern) 'assertion-stream))
+;Value: get-indexed-assertions
+
+1 ]=> ; get-stream procedure
+(define (get-stream key1 key2)
+  (let ((s (get key1 key2)))
+    (if s s the-empty-stream)))
+;Value: get-stream
+
+1 ]=> ; THE-RULES stream definition
+(define THE-RULES the-empty-stream)
+;Value: the-rules
+
+1 ]=> ; fetch-rules procedure
+(define (fetch-rules pattern frame)
+  (if (use-index? pattern)
+      (get-indexed-rules pattern)
+      (get-all-rules)))
+;Value: fetch-rules
+
+1 ]=> ; get-all-rules procedure
+(define (get-all-rules) THE-RULES)
+;Value: get-all-rules
+
+1 ]=> ; get-indexed-rules procedure
+(define (get-indexed-rules pattern)
+  (stream-append
+   (get-stream (index-key-of pattern) 'rule-stream)
+   (get-stream '? 'rule-stream)))
+;Value: get-indexed-rules
+
+1 ]=> ; add-rule-or-assertion! mutator procedure
+(define (add-rule-or-assertion! assertion)
+  (if (rule? assertion)
+      (add-rule! assertion)
+      (add-assertion! assertion)))
+;Value: add-rule-or-assertion!
+
+1 ]=> ; add-assertion! mutator procedure
+(define (add-assertion! assertion)
+  (store-assertion-in-index assertion)
+  (let ((old-assertions THE-ASSERTIONS))
+    (set! THE-ASSERTIONS
+          (cons-stream assertion old-assertions))
+    'ok))
+;Value: add-assertion!
+
+1 ]=> ; add-rule! mutator procedure
+(define (add-rule! rule)
+  (store-rule-in-index rule)
+  (let ((old-rules THE-RULES))
+    (set! THE-RULES (cons-stream rule old-rules))
+    'ok))
+;Value: add-rule!
+
+1 ]=> ; store-assertion-in-index procedure
+(define (store-assertion-in-index assertion)
+  (if (indexable? assertion)
+      (let ((key (index-key-of assertion)))
+        (let ((current-assertion-stream
+               (get-stream key 'assertion-stream)))
+          (put key
+               'assertion-stream
+               (cons-stream assertion
+                            current-assertion-stream))))))
+;Value: store-assertion-in-index
+
+1 ]=> ; store-rule-in-index procedure
+(define (store-rule-in-index rule)
+  (let ((pattern (conclusion rule)))
+    (if (indexable? pattern)
+        (let ((key (index-key-of pattern)))
+          (let ((current-rule-stream
+                 (get-stream key 'rule-stream)))
+            (put key
+                 'rule-stream
+                 (cons-stream rule
+                              current-rule-stream)))))))
+;Value: store-rule-in-index
+
+1 ]=> ; indexable? predicate procedure
+(define (indexable? pat) (or (constant-symbol? (car pat)) (var? (car pat))))
+;Value: indexable?
+
+1 ]=> ; index-key-of procedure
+(define (index-key-of pat)
+  (let ((key (car pat)))
+    (if (var? key) '? key)))
+;Value: index-key-of
+
+1 ]=> ; use-index? predicate procedure
+(define (use-index? pat) (constant-symbol? (car pat)))
+;Value: use-index?
+
+1 ]=> #|
+ | §4.4.4.6 - Stream operations
+ |#
+
+; stream-append-delayed procedure
+(define (stream-append-delayed s1 delayed-s2)
+  (if (stream-null? s1)
+      (force delayed-s2)
+      (cons-stream
+       (stream-car s1)
+       (stream-append-delayed (stream-cdr s1) delayed-s2))))
+;Value: stream-append-delayed
+
+1 ]=> ; interleave-delayed procedure
+(define (interleave-delayed s1 delayed-s2)
+  (if (stream-null? s1)
+      (force delayed-s2)
+      (cons-stream
+       (stream-car s1)
+       (interleave-delayed (force delayed-s2)
+                           (delay (stream-cdr s1))))))
+;Value: interleave-delayed
+
+1 ]=> ; stream-flatmap procedure
+(define (stream-flatmap proc s) (flatten-stream (stream-map proc s)))
+;Value: stream-flatmap
+
+1 ]=> ; flatten-stream procedure
+(define (flatten-stream stream)
+  (if (stream-null? stream)
+      the-empty-stream
+      (interleave-delayed
+       (stream-car stream)
+       (delay (flatten-stream (stream-cdr stream))))))
+;Value: flatten-stream
+
+1 ]=> ; singleton-stream constructor procedure
+(define (singleton-stream x) (cons-stream x the-empty-stream))
+;Value: singleton-stream
+
+1 ]=> #|
+ | §4.4.4.7 - Query syntax procedures
+ |#
+
+; type selector procedure
+(define (type exp)
+  (if (pair? exp)
+      (car exp)
+      (error "Unknown expression TYPE" exp)))
+;Value: type
+
+1 ]=> ; contents selector procedure
+(define (contents exp)
+  (if (pair? exp)
+      (cdr exp)
+      (error "Unknown expression CONTENTS" exp)))
+;Value: contents
+
+1 ]=> ; assertion-to-be-added? predicate procedure
+(define (assertion-to-be-added? exp) (eq? (type exp) 'assert!))
+;Value: assertion-to-be-added?
+
+1 ]=> ; add-assertion-body selector procedure
+(define (add-assertion-body exp) (car (contents exp)))
+;Value: add-assertion-body
+
+1 ]=> ; empty-conjunction? predicate procedure
+(define (empty-conjunction? exps) (null? exps))
+;Value: empty-conjunction?
+
+1 ]=> ; first-conjunct selector procedure
+(define (first-conjunct exps) (car exps))
+;Value: first-conjunct
+
+1 ]=> ; rest-conjuncts selector procedure
+(define (rest-conjuncts exps) (cdr exps))
+;Value: rest-conjuncts
+
+1 ]=> ; empty-conjunction? predicate procedure
+(define (empty-disjunction? exps) (null? exps))
+;Value: empty-disjunction?
+
+1 ]=> ; first-disjunct selector procedure
+(define (first-disjunct exps) (car exps))
+;Value: first-disjunct
+
+1 ]=> ; rest-disjuncts selector procedure
+(define (rest-disjuncts exps) (cdr exps))
+;Value: rest-disjuncts
+
+1 ]=> ; negated-query selector procedure
+(define (negated-query exps) (car exps))
+;Value: negated-query
+
+1 ]=> ; predicate selector procedure
+(define (predicate exps) (car exps))
+;Value: predicate
+
+1 ]=> ; args selector procedure
+(define (args exps) (cdr exps))
+;Value: args
+
+1 ]=> ; rule? predicate procedure
+(define (rule? statement) (tagged-list? statement 'rule))
+;Value: rule?
+
+1 ]=> ; conclusion selector procedure
+(define (conclusion rule) (cadr rule))
+;Value: conclusion
+
+1 ]=> ; rule-body selector procedure
+(define (rule-body rule)
+  (if (null? (cddr rule))
+      '(always-true)
+      (caddr rule)))
+;Value: rule-body
+
+1 ]=> ; query-syntax-process procedure
+(define (query-syntax-process exp) (map-over-symbols expand-question-mark exp))
+;Value: query-syntax-process
+
+1 ]=> ; map-over-symbols process
+(define (map-over-symbols proc exp)
+  (cond ((pair? exp)
+         (cons (map-over-symbols proc (car exp))
+               (map-over-symbols proc (cdr exp))))
+        ((symbol? exp) (proc exp))
+        (else exp)))
+;Value: map-over-symbols
+
+1 ]=> ; expand-question-mark procedure
+(define (expand-question-mark symbol)
+  (let ((chars (symbol->string symbol)))
+    (if (string=? (substring chars 0 1) "?")
+        (list '?
+              (string->symbol
+               (substring chars 1 (string-length chars))))
+        symbol)))
+;Value: expand-question-mark
+
+1 ]=> ; var? predicate procedure
+(define (var? exp) (tagged-list? exp '?))
+;Value: var?
+
+1 ]=> ; constant-symbol? predicate procedure
+(define (constant-symbol? exp) (symbol? exp))
+;Value: constant-symbol?
+
+1 ]=> ; rule-counter definition
+(define rule-counter 0)
+;Value: rule-counter
+
+1 ]=> ; new-rule-application-id procedure (mutator)
+(define (new-rule-application-id)
+  (set! rule-counter (+ 1 rule-counter))
+  rule-counter)
+;Value: new-rule-application-id
+
+1 ]=> ; make-new-variable constructor procedure
+(define (make-new-variable var rule-application-id)
+  (cons '? (cons rule-application-id (cdr var))))
+;Value: make-new-variable
+
+1 ]=> ; contract-question-mark procedure
+(define (contract-question-mark variable)
+  (string->symbol
+   (string-append "?"
+     (if (number? (cadr variable))
+         (string-append (symbol->string (caddr variable))
+                        "-"
+                        (number->string (cadr variable)))
+         (symbol->string (cadr variable))))))
+;Value: contract-question-mark
+
+1 ]=> #|
+ | §4.4.4.8 - Frames and bindings
+ |#
+
+; make-binding constructor procedure
+(define (make-binding variable value) (cons variable value))
+;Value: make-binding
+
+1 ]=> ; binding-variable selector procedure
+(define (binding-variable binding) (car binding))
+;Value: binding-variable
+
+1 ]=> ; binding-value selector procedure
+(define (binding-value binding) (cdr binding))
+;Value: binding-value
+
+1 ]=> ; binding-in-frame procedure
+(define (binding-in-frame variable frame) (assoc variable frame))
+;Value: binding-in-frame
+
+1 ]=> ; extend procedure
+(define (extend variable value frame)
+  (cons (make-binding variable value) frame))
+;Value: extend
+
+1 ]=> #|
+ | From §4.1
+ |#
+
+; tagged-list procedure
+(define (tagged-list? exp tag)
+  (if (pair? exp)
+      (eq? (car exp) tag)
+      false))
+;Value: tagged-list?
+
+1 ]=> ; prompt-for-input procedure
+(define (prompt-for-input string)
+  (newline) (newline) (display string) (newline))
+;Value: prompt-for-input
+
+1 ]=> #|
+ | Stream support from §3
+ |#
+
+; stream-map procedure
+(define (stream-map proc s)
+  (if (stream-null? s)
+      the-empty-stream
+      (cons-stream (proc (stream-car s))
+                   (stream-map proc (stream-cdr s)))))
+;Value: stream-map
+
+1 ]=> ; stream-for-each procedure
+(define (stream-for-each proc s)
+  (if (stream-null? s)
+      'done
+      (begin (proc (stream-car s))
+             (stream-for-each proc (stream-cdr s)))))
+;Value: stream-for-each
+
+1 ]=> ; display-stream procedure
+(define (display-stream s)
+  (stream-for-each display-line s))
+;Value: display-stream
+
+1 ]=> ; display-line procedure
+(define (display-line x)
+  (newline)
+  (display x))
+;Value: display-line
+
+1 ]=> ; stream-filter procedure
+(define (stream-filter pred stream)
+  (cond ((stream-null? stream) the-empty-stream)
+        ((pred (stream-car stream))
+         (cons-stream (stream-car stream)
+                      (stream-filter pred
+                                     (stream-cdr stream))))
+        (else (stream-filter pred (stream-cdr stream)))))
+;Value: stream-filter
+
+1 ]=> ; stream-append procedure
+(define (stream-append s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1)
+                   (stream-append (stream-cdr s1) s2))))
+;Value: stream-append
+
+1 ]=> ; interleave procedure
+(define (interleave s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1)
+                   (interleave s2 (stream-cdr s1)))))
+;Value: interleave
+
+1 ]=> #|
+ | Table support from §3.3.3 (local tables)
+ |#
+
+; make-table constructor procedure
+(define (make-table)
+  (let ((local-table (list '*table*)))
+    (define (lookup key-1 key-2)
+      (let ((subtable (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (assoc key-2 (cdr subtable))))
+              (if record
+                  (cdr record)
+                  false))
+            false)))
+    (define (insert! key-1 key-2 value)
+      (let ((subtable (assoc key-1 (cdr local-table))))
+        (if subtable
+            (let ((record (assoc key-2 (cdr subtable))))
+              (if record
+                  (set-cdr! record value)
+                  (set-cdr! subtable
+                            (cons (cons key-2 value)
+                                  (cdr subtable)))))
+            (set-cdr! local-table
+                      (cons (list key-1
+                                  (cons key-2 value))
+                            (cdr local-table)))))
+      'ok)
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch))
+;Value: make-table
+
+1 ]=> #|
+ | From Instructor's Manual
+ |#
+
+; define get list
+(define get '())
+;Value: get
+
+1 ]=> ; define put list
+(define put '())
+;Value: put
+
+1 ]=> ; initialize-data-base procedure
+(define (initialize-data-base rules-and-assertions)
+  (define (deal-out r-and-a rules assertions)
+    (cond ((null? r-and-a)
+           (set! THE-ASSERTIONS (list->stream assertions))
+           (set! THE-RULES (list->stream rules))
+           'done)
+          (else
+           (let ((s (query-syntax-process (car r-and-a))))
+             (cond ((rule? s)
+                    (store-rule-in-index s)
+                    (deal-out (cdr r-and-a)
+                              (cons s rules)
+                              assertions))
+                   (else
+                    (store-assertion-in-index s)
+                    (deal-out (cdr r-and-a)
+                              rules
+                              (cons s assertions))))))))
+  (let ((operation-table (make-table)))
+    (set! get (operation-table 'lookup-proc))
+    (set! put (operation-table 'insert-proc!)))
+  (put 'and 'qeval conjoin)
+  (put 'or 'qeval disjoin)
+  (put 'not 'qeval negate)
+  (put 'lisp-value 'qeval lisp-value)
+  (put 'always-true 'qeval always-true)
+  (deal-out rules-and-assertions '() '()))
+;Value: initialize-data-base
+
+1 ]=> #|
+ | Do following to reinit the data base from microshaft-data-base in Scheme
+ | (not in the query driver loop):
+ |
+ | (initialize-data-base microshaft-data-base)
+ |#
+
+; microshaft-data-base list definition
+(define microshaft-data-base
+  '(; Ben Bitdiddle
+    (address (Bitdiddle Ben) (Slumerville (Ridge Road) 10))
+    (job (Bitdiddle Ben) (computer wizard))
+    (salary (Bitdiddle Ben) 60000)
+    (supervisor (Bitdiddle Ben) (Warbucks Oliver))
+    ; Alyssa P. Hacker
+    (address (Hacker Alyssa P) (Cambridge (Mass Ave) 78))
+    (job (Hacker Alyssa P) (computer programmer))
+    (salary (Hacker Alyssa P) 40000)
+    (supervisor (Hacker Alyssa P) (Bitdiddle Ben))
+    ; Cy D. Fect
+    (address (Fect Cy D) (Cambridge (Ames Street) 3))
+    (job (Fect Cy D) (computer programmer))
+    (salary (Fect Cy D) 35000)
+    (supervisor (Fect Cy D) (Bitdiddle Ben))
+    ; Lem E. Tweakit
+    (address (Tweakit Lem E) (Boston (Bay State Road) 22))
+    (job (Tweakit Lem E) (computer technician))
+    (salary (Tweakit Lem E) 25000)
+    (supervisor (Tweakit Lem E) (Bitdiddle Ben))
+    ; Louis Reasoner
+    (address (Reasoner Louis) (Slumerville (Pine Tree Road) 80))
+    (job (Reasoner Louis) (computer programmer trainee))
+    (salary (Reasoner Louis) 30000)
+    (supervisor (Reasoner Louis) (Hacker Alyssa P))
+    ; Oliver Warbucks
+    (address (Warbucks Oliver) (Swellesley (Top Heap Road)))
+    (job (Warbucks Oliver) (administration big wheel))
+    (salary (Warbucks Oliver) 150000)
+    ; Eben Scrooge
+    (address (Scrooge Eben) (Weston (Shady Lane) 10))
+    (job (Scrooge Eben) (accounting chief accountant))
+    (salary (Scrooge Eben) 75000)
+    (supervisor (Scrooge Eben) (Warbucks Oliver))
+    ; Robert Cratchet
+    (address (Cratchet Robert) (Allston (N Harvard Street) 16))
+    (job (Cratchet Robert) (accounting scrivener))
+    (salary (Cratchet Robert) 18000)
+    (supervisor (Cratchet Robert) (Scrooge Eben))
+    ; DeWitt Aull
+    (address (Aull DeWitt) (Slumerville (Onion Square) 5))
+    (job (Aull DeWitt) (administration secretary))
+    (salary (Aull DeWitt) 25000)
+    (supervisor (Aull DeWitt) (Warbucks Oliver))
+    ; can-do-job assertions
+    (can-do-job (computer wizard) (computer programmer))
+    (can-do-job (computer wizard) (computer technician))
+    (can-do-job (computer programmer) (computer programmer trainee))
+    (can-do-job (administration secretary) (administration big wheel))
+    ; lives-near rule
+    (rule (lives-near ?person-1 ?person-2)
+          (and (address ?person-1 (?town . ?rest-1))
+               (address ?person-2 (?town . ?rest-2))
+               (not (same ?person-1 ?person-2))))
+    ; same rule
+    (rule (same ?x ?x))
+    ; wheel rule
+    (rule (wheel ?person)
+          (and (supervisor ?middle-manager ?person)
+               (supervisor ?x ?middle-manager)))
+    ; outranked-by rule
+    (rule (outranked-by ?staff-person ?boss)
+          (or (supervisor ?staff-person ?boss)
+              (and (supervisor ?staff-person ?middle-manager)
+                   (outranked-by ?middle-manager ?boss))))
+    ))
+;Value: microshaft-data-base
+
+1 ]=> #|
+ | Exercise 4.60
+ |
+ | By giving the query
+ |
+ | (lives-near ?person (Hacker Alyssa P))
+ |
+ | Alyssa P. Hacker is able to find people who live near her, with whom she can
+ | ride to work. On the other hand, when she tries to find all pairs of people
+ | who live near each other by querying
+ |
+ | (lives-near ?person-1 ?person-2)
+ |
+ | she notices that each pair of people who live near each other is listed
+ | twice; for example,
+ |
+ | (lives-near (Hacker Alyssa P) (Fect Cy D))
+ | (lives-near (Fect Cy D) (Hacker Alyssa P))
+ |
+ | Why does this happen? Is there a way to find a list of people who live near
+ | each other, in which each pair appears only once? Explain.
+ |#
+
+(initialize-data-base microshaft-data-base)
+;Value: done
+
+1 ]=> (query-driver-loop)
+
+;;; Query input:
+(lives-near ?person (Hacker Alyssa P))
+;;; Query results:
+(lives-near (fect cy d) (hacker alyssa p))
+
+;;; Query input:
+(lives-near ?person-1 ?person-2)
+;;; Query results:
+(lives-near (aull dewitt) (reasoner louis))
+(lives-near (aull dewitt) (bitdiddle ben))
+(lives-near (reasoner louis) (aull dewitt))
+(lives-near (reasoner louis) (bitdiddle ben))
+(lives-near (hacker alyssa p) (fect cy d))
+(lives-near (fect cy d) (hacker alyssa p))
+(lives-near (bitdiddle ben) (aull dewitt))
+(lives-near (bitdiddle ben) (reasoner louis))
+
+;;; Query input:
+#|
+ | Q1: Why does this happen?
+ |
+ | A1: Because each new frame has a unique set of consistent bindings among all
+ | variables. The frames
+ |
+ |   frame-1: ((?person-1 (Hacker Alyssa P)) (?person-2 (Fect Cy D)))
+ |   frame-2: ((?person-1 (Fect Cy D)) (?person-2 (Hacker Alyssa P)))
+ |
+ | are such frames. Every variable assignment is consistent with the
+ | 'lives-near' rule and is unique among all consistent frames.
+ |
+ | Q2: Is there a way to find a list of people who live near
+ | each other, in which each pair appears only once?
+ |
+ | A2: Yes, if we combine the 'lives-near' query with another query like
+ | 'lisp-value', we can restrict the ordering. See below.
+ |#
+
+(and (lives-near ?person-1 ?person-2)
+     (lisp-value (lambda (a b) (symbol<? (car a) (car b)))
+                 ?person-1
+                 ?person-2))
+;;; Query results:
+(and (lives-near (aull dewitt) (reasoner louis)) (lisp-value (lambda (a b) (symbol<? (car a) (car b))) (aull dewitt) (reasoner louis)))
+(and (lives-near (aull dewitt) (bitdiddle ben)) (lisp-value (lambda (a b) (symbol<? (car a) (car b))) (aull dewitt) (bitdiddle ben)))
+(and (lives-near (fect cy d) (hacker alyssa p)) (lisp-value (lambda (a b) (symbol<? (car a) (car b))) (fect cy d) (hacker alyssa p)))
+(and (lives-near (bitdiddle ben) (reasoner louis)) (lisp-value (lambda (a b) (symbol<? (car a) (car b))) (bitdiddle ben) (reasoner louis)))
+
+;;; Query input:
+End of input stream reached.
+Post proelium, praemium.
