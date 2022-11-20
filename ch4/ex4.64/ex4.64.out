@@ -840,27 +840,14 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  |
  | Answer
  |
- | Query                                    Unified Frame
- | #############################################################################
- | (outranked-by (Bitdiddle Ben) ?who)      ?staff-person-1 = (Bitdiddle Ben)
- |                                          ?boss-1 = ?who
- | (supervisor ?staff-person-1 ?boss-1)     ?staff-person-1 = (Bitdiddle Ben)
- | -> match successful                      ?boss-1 = ?who
- | (outranked-by ?middle-manager-1 ?boss-1) ?staff-person-1 = (Bitdiddle Ben)
- |                                          ?boss-1 = ?who
- |                                          ?staff-person-2 = ?middle-manager-1
- |                                          ?boss-2 = ?boss-1
- | (supervisor ?staff-person-2 ?boss-2)     ?staff-person-1 = (Bitdiddle Ben)
- | -> match failed                          ?boss-1 = ?who
- |                                          ?staff-person-2 = ?middle-manager-1
- |                                          ?boss-2 = ?boss-1
- | (outranked-by ?middle-manager-2 ?boss-2) ?staff-person-1 = (Bitdiddle Ben)
- |                                          ?boss-1 = ?who
- |                                          ?staff-person-2 = ?middle-manager-1
- |                                          ?boss-2 = ?boss-1
- |                                          ?staff-person-3 = ?middle-manager-2
- |                                          ?boss-3 = ?boss-2
- | ⟨Infinite Loop⟩                          ⟨Infinite Loop⟩
+ | Unified Query                                Match?
+ | #############################################################
+ | (outranked-by (Bitdiddle Ben) ?who)          No
+ | (supervisor (Bitdiddle Ben) ?who)            Yes
+ | (outranked-by ?middle-manager ?who)          No
+ | (supervisor ?middle-manager ?who)            No
+ | (outranked-by ?middle-manager ?who)          No
+ | ⟨Infinite Loop⟩                              ⟨Infinite Loop⟩
  |#
 
 (initialize-data-base microshaft-data-base)
