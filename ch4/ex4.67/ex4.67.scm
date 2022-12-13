@@ -28,7 +28,7 @@
                             frame
                             (lambda (v f)
                               (contract-question-mark v))))
-             (qeval q (singleton-stream '()))))
+             (qeval q (singleton-stream '()) '())))                 ; ***
            (query-driver-loop)))))
 
 ; instantiate procedure
@@ -49,48 +49,52 @@
  |#
 
 ; qeval procedure
-(define (qeval query frame-stream)
+(define (qeval query frame-stream hist)                             ; ***
   (let ((qproc (get (type query) 'qeval)))
     (if qproc
-        (qproc (contents query) frame-stream)
-        (simple-query query frame-stream))))
+        (qproc (contents query) frame-stream hist)
+        (simple-query query frame-stream hist))))
 
 ; simple-query procedure
-(define (simple-query query-pattern frame-stream)
+(define (simple-query query-pattern frame-stream hist)              ; ***
   (stream-flatmap
    (lambda (frame)
      (stream-append-delayed
       (find-assertions query-pattern frame)
-      (delay (apply-rules query-pattern frame))))
+      (delay (apply-rules query-pattern frame hist))))
    frame-stream))
 
 ; conjoin procedure
-(define (conjoin conjuncts frame-stream)
+(define (conjoin conjuncts frame-stream hist)                       ; ***
   (if (empty-conjunction? conjuncts)
       frame-stream
       (conjoin (rest-conjuncts conjuncts)
                (qeval (first-conjunct conjuncts)
-                      frame-stream))))
+                      frame-stream
+                      hist)
+               hist)))
 
 ;;(put 'and 'qeval conjoin)
 
 ; disjoin procedure
-(define (disjoin disjuncts frame-stream)
+(define (disjoin disjuncts frame-stream hist)                       ; ***
   (if (empty-disjunction? disjuncts)
       the-empty-stream
       (interleave-delayed
-       (qeval (first-disjunct disjuncts) frame-stream)
+       (qeval (first-disjunct disjuncts) frame-stream hist)
        (delay (disjoin (rest-disjuncts disjuncts)
-                       frame-stream)))))
+                       frame-stream
+                       hist)))))
 
 ;;(put 'or 'qeval disjoin)
 
 ; negate procedure
-(define (negate operands frame-stream)
+(define (negate operands frame-stream hist)                         ; ***
   (stream-flatmap
    (lambda (frame)
      (if (stream-null? (qeval (negated-query operands)
-                              (singleton-stream frame)))
+                              (singleton-stream frame)
+                              hist))
          (singleton-stream frame)
          the-empty-stream))
    frame-stream))
@@ -98,7 +102,7 @@
 ;;(put 'not 'qeval negate)
 
 ; lisp-value procedure
-(define (lisp-value call frame-stream)
+(define (lisp-value call frame-stream hist)                         ; ***
   (stream-flatmap
    (lambda (frame)
      (if (execute
@@ -118,8 +122,8 @@
   (apply (eval (predicate exp) user-initial-environment)
          (args exp)))
 
-; always-true procedure
-(define (always-true ignore frame-stream) frame-stream)
+; always-true procedure                                             ; ***
+(define (always-true ignore frame-stream hist) frame-stream)
 
 ;;(put 'always-true 'qeval always-true)
 
@@ -166,30 +170,33 @@
  |#
 
 ; apply-rules procedure
-(define (apply-rules pattern frame)
+(define (apply-rules pattern frame hist)                            ; ***
   (stream-flatmap (lambda (rule)
-                    (apply-a-rule rule pattern frame))
+                    (apply-a-rule rule pattern frame hist))
                   (fetch-rules pattern frame)))
 
 ; apply-a-rule procedure
-(define (apply-a-rule rule query-pattern query-frame)
+(define (apply-a-rule rule query-pattern query-frame hist)          ; ***
   (let ((clean-rule (rename-variables-in rule)))
-    (let ((unify-result
-           (unify-match query-pattern
-                        (conclusion clean-rule)
-                        query-frame)))
-      (if (eq? unify-result 'failed)
-          the-empty-stream
-          (begin (display-instance query-pattern unify-result)      ; ***
-                 (qeval (rule-body clean-rule)
-                        (singleton-stream unify-result)))))))
+    (let ((pattern query-pattern)
+          (conclusion (conclusion clean-rule))
+          (body (rule-body clean-rule))
+          (frame query-frame))
+      (let ((unify-result (unify-match pattern conclusion frame)))
+        (let ((norm-result (norm-inst pattern unify-result))
+              (frame-stream (singleton-stream unify-result)))
+          (cond ((eq? norm-result 'failed) the-empty-stream)
+                ((member norm-result hist)
+                 (newline)
+                 (display "⟨infinite loop⟩")
+                 the-empty-stream)
+                (else (qeval body frame-stream (cons norm-result hist)))))))))
 
-; display-instance procedure
-(define (display-instance exp frame)                                ; ***
-  (let ((unbound-var-handler (lambda (v f) (contract-question-mark v))))
-    (let ((instance (instantiate exp frame unbound-var-handler)))
-      (newline)
-      (display instance))))
+; norm-inst procedure
+(define (norm-inst exp unified-frame)                               ; ***
+  (let ((unbound-var-handler (lambda (v f) (norm-question-mark v))))
+    (cond ((eq? unified-frame 'failed) 'failed)
+          (else (instantiate exp unified-frame unbound-var-handler)))))
 
 ; rename-variables-in procedure
 (define (rename-variables-in rule)
@@ -491,6 +498,15 @@
                         (number->string (cadr variable)))
          (symbol->string (cadr variable))))))
 
+; norm-question-mark
+(define (norm-question-mark variable)                               ; ***
+  (string->symbol
+   (string-append "?"
+    (symbol->string
+     (if (number? (cadr variable))
+         (caddr variable)
+         (cadr variable))))))
+
 #|
  | §4.4.4.8 - Frames and bindings
  |#
@@ -745,28 +761,56 @@
  |
  | Strategy:
  | ---------
- | 1. Maintain a mutable list 'hist' of instantiated, unified rule conclusions:
  |
- |    (define hist '())
+ | 1. A "normalized instance" is an instantiation of a unified rule conclusion
+ |    such that all unbound variables have their rule application id removed.
  |
- | 2. Before evaluating a rule body, determine if the newly instantiated,
- |    unified rule conclusion 'inst' unifies with any other entry in 'hist'.
+ | 2. Have all procedures that evaluate or instantiate rules take an
+ |    additional argument 'hist' that is a list of normalized instances that
+ |    are currently being evaluated.
  |
- | 3. If so, then the query evaluator has entered an infinite deductive loop:
+ | 3. If the normalized instantiation 'norm-result' of a rule application is a
+ |    'member' of 'hist':
  |
- |    (begin (set! hist '()) ⟨indicate infinite loop⟩)
+ |    a. Then notify the user that we have entered an infinite deductive loop
+ |       and return 'the-empty-stream'.
  |
- | 4. If not, add push 'inst' onto 'hist':
+ |    b. Else evaluate the rule body with 'hist'ory '(cons norm-result hist)'
  |
- |    (set! hist (cons inst hist))
+ | 4. Note 'hist' grows and shrinks accordingly with each resulting frame.
  |
- | 5. Evaluate the rule body:
+ | Impl (; ***):
+ | -------------
  |
- |    (qeval (rule-body clean-rule) (singleton-stream unify-result))
+ | 1. Within 'query-driver-loop', 'qeval' first gets called with 'hist' of '().
  |
- | 6. After evaluating a rule body, pop 'inst' off of 'hist':
+ | 2. Within 'qeval', 'hist' gets passed to 'qproc' and 'simple-query'.
  |
- |    (set! hist (cdr hist))
+ | 3. 'Qproc' can have the following procedure values: 'conjoin', 'disjoin',
+ |    'negate', 'lisp-value', and 'always-true'.
+ |
+ | 4. Within 'simple-query', 'hist' gets passed to 'apply-rules'.
+ |
+ | 5. Within 'qproc', 'hist' gets passed to 'conjoin', 'disjoin', and 'qeval'.
+ |
+ | 6. Within 'apply-rules', 'hist' gets passed to 'apply-a-rule'.
+ |
+ | 7. Within 'apply-a-rule', the normalized instance value 'norm-result' is
+ |    computed. We then check '(member norm-result hist)':
+ |
+ |    a. True: '(begin (newline) (display "⟨infinite loop⟩") the-empty-list)'
+ |
+ |    b. False: '(qeval body frame-stream (cons norm-result hist))'
+ |
+ | 8. The mutual recursion of the query evaluator ensures that each frame has
+ |    the correct 'hist' value, regardless of which rule is being evaluated
+ |    from the database stream.
+ |
+ | 9. 'Norm-inst' makes a nomalized instance given a pattern and unified frame.
+ |
+ | 10. 'Norm-question-mark' removes the rule application id from a variable.
+ |
+ | 11. See the output below for a unit-test of deductive loop detection.
  |#
 
 (initialize-data-base microshaft-data-base)
