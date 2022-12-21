@@ -128,10 +128,10 @@
 ;;(put 'always-true 'qeval always-true)
 
 ; uniquely-asserted procedure
-(define (uniquely-asserted query frame-stream hist)         ; ***
+(define (uniquely-asserted contents frame-stream hist)                  ; ***
   (simple-stream-flatmap
    (lambda (frame)
-     (let ((temp-1 (negated-query query))
+     (let ((temp-1 (unique-query contents))
            (temp-2 (singleton-stream frame)))
        (let ((result (qeval temp-1 temp-2 hist)))
          (if (singleton-stream? result)
@@ -479,6 +479,9 @@
   (if (null? (cddr rule))
       '(always-true)
       (caddr rule)))
+
+; unique-query selector procedure                                   ; ***
+(define (unique-query exps) (car exps))
 
 ; query-syntax-process procedure
 (define (query-syntax-process exp) (map-over-symbols expand-question-mark exp))

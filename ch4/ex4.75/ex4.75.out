@@ -150,10 +150,10 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 1 ]=> ;;(put 'always-true 'qeval always-true)
 
 ; uniquely-asserted procedure
-(define (uniquely-asserted query frame-stream hist)         ; ***
+(define (uniquely-asserted contents frame-stream hist)                  ; ***
   (simple-stream-flatmap
    (lambda (frame)
-     (let ((temp-1 (negated-query query))
+     (let ((temp-1 (unique-query contents))
            (temp-2 (singleton-stream frame)))
        (let ((result (qeval temp-1 temp-2 hist)))
          (if (singleton-stream? result)
@@ -554,6 +554,10 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
       '(always-true)
       (caddr rule)))
 ;Value: rule-body
+
+1 ]=> ; unique-query selector procedure                                   ; ***
+(define (unique-query exps) (car exps))
+;Value: unique-query
 
 1 ]=> ; query-syntax-process procedure
 (define (query-syntax-process exp) (map-over-symbols expand-question-mark exp))
@@ -1068,4 +1072,4 @@ Assertion added to data base.
 
 ;;; Query input:
 End of input stream reached.
-Pulvis et umbra sumus.
+..#]^@^@^@ NO CARRIER
