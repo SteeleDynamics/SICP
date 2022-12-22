@@ -150,7 +150,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 1 ]=> ;;(put 'always-true 'qeval always-true)
 
 ; uniquely-asserted procedure
-(define (uniquely-asserted contents frame-stream hist)                  ; ***
+(define (uniquely-asserted contents frame-stream hist)              ; ***
   (simple-stream-flatmap
    (lambda (frame)
      (let ((temp-1 (unique-query contents))
@@ -1072,4 +1072,4 @@ Assertion added to data base.
 
 ;;; Query input:
 End of input stream reached.
-..#]^@^@^@ NO CARRIER
+Happy happy joy joy!

@@ -128,7 +128,7 @@
 ;;(put 'always-true 'qeval always-true)
 
 ; uniquely-asserted procedure
-(define (uniquely-asserted contents frame-stream hist)                  ; ***
+(define (uniquely-asserted contents frame-stream hist)              ; ***
   (simple-stream-flatmap
    (lambda (frame)
      (let ((temp-1 (unique-query contents))
