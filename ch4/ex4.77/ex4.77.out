@@ -902,29 +902,37 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  | operation possible. We could wait to perform filtering until all other
  | operations have been performed. However, for efficiency's sake, we
  | would like to perform filtering as soon as possible so as to cut down
- | on the number of intermediate frames generated.
+ | on the number of intermediate frames
  |
  | Tasks:
  |
- | 1. Create a new special form 'filter' such that 'not' and 'lisp-value'
- |    are derived queries that use 'filter'.
+ | 1. Augment ⟨frame⟩ -> (cons ⟨binding-list⟩ ⟨query⟩)
+ |    a. ⟨binding⟩ -> same as before
+ |    b. ⟨query⟩ -> same as before
+ |    c. (define the-empty-query '())
+ |    d. (define (query-null? query) (null? query))
  |
- | 2. Add 'filter' to 'operation-table', dispatch to 'filter' procedure.
+ | 2. Augment ⟨frame⟩ selector and constructor procedures.
+ |    a. 'make-binding'
+ |    b. 'binding-variable'
+ |    c. 'binding-value'
+ |    d. 'binding-in-frame'
+ |    e. 'extend'
  |
- | 3. Augment 'negate' and 'lisp-value' procedures to create derived
- |    'filter' queries. Then use 'qeval' to evaluate those derived
- |    queries.
+ | 3. Implement '(unbound-var? ⟨binding-list⟩ ⟨query⟩)' procedure.
+ |    a. Uses a locally-defined 'tree-walk' procedure.
  |
- | 4. Append the '(delay (qeval ⟨filter query⟩ frame-stream hist))'
- |    "promise" to all frames resulting from ⟨filter query⟩.
+ | 4. Augment 'not', 'lisp-value', 'uniquely-asserted' such that:
+ |    a. Checks '(unbound-var? ⟨binding-list⟩ ⟨query⟩)'
+ |    b. If false, evaluate ⟨query⟩ same as before (OK)
+ |    c. If true, construct ⟨frame⟩ with non-empty query and eval
+ |       (singleton-stream ⟨frame⟩)
  |
- | 5. Implement '(unbound-var? exp frame)' procedure (uses a locally
- |    defined 'tree-walk' procedure).
- |
- | 6. If the value '(unbound-var? exp frame)' is false, 'force' the
- |    filter promise.
- |
- | 7. Implement check of #6 in 'qeval' procedure.
+ | 5. Put "delayed" query check in 'qeval'.
+ |    a. Checks '(unbound-var? ⟨binding-list⟩ ⟨uneval-query⟩)'
+ |    b. If false, evaluate ⟨uneval-query⟩, then use result to evaluate
+ |       current ⟨query⟩.
+ |    c. Tf true, evaluate current ⟨query⟩ (to extend ⟨frame⟩)
  |#
 
 (initialize-data-base microshaft-data-base)
@@ -1074,4 +1082,4 @@ Assertion added to data base.
 
 ;;; Query input:
 End of input stream reached.
-..#]^@^@^@ NO CARRIER
+Moriturus te salutat.
