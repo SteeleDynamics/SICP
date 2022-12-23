@@ -140,7 +140,7 @@
    frame-stream))
 
 ; singleton-stream? predicate procedure
-(define (singleton-stream? stream)
+(define (singleton-stream? stream)                                  ; ***
   (and (not (stream-null? stream))
        (stream-null? (stream-cdr stream))))
 
@@ -162,7 +162,10 @@
          (pattern-match query-pat assertion query-frame)))
     (if (eq? match-result 'failed)
         the-empty-stream
-        (singleton-stream match-result))))
+        (begin (newline)                                            ; ***
+               (display "frame: ")                                  ; ***
+               (display match-result)                               ; ***
+               (singleton-stream match-result)))))
 
 ; pattern-match procedure
 (define (pattern-match pat dat frame)
@@ -209,7 +212,11 @@
                  (newline)
                  (display "⟨infinite loop⟩")
                  the-empty-stream)
-                (else (qeval body frame-stream (cons norm-result hist)))))))))
+                (else
+                 (newline)                                          ; ***
+                 (display "frame: ")                                ; ***
+                 (display unify-result)                             ; ***
+                 (qeval body frame-stream (cons norm-result hist)))))))))
 
 ; norm-inst procedure
 (define (norm-inst exp unified-frame)                               ; ***
@@ -581,6 +588,13 @@
    (cons (make-binding variable value)
          (frame-binding-list frame))
    (frame-query frame)))
+
+; unbound-var? predicate procedure
+(define (unbound-var? frame)                                        ; ***
+  (let ((unbound-var-handler (lambda (v f) false))
+        (query (frame-query frame)))
+    (let ((result (instantiate query frame unbound-var-handler)))
+      (not result))))
 
 #|
  | From §4.1
