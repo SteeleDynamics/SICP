@@ -28,7 +28,7 @@
                             frame
                             (lambda (v f)
                               (contract-question-mark v))))
-             (qeval q (singleton-stream '()) '())))                 ; ***
+             (qeval q (singleton-stream the-empty-frame) '())))     ; ***
            (query-driver-loop)))))
 
 ; instantiate procedure
@@ -553,12 +553,34 @@
 ; binding-value selector procedure
 (define (binding-value binding) (cdr binding))
 
+; the-empty-query definition                                        ; ***
+(define the-empty-query '())
+
+; query-null? predicate procedure                                   ; ***
+(define (query-null? query) (null? query))
+
+; the-empty-frame definition                                        ; ***
+(define the-empty-frame (cons '() the-empty-query))
+
+; cons-frame constructor procedure                                  ; ***
+(define (cons-frame binding-list query) (cons binding-list query))
+
+; frame-binding-list selector procedure                             ; ***
+(define (frame-binding-list frame) (car frame))
+
+; frame-query selector procedure                                    ; ***
+(define (frame-query frame) (cdr frame))
+
 ; binding-in-frame procedure
-(define (binding-in-frame variable frame) (assoc variable frame))
+(define (binding-in-frame variable frame)                           ; ***
+  (assoc variable (frame-binding-list frame)))
 
 ; extend procedure
-(define (extend variable value frame)
-  (cons (make-binding variable value) frame))
+(define (extend variable value frame)                               ; ***
+  (cons-frame
+   (cons (make-binding variable value)
+         (frame-binding-list frame))
+   (frame-query frame)))
 
 #|
  | From §4.1
@@ -801,18 +823,18 @@
  |
  | Tasks:
  |
- | 1. Augment ⟨frame⟩ -> (cons ⟨binding-list⟩ ⟨query⟩)
- |    a. ⟨binding⟩ -> same as before
- |    b. ⟨query⟩ -> same as before
- |    c. (define the-empty-query '())
- |    d. (define (query-null? query) (null? query))
+ | 1. Augment ⟨frame⟩ -> (cons ⟨binding-list⟩ ⟨query⟩) (*DONE*)
+ |    a. ⟨binding⟩ -> same as before (*DONE*)
+ |    b. ⟨query⟩ -> same as before (*DONE*)
+ |    c. (define the-empty-query '()) (*DONE*)
+ |    d. (define (query-null? query) (null? query)) (*DONE*)
  |
- | 2. Augment ⟨frame⟩ selector and constructor procedures.
- |    a. 'make-binding'
- |    b. 'binding-variable'
- |    c. 'binding-value'
- |    d. 'binding-in-frame'
- |    e. 'extend'
+ | 2. Augment ⟨frame⟩ selector and constructor procedures. (*DONE*)
+ |    a. 'make-binding' (*DONE*)
+ |    b. 'binding-variable' (*DONE*)
+ |    c. 'binding-value' (*DONE*)
+ |    d. 'binding-in-frame' (*DONE*)
+ |    e. 'extend' (*DONE*)
  |
  | 3. Implement '(unbound-var? ⟨binding-list⟩ ⟨query⟩)' procedure.
  |    a. Uses a locally-defined 'tree-walk' procedure.
