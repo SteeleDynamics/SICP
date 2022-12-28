@@ -844,10 +844,14 @@
  | 3. Implement '(unbound-var? ⟨binding-list⟩ ⟨query⟩)' procedure. (*DONE*)
  |    a. Uses a locally-defined 'tree-walk' procedure. (*DONE*)
  |
- | 4. Augment 'not' (*DONE*), 'lisp-value', 'uniquely-asserted' such that:
- |    a. Checks '(unbound-var? ⟨binding-list⟩ ⟨query⟩)'
- |    b. If true, return value '(singleton-stream ⟨frame⟩)'
- |    c. If false, evaluate ⟨query⟩ same as before
+ | 4. Augment 'negate', 'lisp-value', 'uniquely-asserted' such that:
+ |    a. An unbound variable results in the containing compound query
+ |       moving the offending simple query to the end of the operand
+ |       queries.
+ |    b. Compound queries 'and' and 'or' are the only queries that have
+ |       multiple queries that can be reordered.
+ |    c. If there is no containing compound query, then we should return
+ |       value 'the-empty-stream'.
  |
  | 5. 'Cons' original query to frame to keep track of all variables. (*DONE*)
  |    a. Use 'cons-frame' constructor proc in 'qeval' proc. (*DONE*)
