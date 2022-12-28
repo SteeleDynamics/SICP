@@ -28,7 +28,7 @@
                             frame
                             (lambda (v f)
                               (contract-question-mark v))))
-             (qeval q (singleton-stream the-empty-frame) '())))     ; ***
+             (qeval q (singleton-stream (cons-frame '() q)) '())))  ; ***
            (query-driver-loop)))))
 
 ; instantiate procedure
@@ -92,11 +92,13 @@
 (define (negate operands frame-stream hist)                         ; ***
   (simple-stream-flatmap                                            ; ***
    (lambda (frame)
-     (if (stream-null? (qeval (negated-query operands)
-                              (singleton-stream frame)
-                              hist))
-         (singleton-stream frame)
-         the-empty-stream))
+     (if (unbound-var? frame)                                       ; ***
+         (singleton-stream frame)                                   ; ***
+         (if (stream-null? (qeval (negated-query operands)
+                                  (singleton-stream frame)
+                                  hist))
+             (singleton-stream frame)
+             the-empty-stream)))
    frame-stream))
 
 ;;(put 'not 'qeval negate)
@@ -162,10 +164,7 @@
          (pattern-match query-pat assertion query-frame)))
     (if (eq? match-result 'failed)
         the-empty-stream
-        (begin (newline)                                            ; ***
-               (display "frame: ")                                  ; ***
-               (display match-result)                               ; ***
-               (singleton-stream match-result)))))
+        (singleton-stream match-result))))
 
 ; pattern-match procedure
 (define (pattern-match pat dat frame)
@@ -213,9 +212,6 @@
                  (display "⟨infinite loop⟩")
                  the-empty-stream)
                 (else
-                 (newline)                                          ; ***
-                 (display "frame: ")                                ; ***
-                 (display unify-result)                             ; ***
                  (qeval body frame-stream (cons norm-result hist)))))))))
 
 ; norm-inst procedure
@@ -591,10 +587,13 @@
 
 ; unbound-var? predicate procedure
 (define (unbound-var? frame)                                        ; ***
-  (let ((unbound-var-handler (lambda (v f) false))
-        (query (frame-query frame)))
-    (let ((result (instantiate query frame unbound-var-handler)))
-      (not result))))
+  (define (tree-walk exp)
+    (cond ((var? exp)
+           (not (binding-in-frame exp frame)))
+          ((pair? exp)
+           (or (tree-walk (car exp)) (tree-walk (cdr exp))))
+          (else false)))
+  (tree-walk (frame-query frame)))
 
 #|
  | From §4.1
@@ -850,20 +849,16 @@
  |    d. 'binding-in-frame' (*DONE*)
  |    e. 'extend' (*DONE*)
  |
- | 3. Implement '(unbound-var? ⟨binding-list⟩ ⟨query⟩)' procedure.
- |    a. Uses a locally-defined 'tree-walk' procedure.
+ | 3. Implement '(unbound-var? ⟨binding-list⟩ ⟨query⟩)' procedure. (*DONE*)
+ |    a. Uses a locally-defined 'tree-walk' procedure. (*DONE*)
  |
- | 4. Augment 'not', 'lisp-value', 'uniquely-asserted' such that:
+ | 4. Augment 'not' (*DONE*), 'lisp-value', 'uniquely-asserted' such that:
  |    a. Checks '(unbound-var? ⟨binding-list⟩ ⟨query⟩)'
- |    b. If false, evaluate ⟨query⟩ same as before (OK)
- |    c. If true, construct ⟨frame⟩ with non-empty query and eval
- |       (singleton-stream ⟨frame⟩)
+ |    b. If true, return value '(singleton-stream ⟨frame⟩)'
+ |    c. If false, evaluate ⟨query⟩ same as before
  |
- | 5. Put "delayed" query check in 'qeval'.
- |    a. Checks '(unbound-var? ⟨binding-list⟩ ⟨uneval-query⟩)'
- |    b. If false, evaluate ⟨uneval-query⟩, then use result to evaluate
- |       current ⟨query⟩.
- |    c. Tf true, evaluate current ⟨query⟩ (to extend ⟨frame⟩)
+ | 5. 'Cons' original query to frame to keep track of all variables. (*DONE*)
+ |    a. Use 'cons-frame' constructor proc in 'qeval' proc. (*DONE*)
  |#
 
 (initialize-data-base microshaft-data-base)
