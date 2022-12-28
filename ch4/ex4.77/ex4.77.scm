@@ -93,7 +93,7 @@
   (simple-stream-flatmap                                            ; ***
    (lambda (frame)
      (if (unbound-var? frame)                                       ; ***
-         (singleton-stream frame)                                   ; ***
+         (singleton-stream frame) ;TODO: fix this...                ; ***
          (if (stream-null? (qeval (negated-query operands)
                                   (singleton-stream frame)
                                   hist))
@@ -556,15 +556,6 @@
 ; binding-value selector procedure
 (define (binding-value binding) (cdr binding))
 
-; the-empty-query definition                                        ; ***
-(define the-empty-query '())
-
-; query-null? predicate procedure                                   ; ***
-(define (query-null? query) (null? query))
-
-; the-empty-frame definition                                        ; ***
-(define the-empty-frame (cons '() the-empty-query))
-
 ; cons-frame constructor procedure                                  ; ***
 (define (cons-frame binding-list query) (cons binding-list query))
 
@@ -839,8 +830,6 @@
  | 1. Augment ⟨frame⟩ -> (cons ⟨binding-list⟩ ⟨query⟩) (*DONE*)
  |    a. ⟨binding⟩ -> same as before (*DONE*)
  |    b. ⟨query⟩ -> same as before (*DONE*)
- |    c. (define the-empty-query '()) (*DONE*)
- |    d. (define (query-null? query) (null? query)) (*DONE*)
  |
  | 2. Augment ⟨frame⟩ selector and constructor procedures. (*DONE*)
  |    a. 'make-binding' (*DONE*)

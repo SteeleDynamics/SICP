@@ -111,7 +111,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
   (simple-stream-flatmap                                            ; ***
    (lambda (frame)
      (if (unbound-var? frame)                                       ; ***
-         (singleton-stream frame)                                   ; ***
+         (singleton-stream frame) ;TODO: fix this...                ; ***
          (if (stream-null? (qeval (negated-query operands)
                                   (singleton-stream frame)
                                   hist))
@@ -645,18 +645,6 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 (define (binding-value binding) (cdr binding))
 ;Value: binding-value
 
-1 ]=> ; the-empty-query definition                                        ; ***
-(define the-empty-query '())
-;Value: the-empty-query
-
-1 ]=> ; query-null? predicate procedure                                   ; ***
-(define (query-null? query) (null? query))
-;Value: query-null?
-
-1 ]=> ; the-empty-frame definition                                        ; ***
-(define the-empty-frame (cons '() the-empty-query))
-;Value: the-empty-frame
-
 1 ]=> ; cons-frame constructor procedure                                  ; ***
 (define (cons-frame binding-list query) (cons binding-list query))
 ;Value: cons-frame
@@ -951,8 +939,6 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  | 1. Augment ⟨frame⟩ -> (cons ⟨binding-list⟩ ⟨query⟩) (*DONE*)
  |    a. ⟨binding⟩ -> same as before (*DONE*)
  |    b. ⟨query⟩ -> same as before (*DONE*)
- |    c. (define the-empty-query '()) (*DONE*)
- |    d. (define (query-null? query) (null? query)) (*DONE*)
  |
  | 2. Augment ⟨frame⟩ selector and constructor procedures. (*DONE*)
  |    a. 'make-binding' (*DONE*)
@@ -1128,4 +1114,4 @@ Assertion added to data base.
 
 ;;; Query input:
 End of input stream reached.
-Post proelium, praemium.
+Pulvis et umbra sumus.
