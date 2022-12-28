@@ -580,7 +580,10 @@
 (define (unbound-var? frame)                                        ; ***
   (define (tree-walk exp)
     (cond ((var? exp)
-           (not (binding-in-frame exp frame)))
+           (let ((binding (binding-in-frame exp frame)))
+             (if binding
+                 (tree-walk (binding-value binding))
+                 true)))
           ((pair? exp)
            (or (tree-walk (car exp)) (tree-walk (cdr exp))))
           (else false)))
