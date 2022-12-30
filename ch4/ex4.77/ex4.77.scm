@@ -50,9 +50,11 @@
 
 ; qeval procedure
 (define (qeval query frame-stream hist)                             ; ***
-  (let ((qproc (get (type query) 'qeval)))
+  (let ((qproc (get (type query) 'qeval))
+        (sc (lambda (x) x))                                         ; ***
+        (fc (lambda () the-empty-stream)))                          ; ***
     (if qproc
-        (qproc (contents query) frame-stream hist)
+        (qproc (contents query) frame-stream hist sc fc)            ; ***
         (simple-query query frame-stream hist))))
 
 ; simple-query procedure
@@ -65,31 +67,35 @@
    frame-stream))
 
 ; conjoin procedure
-(define (conjoin conjuncts frame-stream hist)                       ; ***
+(define (conjoin conjuncts frame-stream hist sc fc)                 ; ***
   (if (empty-conjunction? conjuncts)
       frame-stream
       (conjoin (rest-conjuncts conjuncts)
                (qeval (first-conjunct conjuncts)
                       frame-stream
                       hist)
-               hist)))
+               hist
+               sc
+               fc)))
 
 ;;(put 'and 'qeval conjoin)
 
 ; disjoin procedure
-(define (disjoin disjuncts frame-stream hist)                       ; ***
+(define (disjoin disjuncts frame-stream hist sc fc)                 ; ***
   (if (empty-disjunction? disjuncts)
       the-empty-stream
       (interleave-delayed
        (qeval (first-disjunct disjuncts) frame-stream hist)
        (delay (disjoin (rest-disjuncts disjuncts)
                        frame-stream
-                       hist)))))
+                       hist
+                       sc
+                       fc)))))
 
 ;;(put 'or 'qeval disjoin)
 
 ; negate procedure
-(define (negate operands frame-stream hist)                         ; ***
+(define (negate operands frame-stream hist sc fc)                   ; ***
   (simple-stream-flatmap                                            ; ***
    (lambda (frame)
      (if (unbound-var? frame)                                       ; ***
@@ -104,7 +110,7 @@
 ;;(put 'not 'qeval negate)
 
 ; lisp-value procedure
-(define (lisp-value call frame-stream hist)                         ; ***
+(define (lisp-value call frame-stream hist sc fc)                   ; ***
   (simple-stream-flatmap                                            ; ***
    (lambda (frame)
      (if (execute
@@ -125,12 +131,12 @@
          (args exp)))
 
 ; always-true procedure                                             ; ***
-(define (always-true ignore frame-stream hist) frame-stream)
+(define (always-true ignore frame-stream hist sc fc) (sc frame-stream))
 
 ;;(put 'always-true 'qeval always-true)
 
 ; uniquely-asserted procedure
-(define (uniquely-asserted contents frame-stream hist)              ; ***
+(define (uniquely-asserted contents frame-stream hist sc fc)        ; ***
   (simple-stream-flatmap
    (lambda (frame)
      (let ((temp-1 (unique-query contents))
