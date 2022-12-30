@@ -11,25 +11,28 @@
 ; query-driver-loop procedure
 (define (query-driver-loop)
   (prompt-for-input input-prompt)
-  (let ((q (query-syntax-process (read))))
-    (cond ((assertion-to-be-added? q)
-           (add-rule-or-assertion! (add-assertion-body q))
-           (newline)
-           (display "Assertion added to data base.")
-           (query-driver-loop))
-          (else
-           (newline)
-           (display output-prompt)
-           ;; [extra newline at end] (announce-output output-prompt)
-           (display-stream
-            (stream-map
-             (lambda (frame)
-               (instantiate q
-                            frame
-                            (lambda (v f)
-                              (contract-question-mark v))))
-             (qeval q (singleton-stream (cons-frame '() q)) '())))  ; ***
-           (query-driver-loop)))))
+  (let ((q (query-syntax-process (read)))
+        (sc (lambda (x) x))
+        (fc (lambda () the-empty-stream)))
+    (let ((frame-stream (singleton-stream (cons-frame '() q))))
+      (cond ((assertion-to-be-added? q)
+             (add-rule-or-assertion! (add-assertion-body q))
+             (newline)
+             (display "Assertion added to data base.")
+             (query-driver-loop))
+            (else
+             (newline)
+             (display output-prompt)
+             ;; [extra newline at end] (announce-output output-prompt)
+             (display-stream
+              (stream-map
+               (lambda (frame)
+                 (instantiate q
+                              frame
+                              (lambda (v f)
+                                (contract-question-mark v))))
+               (qeval q frame-stream '() sc fc)))                   ; ***
+             (query-driver-loop))))))
 
 ; instantiate procedure
 (define (instantiate exp frame unbound-var-handler)
@@ -49,34 +52,29 @@
  |#
 
 ; qeval procedure
-(define (qeval query frame-stream hist)                             ; ***
-  (let ((qproc (get (type query) 'qeval))
-        (sc (lambda (x) x))                                         ; ***
-        (fc (lambda () the-empty-stream)))                          ; ***
+(define (qeval query frame-stream hist sc fc)                       ; ***
+  (let ((qproc (get (type query) 'qeval)))
     (if qproc
         (qproc (contents query) frame-stream hist sc fc)            ; ***
-        (simple-query query frame-stream hist))))
+        (simple-query query frame-stream hist sc fc))))
 
 ; simple-query procedure
-(define (simple-query query-pattern frame-stream hist)              ; ***
+(define (simple-query query-pattern frame-stream hist sc fc)        ; ***
   (stream-flatmap
    (lambda (frame)
      (stream-append-delayed
       (find-assertions query-pattern frame)
-      (delay (apply-rules query-pattern frame hist))))
+      (delay (apply-rules query-pattern frame hist sc fc))))        ; ***
    frame-stream))
 
 ; conjoin procedure
 (define (conjoin conjuncts frame-stream hist sc fc)                 ; ***
   (if (empty-conjunction? conjuncts)
       frame-stream
-      (conjoin (rest-conjuncts conjuncts)
-               (qeval (first-conjunct conjuncts)
-                      frame-stream
-                      hist)
-               hist
-               sc
-               fc)))
+      (let ((first (first-conjunct conjuncts))
+            (rest (rest-conjuncts conjuncts)))
+        (let ((result (qeval first frame-stream hist sc fc)))       ; !!!
+          (conjoin rest result hist sc fc)))))
 
 ;;(put 'and 'qeval conjoin)
 
@@ -84,13 +82,11 @@
 (define (disjoin disjuncts frame-stream hist sc fc)                 ; ***
   (if (empty-disjunction? disjuncts)
       the-empty-stream
-      (interleave-delayed
-       (qeval (first-disjunct disjuncts) frame-stream hist)
-       (delay (disjoin (rest-disjuncts disjuncts)
-                       frame-stream
-                       hist
-                       sc
-                       fc)))))
+      (let ((first (first-disjunct disjuncts))
+            (rest (rest-disjuncts disjuncts)))
+        (interleave-delayed
+         (qeval first frame-stream hist sc fc)                      ; !!!
+         (delay (disjoin rest frame-stream hist sc fc))))))
 
 ;;(put 'or 'qeval disjoin)
 
@@ -102,9 +98,11 @@
          (singleton-stream frame) ;TODO: fix this...                ; ***
          (if (stream-null? (qeval (negated-query operands)
                                   (singleton-stream frame)
-                                  hist))
-             (singleton-stream frame)
-             the-empty-stream)))
+                                  hist
+                                  sc
+                                  fc))
+             (sc (singleton-stream frame))                          ; ***
+             (sc the-empty-stream))))                               ; ***
    frame-stream))
 
 ;;(put 'not 'qeval negate)
@@ -141,7 +139,7 @@
    (lambda (frame)
      (let ((temp-1 (unique-query contents))
            (temp-2 (singleton-stream frame)))
-       (let ((result (qeval temp-1 temp-2 hist)))
+       (let ((result (qeval temp-1 temp-2 hist sc fc)))             ; !!!
          (if (singleton-stream? result)
              result
              the-empty-stream))))
@@ -197,13 +195,13 @@
  |#
 
 ; apply-rules procedure
-(define (apply-rules pattern frame hist)                            ; ***
+(define (apply-rules pattern frame hist sc fc)                      ; ***
   (stream-flatmap (lambda (rule)
-                    (apply-a-rule rule pattern frame hist))
+                    (apply-a-rule rule pattern frame hist sc fc))
                   (fetch-rules pattern frame)))
 
 ; apply-a-rule procedure
-(define (apply-a-rule rule query-pattern query-frame hist)          ; ***
+(define (apply-a-rule rule query-pattern query-frame hist sc fc)    ; ***
   (let ((clean-rule (rename-variables-in rule)))
     (let ((pattern query-pattern)
           (conclusion (conclusion clean-rule))
@@ -218,7 +216,7 @@
                  (display "⟨infinite loop⟩")
                  the-empty-stream)
                 (else
-                 (qeval body frame-stream (cons norm-result hist)))))))))
+                 (qeval body frame-stream (cons norm-result hist) sc fc))))))))
 
 ; norm-inst procedure
 (define (norm-inst exp unified-frame)                               ; ***
