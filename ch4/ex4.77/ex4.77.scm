@@ -12,7 +12,7 @@
 (define (query-driver-loop)
   (prompt-for-input input-prompt)
   (let ((q (query-syntax-process (read))))
-    (let ((frame-stream (singleton-stream (cons-frame '() q))))
+    (let ((frame-stream (singleton-stream (make-frame '() '()))))
       (cond ((assertion-to-be-added? q)
              (add-rule-or-assertion! (add-assertion-body q))
              (newline)
@@ -554,38 +554,62 @@
 ; binding-value selector procedure
 (define (binding-value binding) (cdr binding))
 
-; cons-frame constructor procedure                                  ; ***
-(define (cons-frame binding-list query) (cons binding-list query))
+; extend-bindings procedure                                         ; ***
+(define (extend-bindings binding bindings) (cons binding bindings))
 
-; frame-binding-list selector procedure                             ; ***
-(define (frame-binding-list frame) (car frame))
+; mk-promise constructor procedure                                  ; ***
+(define (mk-promise exp pred) (cons exp pred))
 
-; frame-query selector procedure                                    ; ***
-(define (frame-query frame) (cdr frame))
+; promise-exp selector procedure                                    ; ***
+(define (promise-exp promise) (car exp))
+
+; promise-pred selector procedure                                   ; ***
+(define (promise-pred promise) (cdr exp))
+
+; extend-promises procedure                                         ; ***
+(define (extend-promises promise promises) (cons promise promises))
+
+; empty-promise? predicate procedure                                ; ***
+(define (empty-promise? promises) (null? promises))
+
+; first-promise selector procedure                                  ; ***
+(define (first-promise promises) (car promises))
+
+; rest-promises selector procedure                                  ; ***
+(define (rest-promises promises) (cdr promises))
+
+; make-frame constructor procedure                                  ; ***
+(define (make-frame bindings promises) (cons bindings promises))
+
+; frame-bindings selector procedure                                 ; ***
+(define (frame-bindings frame) (car frame))
+
+; frame-promises selector procedure                                 ; ***
+(define (frame-promises frame) (cdr frame))
 
 ; binding-in-frame procedure
 (define (binding-in-frame variable frame)                           ; ***
-  (assoc variable (frame-binding-list frame)))
+  (assoc variable (frame-bindings frame)))
 
 ; extend procedure
 (define (extend variable value frame)                               ; ***
-  (cons-frame
-   (cons (make-binding variable value)
-         (frame-binding-list frame))
-   (frame-query frame)))
+  ; TODO: Extend bindings then attempt to evaluate promises
+  (make-frame
+   (extend-bindings (make-binding variable value)
+                    (frame-bindings frame))
+   (frame-promises frame)))
 
 ; unbound-var? predicate procedure
-(define (unbound-var? frame)                                        ; ***
-  (define (tree-walk exp)
-    (cond ((var? exp)
-           (let ((binding (binding-in-frame exp frame)))
-             (if binding
-                 (tree-walk (binding-value binding))
-                 true)))
-          ((pair? exp)
-           (or (tree-walk (car exp)) (tree-walk (cdr exp))))
-          (else false)))
-  (tree-walk (frame-query frame)))
+(define (unbound-var? exp frame)                                    ; ***
+  (cond ((var? exp)
+         (let ((binding (binding-in-frame exp frame)))
+           (if binding
+               (unbound-var? (binding-value binding) frame)
+               true)))
+        ((pair? exp)
+         (or (unbound-var? (car exp) frame)
+             (unbound-var? (cdr exp) frame)))
+        (else false)))
 
 #|
  | From §4.1
@@ -828,27 +852,34 @@
  |
  | Tasks:
  |
- | 1. Augment ⟨frame⟩ -> (cons ⟨binding-list⟩ ⟨promise⟩) (*IN PROGRESS*)
- |    a. ⟨binding⟩ -> same as before (*IN PROGRESS*)
- |    b. ⟨promise⟩ -> (cons ⟨query⟩ ⟨predicate⟩) (*IN PROGRESS*)
- |    c. ⟨query⟩ -> same as before (*IN PROGRESS*)
- |    d. ⟨predicate⟩ -> pred proc in 'simple-stream-flatmap' (*IN PROGRESS*)
+ | 1. Implement ⟨promise⟩ selector and constructor procedures. (*DONE*)
+ |    a. 'mk-promise' (*DONE*)
+ |    b. 'promise-exp' (*DONE*)
+ |    c. 'promise-pred' (*DONE*)
+ |    d. 'extend-promises' (*DONE*)
+ |    e. 'empty-promise?' (*DONE*)
+ |    f. 'first-promise' (*DONE*)
+ |    g. 'rest-promises' (*DONE*)
  |
- | 2. Augment ⟨frame⟩ selector and constructor procedures. (*IN PROGRESS*)
- |    a. 'make-binding' (*IN PROGRESS*)
- |    b. 'binding-variable' (*IN PROGRESS*)
- |    c. 'binding-value' (*IN PROGRESS*)
- |    d. 'binding-in-frame' (*IN PROGRESS*)
+ | 2. Augment ⟨binding⟩ selector and constructor procedures. (*DONE*)
+ |    a. 'make-binding' (*DONE*)
+ |    b. 'binding-variable' (*DONE*)
+ |    c. 'binding-value' (*DONE*)
+ |    d. 'extend-bindings' (*DONE*)
+ |
+ | 3. Implement '(unbound-var? ⟨exp⟩ ⟨frame⟩)' procedure. (*DONE*)
+ |
+ | 4. Implement 'eval-promises' procedure. (*NOT STARTED*)
+ | 
+ | 5. Augment ⟨frame⟩ selector and constructor procedures. (*IN PROGRESS*)
+ |    a. 'make-frame' (*DONE*)
+ |    b. 'frame-bindings' (*DONE*)
+ |    c. 'frame-promises' (*DONE*)
+ |    d. 'binding-in-frame' (*DONE*)
  |    e. 'extend' (*IN PROGRESS*)
  |
- | 3. Implement '(unbound-var? ⟨binding-list⟩ ⟨query⟩)' procedure. (*DONE*)
- |    a. Uses a locally-defined 'tree-walk' procedure. (*DONE*)
- |
- | 4. Augment 'negate', 'lisp-value', 'uniquely-asserted' such that:
+ | 6. Augment 'negate', 'lisp-value', 'uniquely-asserted' such that:
  |    ⟨??⟩
- |
- | 5. 'Cons' orig query to frame to keep track of all vars. (*IN PROGRESS*)
- |    a. Use 'cons-frame' constructor proc in 'qeval' proc. (*IN PROGRESS*)
  |#
 
 (initialize-data-base microshaft-data-base)
