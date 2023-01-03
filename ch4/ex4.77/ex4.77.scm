@@ -12,7 +12,7 @@
 (define (query-driver-loop)
   (prompt-for-input input-prompt)
   (let ((q (query-syntax-process (read))))
-    (let ((frame-stream (singleton-stream (make-frame '() '()))))
+    (let ((stream (singleton-stream (make-frame '() '()))))
       (cond ((assertion-to-be-added? q)
              (add-rule-or-assertion! (add-assertion-body q))
              (newline)
@@ -29,7 +29,7 @@
                               frame
                               (lambda (v f)
                                 (contract-question-mark v))))
-               (qeval q frame-stream '())))                         ; ***
+               (stream-eval-promises true (qeval q stream '()))))   ; ***
              (query-driver-loop))))))
 
 ; instantiate procedure
@@ -90,29 +90,30 @@
 
 ; negate procedure
 (define (negate operands frame-stream hist)                         ; ***
-  (simple-stream-flatmap                                            ; ***
-   (lambda (frame)
-     (if (stream-null? (qeval (negated-query operands)
-                              (singleton-stream frame)
-                              hist))
-         (singleton-stream frame)
-         the-empty-stream))
+  (stream-add-or-eval-promise                                       ; ***
+   (cons-promise
+    operands
+    (lambda (frame)
+      (stream-null?
+       (qeval (negated-query operands)
+              (singleton-stream frame)
+              hist))))
    frame-stream))
 
 ;;(put 'not 'qeval negate)
 
 ; lisp-value procedure
 (define (lisp-value call frame-stream hist)                         ; ***
-  (simple-stream-flatmap                                            ; ***
-   (lambda (frame)
-     (if (execute
-          (instantiate
-           call
-           frame
-           (lambda (v f)
-             (error "Unknown pat var -- LISP-VALUE" v))))
-         (singleton-stream frame)
-         the-empty-stream))
+  (stream-add-or-eval-promise                                       ; ***
+   (cons-promise
+    call
+    (lambda (frame)
+      (execute
+       (instantiate
+        call
+        frame
+        (lambda (v f)
+          (error "Unknown pat var -- LISP-VALUE" v))))))
    frame-stream))
 
 ;;(put 'lisp-value 'qeval lisp-value)
@@ -129,14 +130,16 @@
 
 ; uniquely-asserted procedure
 (define (uniquely-asserted contents frame-stream hist)              ; ***
-  (simple-stream-flatmap
-   (lambda (frame)
-     (let ((temp-1 (unique-query contents))
-           (temp-2 (singleton-stream frame)))
-       (let ((result (qeval temp-1 temp-2 hist)))
-         (if (singleton-stream? result)
-             result
-             the-empty-stream))))
+  (stream-add-or-eval-promise                                       ; ***
+   (cons-promise
+    contents
+    (lambda (frame)
+      (let ((temp-1 (unique-query contents))
+            (temp-2 (singleton-stream frame)))
+        (let ((result (qeval temp-1 temp-2 hist)))
+          (if (singleton-stream? result)
+              (stream-car result)
+              false)))))
    frame-stream))
 
 ; singleton-stream? predicate procedure
@@ -145,6 +148,44 @@
        (stream-null? (stream-cdr stream))))
 
 ;;(put 'unique 'qeval uniquely-asserted)
+
+; eval-promises procedure
+(define (eval-promises forced frame)                                ; ***
+  (let ((frame-without-promises (make-frame (frame-bindings frame) '())))
+    (define (iter promises acc)
+      (if (empty-promise? promises)
+          (make-frame (frame-bindings frame) acc)
+          (let ((first (first-promise promises))
+                (rest (rest-promises promises)))
+            (if (or forced
+                    (not (unbound-var? (promise-exp first) frame)))
+                (let ((pred (promise-pred first)))
+                  (if (pred frame-without-promises)
+                      (iter rest acc)
+                      'failed))
+                (iter rest (extend-promises first acc))))))
+    (iter (frame-promises frame) '())))
+
+; stream-eval-promises procedure                                    ; ***
+(define (stream-eval-promises forced frame-stream)
+  (simple-stream-flatmap
+   (lambda (frame)
+     (let ((result (eval-promises forced frame)))
+       (if (eq? 'failed result)
+           the-empty-stream
+           (singleton-stream result))))
+   frame-stream))
+
+; stream-add-or-eval-promises                                       ; ***
+(define (stream-add-or-eval-promise promise frame-stream)
+  (stream-eval-promises
+   false
+   (stream-map
+    (lambda (frame)
+      (make-frame
+       (frame-bindings frame)
+       (extend-promises promise (frame-promises frame))))
+    frame-stream)))
 
 #|
  | §4.4.4.3 - Finding Assertions by Pattern Matching
@@ -557,14 +598,14 @@
 ; extend-bindings procedure                                         ; ***
 (define (extend-bindings binding bindings) (cons binding bindings))
 
-; mk-promise constructor procedure                                  ; ***
-(define (mk-promise exp pred) (cons exp pred))
+; cons-promise constructor procedure (make-promise name-collision)  ; ***
+(define (cons-promise exp pred) (cons exp pred))
 
 ; promise-exp selector procedure                                    ; ***
-(define (promise-exp promise) (car exp))
+(define (promise-exp promise) (car promise))
 
 ; promise-pred selector procedure                                   ; ***
-(define (promise-pred promise) (cdr exp))
+(define (promise-pred promise) (cdr promise))
 
 ; extend-promises procedure                                         ; ***
 (define (extend-promises promise promises) (cons promise promises))
@@ -593,11 +634,11 @@
 
 ; extend procedure
 (define (extend variable value frame)                               ; ***
-  ; TODO: Extend bindings then attempt to evaluate promises
-  (make-frame
-   (extend-bindings (make-binding variable value)
-                    (frame-bindings frame))
-   (frame-promises frame)))
+  (eval-promises
+   false
+   (make-frame
+    (extend-bindings (make-binding variable value) (frame-bindings frame))
+    (frame-promises frame))))
 
 ; unbound-var? predicate procedure
 (define (unbound-var? exp frame)                                    ; ***
@@ -853,7 +894,7 @@
  | Tasks:
  |
  | 1. Implement ⟨promise⟩ selector and constructor procedures. (*DONE*)
- |    a. 'mk-promise' (*DONE*)
+ |    a. 'make-promise' (*DONE*)
  |    b. 'promise-exp' (*DONE*)
  |    c. 'promise-pred' (*DONE*)
  |    d. 'extend-promises' (*DONE*)
@@ -869,17 +910,19 @@
  |
  | 3. Implement '(unbound-var? ⟨exp⟩ ⟨frame⟩)' procedure. (*DONE*)
  |
- | 4. Implement 'eval-promises' procedure. (*NOT STARTED*)
- | 
- | 5. Augment ⟨frame⟩ selector and constructor procedures. (*IN PROGRESS*)
+ | 4. Implement 'eval-promises' procedure. (*DONE*)
+ |
+ | 5. Augment ⟨frame⟩ selector and constructor procedures. (*DONE*)
  |    a. 'make-frame' (*DONE*)
  |    b. 'frame-bindings' (*DONE*)
  |    c. 'frame-promises' (*DONE*)
  |    d. 'binding-in-frame' (*DONE*)
- |    e. 'extend' (*IN PROGRESS*)
+ |    e. 'extend' (*DONE*)
  |
- | 6. Augment 'negate', 'lisp-value', 'uniquely-asserted' such that:
- |    ⟨??⟩
+ | 6. Augment 'negate', 'lisp-value', 'uniquely-asserted' (*DONE*)
+ |    a. Implement 'stream-eval-promises' procedure (*DONE*)
+ |    b. Implement 'stream-add-or-eval-promises' procedure (*DONE*)
+ |    c. Augment procs by using 'stream-add-or-eval-promises' (*DONE*)
  |#
 
 (initialize-data-base microshaft-data-base)
@@ -922,3 +965,9 @@
 
 (and (supervisor ?x ?y) (not (job ?x (computer programmer))))
 (and (not (job ?x (computer programmer))) (supervisor ?x ?y))
+
+(and (salary (Bitdiddle Ben) ?a) (salary ?x ?b) (lisp-value < ?b ?a))
+(and (salary (Bitdiddle Ben) ?a) (lisp-value < ?b ?a) (salary ?x ?b))
+
+(and (unique (job ?anyone ?j)) (job ?x ?j))
+(and (unique (supervisor ?y ?x)) (job ?x ?j))

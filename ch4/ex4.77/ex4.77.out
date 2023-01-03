@@ -24,7 +24,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 (define (query-driver-loop)
   (prompt-for-input input-prompt)
   (let ((q (query-syntax-process (read))))
-    (let ((frame-stream (singleton-stream (make-frame '() '()))))
+    (let ((stream (singleton-stream (make-frame '() '()))))
       (cond ((assertion-to-be-added? q)
              (add-rule-or-assertion! (add-assertion-body q))
              (newline)
@@ -41,7 +41,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
                               frame
                               (lambda (v f)
                                 (contract-question-mark v))))
-               (qeval q frame-stream '())))                         ; ***
+               (stream-eval-promises true (qeval q stream '()))))   ; ***
              (query-driver-loop))))))
 ;Value: query-driver-loop
 
@@ -108,13 +108,14 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 ; negate procedure
 (define (negate operands frame-stream hist)                         ; ***
-  (simple-stream-flatmap                                            ; ***
-   (lambda (frame)
-     (if (stream-null? (qeval (negated-query operands)
-                              (singleton-stream frame)
-                              hist))
-         (singleton-stream frame)
-         the-empty-stream))
+  (stream-add-or-eval-promise                                       ; ***
+   (cons-promise
+    operands
+    (lambda (frame)
+      (stream-null?
+       (qeval (negated-query operands)
+              (singleton-stream frame)
+              hist))))
    frame-stream))
 ;Value: negate
 
@@ -122,16 +123,16 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 ; lisp-value procedure
 (define (lisp-value call frame-stream hist)                         ; ***
-  (simple-stream-flatmap                                            ; ***
-   (lambda (frame)
-     (if (execute
-          (instantiate
-           call
-           frame
-           (lambda (v f)
-             (error "Unknown pat var -- LISP-VALUE" v))))
-         (singleton-stream frame)
-         the-empty-stream))
+  (stream-add-or-eval-promise                                       ; ***
+   (cons-promise
+    call
+    (lambda (frame)
+      (execute
+       (instantiate
+        call
+        frame
+        (lambda (v f)
+          (error "Unknown pat var -- LISP-VALUE" v))))))
    frame-stream))
 ;Value: lisp-value
 
@@ -151,14 +152,16 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 ; uniquely-asserted procedure
 (define (uniquely-asserted contents frame-stream hist)              ; ***
-  (simple-stream-flatmap
-   (lambda (frame)
-     (let ((temp-1 (unique-query contents))
-           (temp-2 (singleton-stream frame)))
-       (let ((result (qeval temp-1 temp-2 hist)))
-         (if (singleton-stream? result)
-             result
-             the-empty-stream))))
+  (stream-add-or-eval-promise                                       ; ***
+   (cons-promise
+    contents
+    (lambda (frame)
+      (let ((temp-1 (unique-query contents))
+            (temp-2 (singleton-stream frame)))
+        (let ((result (qeval temp-1 temp-2 hist)))
+          (if (singleton-stream? result)
+              (stream-car result)
+              false)))))
    frame-stream))
 ;Value: uniquely-asserted
 
@@ -170,7 +173,48 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> ;;(put 'unique 'qeval uniquely-asserted)
 
-#|
+; eval-promises procedure
+(define (eval-promises forced frame)                                ; ***
+  (let ((frame-without-promises (make-frame (frame-bindings frame) '())))
+    (define (iter promises acc)
+      (if (empty-promise? promises)
+          (make-frame (frame-bindings frame) acc)
+          (let ((first (first-promise promises))
+                (rest (rest-promises promises)))
+            (if (or forced
+                    (not (unbound-var? (promise-exp first) frame)))
+                (let ((pred (promise-pred first)))
+                  (if (pred frame-without-promises)
+                      (iter rest acc)
+                      'failed))
+                (iter rest (extend-promises first acc))))))
+    (iter (frame-promises frame) '())))
+;Value: eval-promises
+
+1 ]=> ; stream-eval-promises procedure                                    ; ***
+(define (stream-eval-promises forced frame-stream)
+  (simple-stream-flatmap
+   (lambda (frame)
+     (let ((result (eval-promises forced frame)))
+       (if (eq? 'failed result)
+           the-empty-stream
+           (singleton-stream result))))
+   frame-stream))
+;Value: stream-eval-promises
+
+1 ]=> ; stream-add-or-eval-promises                                       ; ***
+(define (stream-add-or-eval-promise promise frame-stream)
+  (stream-eval-promises
+   false
+   (stream-map
+    (lambda (frame)
+      (make-frame
+       (frame-bindings frame)
+       (extend-promises promise (frame-promises frame))))
+    frame-stream)))
+;Value: stream-add-or-eval-promise
+
+1 ]=> #|
  | §4.4.4.3 - Finding Assertions by Pattern Matching
  |#
 
@@ -647,16 +691,16 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 (define (extend-bindings binding bindings) (cons binding bindings))
 ;Value: extend-bindings
 
-1 ]=> ; mk-promise constructor procedure                                  ; ***
-(define (mk-promise exp pred) (cons exp pred))
-;Value: mk-promise
+1 ]=> ; cons-promise constructor procedure (make-promise name-collision)  ; ***
+(define (cons-promise exp pred) (cons exp pred))
+;Value: cons-promise
 
 1 ]=> ; promise-exp selector procedure                                    ; ***
-(define (promise-exp promise) (car exp))
+(define (promise-exp promise) (car promise))
 ;Value: promise-exp
 
 1 ]=> ; promise-pred selector procedure                                   ; ***
-(define (promise-pred promise) (cdr exp))
+(define (promise-pred promise) (cdr promise))
 ;Value: promise-pred
 
 1 ]=> ; extend-promises procedure                                         ; ***
@@ -694,11 +738,11 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 
 1 ]=> ; extend procedure
 (define (extend variable value frame)                               ; ***
-  ; TODO: Extend bindings then attempt to evaluate promises
-  (make-frame
-   (extend-bindings (make-binding variable value)
-                    (frame-bindings frame))
-   (frame-promises frame)))
+  (eval-promises
+   false
+   (make-frame
+    (extend-bindings (make-binding variable value) (frame-bindings frame))
+    (frame-promises frame))))
 ;Value: extend
 
 1 ]=> ; unbound-var? predicate procedure
@@ -970,7 +1014,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  | Tasks:
  |
  | 1. Implement ⟨promise⟩ selector and constructor procedures. (*DONE*)
- |    a. 'mk-promise' (*DONE*)
+ |    a. 'make-promise' (*DONE*)
  |    b. 'promise-exp' (*DONE*)
  |    c. 'promise-pred' (*DONE*)
  |    d. 'extend-promises' (*DONE*)
@@ -986,17 +1030,19 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
  |
  | 3. Implement '(unbound-var? ⟨exp⟩ ⟨frame⟩)' procedure. (*DONE*)
  |
- | 4. Implement 'eval-promises' procedure. (*NOT STARTED*)
- | 
- | 5. Augment ⟨frame⟩ selector and constructor procedures. (*IN PROGRESS*)
+ | 4. Implement 'eval-promises' procedure. (*DONE*)
+ |
+ | 5. Augment ⟨frame⟩ selector and constructor procedures. (*DONE*)
  |    a. 'make-frame' (*DONE*)
  |    b. 'frame-bindings' (*DONE*)
  |    c. 'frame-promises' (*DONE*)
  |    d. 'binding-in-frame' (*DONE*)
- |    e. 'extend' (*IN PROGRESS*)
+ |    e. 'extend' (*DONE*)
  |
- | 6. Augment 'negate', 'lisp-value', 'uniquely-asserted' such that:
- |    ⟨??⟩
+ | 6. Augment 'negate', 'lisp-value', 'uniquely-asserted' (*DONE*)
+ |    a. Implement 'stream-eval-promises' procedure (*DONE*)
+ |    b. Implement 'stream-add-or-eval-promises' procedure (*DONE*)
+ |    c. Augment procs by using 'stream-add-or-eval-promises' (*DONE*)
  |#
 
 (initialize-data-base microshaft-data-base)
@@ -1107,7 +1153,7 @@ Assertion added to data base.
 ;;; Query input:
 (unique (job ?x (computer wizard)))
 ;;; Query results:
-(unique (job (bitdiddle ben) (computer wizard)))
+(unique (job ?x (computer wizard)))
 
 ;;; Query input:
 (unique (job ?x (computer programmer)))
@@ -1116,19 +1162,19 @@ Assertion added to data base.
 ;;; Query input:
 (and (job ?x ?j) (unique (job ?anyone ?j)))
 ;;; Query results:
-(and (job (aull dewitt) (administration secretary)) (unique (job (aull dewitt) (administration secretary))))
-(and (job (cratchet robert) (accounting scrivener)) (unique (job (cratchet robert) (accounting scrivener))))
-(and (job (scrooge eben) (accounting chief accountant)) (unique (job (scrooge eben) (accounting chief accountant))))
-(and (job (warbucks oliver) (administration big wheel)) (unique (job (warbucks oliver) (administration big wheel))))
-(and (job (reasoner louis) (computer programmer trainee)) (unique (job (reasoner louis) (computer programmer trainee))))
-(and (job (tweakit lem e) (computer technician)) (unique (job (tweakit lem e) (computer technician))))
-(and (job (bitdiddle ben) (computer wizard)) (unique (job (bitdiddle ben) (computer wizard))))
+(and (job (aull dewitt) (administration secretary)) (unique (job ?anyone (administration secretary))))
+(and (job (cratchet robert) (accounting scrivener)) (unique (job ?anyone (accounting scrivener))))
+(and (job (scrooge eben) (accounting chief accountant)) (unique (job ?anyone (accounting chief accountant))))
+(and (job (warbucks oliver) (administration big wheel)) (unique (job ?anyone (administration big wheel))))
+(and (job (reasoner louis) (computer programmer trainee)) (unique (job ?anyone (computer programmer trainee))))
+(and (job (tweakit lem e) (computer technician)) (unique (job ?anyone (computer technician))))
+(and (job (bitdiddle ben) (computer wizard)) (unique (job ?anyone (computer wizard))))
 
 ;;; Query input:
 (and (job ?x ?j) (unique (supervisor ?y ?x)))
 ;;; Query results:
-(and (job (scrooge eben) (accounting chief accountant)) (unique (supervisor (cratchet robert) (scrooge eben))))
-(and (job (hacker alyssa p) (computer programmer)) (unique (supervisor (reasoner louis) (hacker alyssa p))))
+(and (job (scrooge eben) (accounting chief accountant)) (unique (supervisor ?y (scrooge eben))))
+(and (job (hacker alyssa p) (computer programmer)) (unique (supervisor ?y (hacker alyssa p))))
 
 ;;; Query input:
 (and (supervisor ?x ?y) (not (job ?x (computer programmer))))
@@ -1143,7 +1189,50 @@ Assertion added to data base.
 ;;; Query input:
 (and (not (job ?x (computer programmer))) (supervisor ?x ?y))
 ;;; Query results:
+(and (not (job (aull dewitt) (computer programmer))) (supervisor (aull dewitt) (warbucks oliver)))
+(and (not (job (cratchet robert) (computer programmer))) (supervisor (cratchet robert) (scrooge eben)))
+(and (not (job (scrooge eben) (computer programmer))) (supervisor (scrooge eben) (warbucks oliver)))
+(and (not (job (reasoner louis) (computer programmer))) (supervisor (reasoner louis) (hacker alyssa p)))
+(and (not (job (tweakit lem e) (computer programmer))) (supervisor (tweakit lem e) (bitdiddle ben)))
+(and (not (job (bitdiddle ben) (computer programmer))) (supervisor (bitdiddle ben) (warbucks oliver)))
+
+;;; Query input:
+(and (salary (Bitdiddle Ben) ?a) (salary ?x ?b) (lisp-value < ?b ?a))
+;;; Query results:
+(and (salary (bitdiddle ben) 60000) (salary (aull dewitt) 25000) (lisp-value < 25000 60000))
+(and (salary (bitdiddle ben) 60000) (salary (cratchet robert) 18000) (lisp-value < 18000 60000))
+(and (salary (bitdiddle ben) 60000) (salary (reasoner louis) 30000) (lisp-value < 30000 60000))
+(and (salary (bitdiddle ben) 60000) (salary (tweakit lem e) 25000) (lisp-value < 25000 60000))
+(and (salary (bitdiddle ben) 60000) (salary (fect cy d) 35000) (lisp-value < 35000 60000))
+(and (salary (bitdiddle ben) 60000) (salary (hacker alyssa p) 40000) (lisp-value < 40000 60000))
+
+;;; Query input:
+(and (salary (Bitdiddle Ben) ?a) (lisp-value < ?b ?a) (salary ?x ?b))
+;;; Query results:
+(and (salary (bitdiddle ben) 60000) (lisp-value < 25000 60000) (salary (aull dewitt) 25000))
+(and (salary (bitdiddle ben) 60000) (lisp-value < 18000 60000) (salary (cratchet robert) 18000))
+(and (salary (bitdiddle ben) 60000) (lisp-value < 30000 60000) (salary (reasoner louis) 30000))
+(and (salary (bitdiddle ben) 60000) (lisp-value < 25000 60000) (salary (tweakit lem e) 25000))
+(and (salary (bitdiddle ben) 60000) (lisp-value < 35000 60000) (salary (fect cy d) 35000))
+(and (salary (bitdiddle ben) 60000) (lisp-value < 40000 60000) (salary (hacker alyssa p) 40000))
+
+;;; Query input:
+(and (unique (job ?anyone ?j)) (job ?x ?j))
+;;; Query results:
+(and (unique (job ?anyone (administration secretary))) (job (aull dewitt) (administration secretary)))
+(and (unique (job ?anyone (accounting scrivener))) (job (cratchet robert) (accounting scrivener)))
+(and (unique (job ?anyone (accounting chief accountant))) (job (scrooge eben) (accounting chief accountant)))
+(and (unique (job ?anyone (administration big wheel))) (job (warbucks oliver) (administration big wheel)))
+(and (unique (job ?anyone (computer programmer trainee))) (job (reasoner louis) (computer programmer trainee)))
+(and (unique (job ?anyone (computer technician))) (job (tweakit lem e) (computer technician)))
+(and (unique (job ?anyone (computer wizard))) (job (bitdiddle ben) (computer wizard)))
+
+;;; Query input:
+(and (unique (supervisor ?y ?x)) (job ?x ?j))
+;;; Query results:
+(and (unique (supervisor ?y (scrooge eben))) (job (scrooge eben) (accounting chief accountant)))
+(and (unique (supervisor ?y (hacker alyssa p))) (job (hacker alyssa p) (computer programmer)))
 
 ;;; Query input:
 End of input stream reached.
-Happy happy joy joy!
+Moriturus te salutat.
