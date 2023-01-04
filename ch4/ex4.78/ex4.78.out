@@ -1,0 +1,1128 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2020 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Sunday March 7, 2021 at 3:24:56 PM
+  Release 11.2 || SF || LIAR/x86-64
+
+1 ]=> ; §4.1.4 -- must precede def of metacircular apply
+; apply-in-underlying-scheme procedure
+(define apply-in-underlying-scheme apply)
+;Value: apply-in-underlying-scheme
+
+1 ]=> #|
+ | §4.1.1 'The Core of the Evaluator'
+ |#
+
+; eval procedure
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp)
+         (make-procedure (lambda-parameters exp)
+                         (lambda-body exp)
+                         env))
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((cond? exp) (eval (cond->if exp) env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else
+         (error "Unknown expression type -- EVAL" exp))))
+;Value: eval
+
+1 ]=> ; apply procedure
+(define (apply procedure arguments)
+  (cond ((primitive-procedure? procedure)
+         (apply-primitive-procedure procedure arguments))
+        ((compound-procedure? procedure)
+         (eval-sequence
+           (procedure-body procedure)
+           (extend-environment
+             (procedure-parameters procedure)
+             arguments
+             (procedure-environment procedure))))
+        (else
+         (error
+          "Unknown procedure type -- APPLY" procedure))))
+;Value: apply
+
+1 ]=> ; list-of-values procedure
+(define (list-of-values exps env)
+  (if (no-operands? exps)
+      '()
+      (cons (eval (first-operand exps) env)
+            (list-of-values (rest-operands exps) env))))
+;Value: list-of-values
+
+1 ]=> ; eval-if procedure
+(define (eval-if exp env)
+  (if (true? (eval (if-predicate exp) env))
+      (eval (if-consequent exp) env)
+      (eval (if-alternative exp) env)))
+;Value: eval-if
+
+1 ]=> ; eval-sequence procedure
+(define (eval-sequence exps env)
+  (cond ((last-exp? exps) (eval (first-exp exps) env))
+        (else (eval (first-exp exps) env)
+              (eval-sequence (rest-exps exps) env))))
+;Value: eval-sequence
+
+1 ]=> ; eval-assignment procedure
+(define (eval-assignment exp env)
+  (set-variable-value! (assignment-variable exp)
+                       (eval (assignment-value exp) env)
+                       env)
+  'ok)
+;Value: eval-assignment
+
+1 ]=> ; eval-definition procedure
+(define (eval-definition exp env)
+  (define-variable! (definition-variable exp)
+                    (eval (definition-value exp) env)
+                    env)
+  'ok)
+;Value: eval-definition
+
+1 ]=> #|
+ | §4.1.2 'Representing Expressions'
+ |#
+
+; self-evaluating? predicate procedure
+(define (self-evaluating? exp)
+  (cond ((number? exp) true)
+        ((string? exp) true)
+        (else false)))
+;Value: self-evaluating?
+
+1 ]=> ; quoted? predicate procedure
+(define (quoted? exp) (tagged-list? exp 'quote))
+;Value: quoted?
+
+1 ]=> ; text-of-quotation selector procedure
+(define (text-of-quotation exp) (cadr exp))
+;Value: text-of-quotation
+
+1 ]=> ; tagged-list? predicate procedure
+(define (tagged-list? exp tag)
+  (if (pair? exp)
+      (eq? (car exp) tag)
+      false))
+;Value: tagged-list?
+
+1 ]=> ; variable? predicate procedure
+(define (variable? exp) (symbol? exp))
+;Value: variable?
+
+1 ]=> ; assignment? predicate procedure
+(define (assignment? exp) (tagged-list? exp 'set!))
+;Value: assignment?
+
+1 ]=> ; assignment-variable selector procedure
+(define (assignment-variable exp) (cadr exp))
+;Value: assignment-variable
+
+1 ]=> ; assignment-value selector procedure
+(define (assignment-value exp) (caddr exp))
+;Value: assignment-value
+
+1 ]=> ; definition? predicate procedure
+(define (definition? exp) (tagged-list? exp 'define))
+;Value: definition?
+
+1 ]=> ; definition-variable selector procedure
+(define (definition-variable exp)
+  (if (symbol? (cadr exp))
+      (cadr exp)
+      (caadr exp)))
+;Value: definition-variable
+
+1 ]=> ; definition-value selector procedure
+(define (definition-value exp)
+  (if (symbol? (cadr exp))
+      (caddr exp)
+      (make-lambda (cdadr exp)
+                   (cddr exp))))
+;Value: definition-value
+
+1 ]=> ; lambda? predicate procedure
+(define (lambda? exp) (tagged-list? exp 'lambda))
+;Value: lambda?
+
+1 ]=> ; lambda-parameters selector procedure
+(define (lambda-parameters exp) (cadr exp))
+;Value: lambda-parameters
+
+1 ]=> ; lambda-body selector procedure
+(define (lambda-body exp) (cddr exp))
+;Value: lambda-body
+
+1 ]=> ; make-lambda constructor procedure
+(define (make-lambda parameters body) (cons 'lambda (cons parameters body)))
+;Value: make-lambda
+
+1 ]=> ; if? predicate procedure
+(define (if? exp) (tagged-list? exp 'if))
+;Value: if?
+
+1 ]=> ; if-predicate selector procedure
+(define (if-predicate exp) (cadr exp))
+;Value: if-predicate
+
+1 ]=> ; if-consequent selector procedure
+(define (if-consequent exp) (caddr exp))
+;Value: if-consequent
+
+1 ]=> ; if-alternative selector procedure
+(define (if-alternative exp)
+  (if (not (null? (cdddr exp)))
+      (cadddr exp)
+      'false))
+;Value: if-alternative
+
+1 ]=> ; make-if constructor procedure
+(define (make-if predicate consequent alternative)
+  (list 'if predicate consequent alternative))
+;Value: make-if
+
+1 ]=> ; begin? predicate procedure
+(define (begin? exp) (tagged-list? exp 'begin))
+;Value: begin?
+
+1 ]=> ; begin-actions selector procedure
+(define (begin-actions exp) (cdr exp))
+;Value: begin-actions
+
+1 ]=> ; last-exp? predicate procedure
+(define (last-exp? seq) (null? (cdr seq)))
+;Value: last-exp?
+
+1 ]=> ; first-exp selector procedure
+(define (first-exp seq) (car seq))
+;Value: first-exp
+
+1 ]=> ; rest-exps selector procedure
+(define (rest-exps seq) (cdr seq))
+;Value: rest-exps
+
+1 ]=> ; sequence->exp procedure
+(define (sequence->exp seq)
+  (cond ((null? seq) seq)
+        ((last-exp? seq) (first-exp seq))
+        (else (make-begin seq))))
+;Value: sequence->exp
+
+1 ]=> ; define make-begin constructor procedure
+(define (make-begin seq) (cons 'begin seq))
+;Value: make-begin
+
+1 ]=> ; application? predicate procedure
+(define (application? exp) (pair? exp))
+;Value: application?
+
+1 ]=> ; operator selector procedure
+(define (operator exp) (car exp))
+;Value: operator
+
+1 ]=> ; operands selector procedure
+(define (operands exp) (cdr exp))
+;Value: operands
+
+1 ]=> ; no-operands? predicate procedure
+(define (no-operands? ops) (null? ops))
+;Value: no-operands?
+
+1 ]=> ; first-operand selector procedure
+(define (first-operand ops) (car ops))
+;Value: first-operand
+
+1 ]=> ; rest-operands selector procedure
+(define (rest-operands ops) (cdr ops))
+;Value: rest-operands
+
+1 ]=> ; cond? predicate procedure
+(define (cond? exp) (tagged-list? exp 'cond))
+;Value: cond?
+
+1 ]=> ; cond-clauses selector procedure
+(define (cond-clauses exp) (cdr exp))
+;Value: cond-clauses
+
+1 ]=> ; cond-else-clause? predicate procedure
+(define (cond-else-clause? clause) (eq? (cond-predicate clause) 'else))
+;Value: cond-else-clause?
+
+1 ]=> ; cond-predicate selector procedure
+(define (cond-predicate clause) (car clause))
+;Value: cond-predicate
+
+1 ]=> ; cond-actions selector procedure
+(define (cond-actions clause) (cdr clause))
+;Value: cond-actions
+
+1 ]=> ; cond->if procedure
+(define (cond->if exp) (expand-clauses (cond-clauses exp)))
+;Value: cond->if
+
+1 ]=> ; expand-clauses procedure
+(define (expand-clauses clauses)
+  (if (null? clauses)
+      'false                          ; no else clause
+      (let ((first (car clauses))
+            (rest (cdr clauses)))
+        (if (cond-else-clause? first)
+            (if (null? rest)
+                (sequence->exp (cond-actions first))
+                (error "ELSE clause isn't last -- COND->IF"
+                       clauses))
+            (make-if (cond-predicate first)
+                     (sequence->exp (cond-actions first))
+                     (expand-clauses rest))))))
+;Value: expand-clauses
+
+1 ]=> #|
+ | §4.1.3 'Evaluator Data Structures'
+ |#
+
+; true? predicate procedure
+(define (true? x) (not (eq? x false)))
+;Value: true?
+
+1 ]=> ; false? predicate procedure
+(define (false? x) (eq? x false))
+;Value: false?
+
+1 ]=> ; make-procedure constructor procedure
+(define (make-procedure parameters body env)
+  (list 'procedure parameters body env))
+;Value: make-procedure
+
+1 ]=> ; compound-procedure? predicate procedure
+(define (compound-procedure? p) (tagged-list? p 'procedure))
+;Value: compound-procedure?
+
+1 ]=> ; procedure-parameters selector procedure
+(define (procedure-parameters p) (cadr p))
+;Value: procedure-parameters
+
+1 ]=> ; procedure-body selector procedure
+(define (procedure-body p) (caddr p))
+;Value: procedure-body
+
+1 ]=> ; procedure-environment selector procedure
+(define (procedure-environment p) (cadddr p))
+;Value: procedure-environment
+
+1 ]=> ; enclosing-environment selector procedure
+(define (enclosing-environment env) (cdr env))
+;Value: enclosing-environment
+
+1 ]=> ; first-frame selector procedure
+(define (first-frame env) (car env))
+;Value: first-frame
+
+1 ]=> ; the-empty-environment definition
+(define the-empty-environment '())
+;Value: the-empty-environment
+
+1 ]=> ; make-frame constructor procedure
+(define (make-frame variables values) (cons variables values))
+;Value: make-frame
+
+1 ]=> ; frame-variables selector procedure
+(define (frame-variables frame) (car frame))
+;Value: frame-variables
+
+1 ]=> ; frame-values selector procedure
+(define (frame-values frame) (cdr frame))
+;Value: frame-values
+
+1 ]=> ; add-binding-to-frame! mutator procedure
+(define (add-binding-to-frame! var val frame)
+  (set-car! frame (cons var (car frame)))
+  (set-cdr! frame (cons val (cdr frame))))
+;Value: add-binding-to-frame!
+
+1 ]=> ; extend-environment procedure
+(define (extend-environment vars vals base-env)
+  (if (= (length vars) (length vals))
+      (cons (make-frame vars vals) base-env)
+      (if (< (length vars) (length vals))
+          (error "Too many arguments supplied" vars vals)
+          (error "Too few arguments supplied" vars vals))))
+;Value: extend-environment
+
+1 ]=> ; lookup-variable-value procedure
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars))
+             (car vals))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable" var)
+        (let ((frame (first-frame env)))
+          (scan (frame-variables frame)
+                (frame-values frame)))))
+  (env-loop env))
+;Value: lookup-variable-value
+
+1 ]=> ; set-variable-value! mutator procedure
+(define (set-variable-value! var val env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars))
+             (set-car! vals val))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable -- SET!" var)
+        (let ((frame (first-frame env)))
+          (scan (frame-variables frame)
+                (frame-values frame)))))
+  (env-loop env))
+;Value: set-variable-value!
+
+1 ]=> ; define-variable! mutator procedure
+(define (define-variable! var val env)
+  (let ((frame (first-frame env)))
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (add-binding-to-frame! var val frame))
+            ((eq? var (car vars))
+             (set-car! vals val))
+            (else (scan (cdr vars) (cdr vals)))))
+    (scan (frame-variables frame)
+          (frame-values frame))))
+;Value: define-variable!
+
+1 ]=> #|
+ | §4.1.4 'Running the Evaluator as a Program'
+ |#
+
+; setup-environment procedure
+(define (setup-environment)
+  (let ((initial-env
+         (extend-environment (primitive-procedure-names)
+                             (primitive-procedure-objects)
+                             the-empty-environment)))
+    (define-variable! 'true true initial-env)
+    (define-variable! 'false false initial-env)
+    initial-env))
+;Value: setup-environment
+
+1 ]=> ;[do later] (define the-global-environment (setup-environment))
+
+; primitive-procedure? predicate procedure
+(define (primitive-procedure? proc) (tagged-list? proc 'primitive))
+;Value: primitive-procedure?
+
+1 ]=> ; primitive-implementation selector procedure
+(define (primitive-implementation proc) (cadr proc))
+;Value: primitive-implementation
+
+1 ]=> ; primitive-procedures list definition
+(define primitive-procedures
+  (list (list 'car car)
+        (list 'cdr cdr)
+        (list 'cons cons)
+        (list 'null? null?)
+;;      more primitives
+        ))
+;Value: primitive-procedures
+
+1 ]=> ; primitive-procedure-names selector procedure
+(define (primitive-procedure-names) (map car primitive-procedures))
+;Value: primitive-procedure-names
+
+1 ]=> ; primitive-procedure-objects selector procedure
+(define (primitive-procedure-objects)
+  (map (lambda (proc) (list 'primitive (cadr proc)))
+       primitive-procedures))
+;Value: primitive-procedure-objects
+
+1 ]=> ;[moved to start of file] (define apply-in-underlying-scheme apply)
+
+; apply-primitive-procedure procedure
+(define (apply-primitive-procedure proc args)
+  (apply-in-underlying-scheme
+   (primitive-implementation proc) args))
+;Value: apply-primitive-procedure
+
+1 ]=> ; input-prompt definition
+(define input-prompt ";;; M-Eval input:")
+;Value: input-prompt
+
+1 ]=> ; output-prompt definition
+(define output-prompt ";;; M-Eval value:")
+;Value: output-prompt
+
+1 ]=> ; driver-loop procedure
+(define (driver-loop)
+  (prompt-for-input input-prompt)
+  (let ((input (read)))
+    (let ((output (eval input the-global-environment)))
+      (announce-output output-prompt)
+      (user-print output)))
+  (driver-loop))
+;Value: driver-loop
+
+1 ]=> ; prompt-for-input procedure
+(define (prompt-for-input string)
+  (newline) (newline) (display string) (newline))
+;Value: prompt-for-input
+
+1 ]=> ; announce-output procedure
+(define (announce-output string) (newline) (display string) (newline))
+;Value: announce-output
+
+1 ]=> ; user-print procedure
+(define (user-print object)
+  (if (compound-procedure? object)
+      (display (list 'compound-procedure
+                     (procedure-parameters object)
+                     (procedure-body object)
+                     '<procedure-env>))
+      (display object)))
+;Value: user-print
+
+1 ]=> ;(define the-global-environment (setup-environment))
+;(driver-loop)
+
+#|
+ | §4.3.3 'Implementing the 'Amb' Evaluator' (modified as needed to run it)
+ |#
+
+; amb? predicate procedure
+(define (amb? exp) (tagged-list? exp 'amb))
+;Value: amb?
+
+1 ]=> ; amb-choices selector procedure
+(define (amb-choices exp) (cdr exp))
+;Value: amb-choices
+
+1 ]=> ; ramb? predicate procedure
+(define (ramb? exp) (tagged-list? exp 'ramb))
+;Value: ramb?
+
+1 ]=> ; ramb-choices selector procedure
+(define (ramb-choices exp) (cdr exp))
+;Value: ramb-choices
+
+1 ]=> ; permanent? predicate procedure
+(define (permanent? exp) (tagged-list? exp 'permanent-set!))
+;Value: permanent?
+
+1 ]=> ; permanent-variable selector procedure
+(define (permanent-variable exp) (cadr exp))
+;Value: permanent-variable
+
+1 ]=> ; permanent-value selector procedure
+(define (permanent-value exp) (caddr exp))
+;Value: permanent-value
+
+1 ]=> ; if-fail? predicate procedure
+(define (if-fail? exp) (tagged-list? exp 'if-fail))
+;Value: if-fail?
+
+1 ]=> ; if-fail-primary
+(define (if-fail-primary exp) (cadr exp))
+;Value: if-fail-primary
+
+1 ]=> ; if-fail-secondary
+(define (if-fail-secondary exp) (caddr exp))
+;Value: if-fail-secondary
+
+1 ]=> ; analyze procedure from §4.1.6, with clause from §4.3.3 added
+; and also support for let expression
+(define (analyze exp)
+  (cond ((self-evaluating? exp)
+         (analyze-self-evaluating exp))
+        ((quoted? exp) (analyze-quoted exp))
+        ((variable? exp) (analyze-variable exp))
+        ((assignment? exp) (analyze-assignment exp))
+        ((definition? exp) (analyze-definition exp))
+        ((if? exp) (analyze-if exp))
+        ((lambda? exp) (analyze-lambda exp))
+        ((begin? exp) (analyze-sequence (begin-actions exp)))
+        ((cond? exp) (analyze (cond->if exp)))
+        ((let? exp) (analyze (let->combination exp))) ;**
+        ((amb? exp) (analyze-amb exp))                ;**
+        ((ramb? exp) (analyze-ramb exp))              ;**
+        ((permanent? exp) (analyze-permanent exp))    ;**
+        ((if-fail? exp) (analyze-if-fail exp))        ;**
+        ((application? exp) (analyze-application exp))
+        (else
+         (error "Unknown expression type -- ANALYZE" exp))))
+;Value: analyze
+
+1 ]=> ; ambeval procedure (CPS)
+(define (ambeval exp env succeed fail) ((analyze exp) env succeed fail))
+;Value: ambeval
+
+1 ]=> #|
+ | Simple expressions
+ |#
+
+; analyze-self-evaluating procedure
+(define (analyze-self-evaluating exp)
+  (lambda (env succeed fail)
+    (succeed exp fail)))
+;Value: analyze-self-evaluating
+
+1 ]=> ; analyze-quoted procedure
+(define (analyze-quoted exp)
+  (let ((qval (text-of-quotation exp)))
+    (lambda (env succeed fail)
+      (succeed qval fail))))
+;Value: analyze-quoted
+
+1 ]=> ; analyze-variable procedure
+(define (analyze-variable exp)
+  (lambda (env succeed fail)
+    (succeed (lookup-variable-value exp env)
+             fail)))
+;Value: analyze-variable
+
+1 ]=> ; analyze-lambda procedure
+(define (analyze-lambda exp)
+  (let ((vars (lambda-parameters exp))
+        (bproc (analyze-sequence (lambda-body exp))))
+    (lambda (env succeed fail)
+      (succeed (make-procedure vars bproc env)
+               fail))))
+;Value: analyze-lambda
+
+1 ]=> #|
+ | Conditionals and sequences
+ |#
+
+; analyze-if procedure
+(define (analyze-if exp)
+  (let ((pproc (analyze (if-predicate exp)))
+        (cproc (analyze (if-consequent exp)))
+        (aproc (analyze (if-alternative exp))))
+    (lambda (env succeed fail)
+      (pproc env
+             ;; success continuation for evaluating the predicate
+             ;; to obtain pred-value
+             (lambda (pred-value fail2)
+               (if (true? pred-value)
+                   (cproc env succeed fail2)
+                   (aproc env succeed fail2)))
+             ;; failure continuation for evaluating the predicate
+             fail))))
+;Value: analyze-if
+
+1 ]=> ; analyze-if-fail procedure
+(define (analyze-if-fail exp)
+  (let ((pproc (analyze (if-fail-primary exp)))
+        (sproc (analyze (if-fail-secondary exp))))
+    (lambda (env succeed fail)
+      (pproc env
+             ;; succ cont eval'g prim expr to get prim-val
+             (lambda (prim-value fail2)
+               (succeed prim-value fail2))
+             ;; fail cont eval'g prim expr
+             (lambda ()
+               (sproc env
+                      ;; succ cont eval'g secd expr to get secd-val
+                      (lambda (secd-val fail3)
+                        (succeed secd-val fail3))
+                      ;; fail cont eval'g secd expr
+                      fail))))))
+;Value: analyze-if-fail
+
+1 ]=> ; analyze-sequence procedure
+(define (analyze-sequence exps)
+  (define (sequentially a b)
+    (lambda (env succeed fail)
+      (a env
+         ;; success continuation for calling a
+         (lambda (a-value fail2)
+           (b env succeed fail2))
+         ;; failure continuation for calling a
+         fail)))
+  (define (loop first-proc rest-procs)
+    (if (null? rest-procs)
+        first-proc
+        (loop (sequentially first-proc (car rest-procs))
+              (cdr rest-procs))))
+  (let ((procs (map analyze exps)))
+    (if (null? procs)
+        (error "Empty sequence -- ANALYZE"))
+    (loop (car procs) (cdr procs))))
+;Value: analyze-sequence
+
+1 ]=> #|
+ | Definitions and assignments
+ |#
+
+; analyze-definition procedure
+(define (analyze-definition exp)
+  (let ((var (definition-variable exp))
+        (vproc (analyze (definition-value exp))))
+    (lambda (env succeed fail)
+      (vproc env
+             (lambda (val fail2)
+               (define-variable! var val env)
+               (succeed 'ok fail2))
+             fail))))
+;Value: analyze-definition
+
+1 ]=> ; analyze-assignment procedure
+(define (analyze-assignment exp)
+  (let ((var (assignment-variable exp))
+        (vproc (analyze (assignment-value exp))))
+    (lambda (env succeed fail)
+      (vproc env
+             (lambda (val fail2)        ; *1*
+               (let ((old-value
+                      (lookup-variable-value var env)))
+                 (set-variable-value! var val env)
+                 (succeed 'ok
+                          (lambda ()    ; *2*
+                            (set-variable-value! var
+                                                 old-value
+                                                 env)
+                            (fail2)))))
+             fail))))
+;Value: analyze-assignment
+
+1 ]=> ; analyze-pemanent procedure
+(define (analyze-permanent exp)
+  (let ((var (permanent-variable exp))
+        (vproc (analyze (permanent-value exp))))
+    (lambda (env succeed fail)
+      (vproc env
+             (lambda (val fail2)
+               (set-variable-value! var val env)
+               (succeed 'ok fail2))
+             fail))))
+;Value: analyze-permanent
+
+1 ]=> #|
+ | Procedure applications
+ |#
+
+; analyze-application procedure
+(define (analyze-application exp)
+  (let ((fproc (analyze (operator exp)))
+        (aprocs (map analyze (operands exp))))
+    (lambda (env succeed fail)
+      (fproc env
+             (lambda (proc fail2)
+               (get-args aprocs
+                         env
+                         (lambda (args fail3)
+                           (execute-application
+                            proc args succeed fail3))
+                         fail2))
+             fail))))
+;Value: analyze-application
+
+1 ]=> ; get-args procedure (CPS)
+(define (get-args aprocs env succeed fail)
+  (if (null? aprocs)
+      (succeed '() fail)
+      ((car aprocs) env
+                    ;; success continuation for this aproc
+                    (lambda (arg fail2)
+                      (get-args (cdr aprocs)
+                                env
+                                ;; success continuation for recursive
+                                ;; call to get-args
+                                (lambda (args fail3)
+                                  (succeed (cons arg args)
+                                           fail3))
+                                fail2))
+                    fail)))
+;Value: get-args
+
+1 ]=> ; execute-application procedure (CPS)
+(define (execute-application proc args succeed fail)
+  (cond ((primitive-procedure? proc)
+         (succeed (apply-primitive-procedure proc args)
+                  fail))
+        ((compound-procedure? proc)
+         ((procedure-body proc)
+          (extend-environment (procedure-parameters proc)
+                              args
+                              (procedure-environment proc))
+          succeed
+          fail))
+        (else
+         (error
+          "Unknown procedure type -- EXECUTE-APPLICATION"
+          proc))))
+;Value: execute-application
+
+1 ]=> #|
+ | Evaluating 'amb' expressions
+ |#
+
+; analyze-amb procedure
+(define (analyze-amb exp)
+  (let ((cprocs (map analyze (amb-choices exp))))
+    (lambda (env succeed fail)
+      (define (try-next choices)
+        (if (null? choices)
+            (fail)
+            ((car choices) env
+                           succeed
+                           (lambda ()
+                             (try-next (cdr choices))))))
+      (try-next cprocs))))
+;Value: analyze-amb
+
+1 ]=> ; remove procedure
+(define (remove x i)
+  (let ((y (take x i))
+        (z (drop x i)))
+    (append y (cdr z))))
+;Value: remove
+
+1 ]=> ; rand-sel procedure
+(define (rand-sel x n)
+  (let ((k (random n)))
+    (let ((kth (list-ref x k))
+          (rest (remove x k)))
+      (cons kth rest))))
+;Value: rand-sel
+
+1 ]=> ; randomize default-random-source
+(random-source-randomize! default-random-source)
+;Unspecified return value
+
+1 ]=> ; analyze-ramb procedure
+(define (analyze-ramb exp)
+  (let ((cprocs (map analyze (ramb-choices exp))))
+    (lambda (env succeed fail)
+      (define (try-next choices n)
+        (if (zero? n)
+            (fail)
+            (let ((res (rand-sel choices n)))
+              ((car res) env
+                         succeed
+                         (lambda ()
+                           (try-next (cdr res) (- n 1)))))))
+      (try-next cprocs (length cprocs)))))
+;Value: analyze-ramb
+
+1 ]=> #|
+ | Driver loop
+ |#
+
+; input-prompt definition
+(define input-prompt ";;; Amb-Eval input:")
+;Value: input-prompt
+
+1 ]=> ; output-prompt definition
+(define output-prompt ";;; Amb-Eval value:")
+;Value: output-prompt
+
+1 ]=> ; driver-loop procedure
+(define (driver-loop)
+  (define (internal-loop try-again)
+    (prompt-for-input input-prompt)
+    (let ((input (read)))
+      (if (eq? input 'try-again)
+          (try-again)
+          (begin
+            (newline)
+            (display ";;; Starting a new problem ")
+            (ambeval input
+                     the-global-environment
+                     ;; ambeval success
+                     (lambda (val next-alternative)
+                       (announce-output output-prompt)
+                       (user-print val)
+                       (internal-loop next-alternative))
+                     ;; ambeval failure
+                     (lambda ()
+                       (announce-output
+                        ";;; There are no more values of")
+                       (user-print input)
+                       (driver-loop)))))))
+  (internal-loop
+   (lambda ()
+     (newline)
+     (display ";;; There is no current problem")
+     (driver-loop))))
+;Value: driver-loop
+
+1 ]=> #|
+ | Support for 'let' expression (as noted in footnote 56, p.428)
+ |#
+
+; let? predicate procedure
+(define (let? exp) (tagged-list? exp 'let))
+;Value: let?
+
+1 ]=> ; let-bindings selector procedure
+(define (let-bindings exp) (cadr exp))
+;Value: let-bindings
+
+1 ]=> ; let-body selector procedure
+(define (let-body exp) (cddr exp))
+;Value: let-body
+
+1 ]=> ; let-var selector procedure
+(define (let-var binding) (car binding))
+;Value: let-var
+
+1 ]=> ; let-val selector procedure
+(define (let-val binding) (cadr binding))
+;Value: let-val
+
+1 ]=> ; make-combination constructor procedure
+(define (make-combination operator operands) (cons operator operands))
+;Value: make-combination
+
+1 ]=> ; let->combination procedure
+(define (let->combination exp)
+  ;;make-combination defined in earlier exercise
+  (let ((bindings (let-bindings exp)))
+    (make-combination (make-lambda (map let-var bindings)
+                                   (let-body exp))
+                      (map let-val bindings))))
+;Value: let->combination
+
+1 ]=> #|
+ | A longer list of primitives -- suitable for running everything in §4.3:
+ |
+ |   1. Overrides the list in ch4-mceval.scm
+ |   2. Has 'not' to support 'require'
+ |   3. Various stuff for code in text (including support for 'prime?')
+ |   4. 'integer?'
+ |   5. 'sqrt' for exercise code
+ |   6. 'eq?' for ex. solution
+ |#
+
+; primitive-procedures list definition
+(define primitive-procedures                                        ; ***
+  (list (list 'assoc assoc)
+        (list 'car car)
+        (list 'cadr cadr)
+        (list 'caddr caddr)
+        (list 'cdr cdr)
+        (list 'cons cons)
+        (list 'eq? eq?)
+        (list 'list list)
+        (list 'member member)
+        (list 'memq memq)
+        (list 'not not)
+        (list 'null? null?)
+        (list 'number->string number->string)
+        (list 'number? number?)
+        (list 'pair? pair?)
+        (list 'string->symbol string->symbol)
+        (list 'string-append string-append)
+        (list 'string-length string-length)
+        (list 'string=? string=?)
+        (list 'substring substring)
+        (list 'symbol->string symbol->string)
+        (list 'symbol? symbol?)
+;;      more primitives
+        ))
+;Value: primitive-procedures
+
+1 ]=> #|
+ | Exercise 4.78
+ |
+ | Redesign the query language as a nondeterministic program to be implemented
+ | using the evaluator of section 4.3, rather than as a stream process. In this
+ | approach, each query will produce a single answer (rather than the stream of
+ | all answers) and the user can type 'try-again' to see more answers. You
+ | should find that much of the mechanism we built in this section is subsumed
+ | by nondeterministic search and backtracking. You will probably also find,
+ | however, that your new query language has subtle differences in behavior
+ | from the one implemented here. Can you find examples that illustrate this
+ | difference?
+ |#
+
+(define the-global-environment (setup-environment))
+;Value: the-global-environment
+
+1 ]=> (driver-loop)
+
+;;; Amb-Eval input:
+; require nondet process
+(define (require p)
+  (if (not p) (amb)))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; query process
+(define (query exp)
+  (let ((q (query-syntax-process exp)))
+    (let ((res (qeval q '()))
+          (proc (lambda (v f) (contract-question-mark v))))
+      (instantiate q res proc))))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; qeval process
+(define (qeval exp frame)
+  (extend '(? x)
+          '(Bitdiddle Ben)
+          (extend '(? type)
+                  '(Wizard)
+                  frame)))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; instantiate procedure
+(define (instantiate exp frame unbound-var-handler)
+  (define (copy exp)
+    (cond ((var? exp)
+           (let ((binding (binding-in-frame exp frame)))
+             (if binding
+                 (copy (binding-value binding))
+                 (unbound-var-handler exp frame))))
+          ((pair? exp)
+           (cons (copy (car exp)) (copy (cdr exp))))
+          (else exp)))
+  (copy exp))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; query-syntax-process procedure
+(define (query-syntax-process exp) (map-over-symbols expand-question-mark exp))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; map-over-symbols process
+(define (map-over-symbols proc exp)
+  (cond ((pair? exp)
+         (cons (map-over-symbols proc (car exp))
+               (map-over-symbols proc (cdr exp))))
+        ((symbol? exp) (proc exp))
+        (else exp)))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; expand-question-mark procedure
+(define (expand-question-mark symbol)
+  (let ((chars (symbol->string symbol)))
+    (if (string=? (substring chars 0 1) "?")
+        (list '?
+              (string->symbol
+               (substring chars 1 (string-length chars))))
+        symbol)))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; contract-question-mark procedure
+(define (contract-question-mark variable)
+  (string->symbol
+   (string-append "?"
+     (if (number? (cadr variable))
+         (string-append (symbol->string (caddr variable))
+                        "-"
+                        (number->string (cadr variable)))
+         (symbol->string (cadr variable))))))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; tagged-list? predicate procedure
+(define (tagged-list? exp tag)
+  (if (pair? exp)
+      (eq? (car exp) tag)
+      false))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; var? predicate procedure
+(define (var? exp) (tagged-list? exp '?))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; constant-symbol? predicate procedure
+(define (constant-symbol? exp) (symbol? exp))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; make-binding constructor procedure
+(define (make-binding variable value) (cons variable value))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; binding-variable selector procedure
+(define (binding-variable binding) (car binding))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; binding-value selector procedure
+(define (binding-value binding) (cdr binding))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; binding-in-frame procedure
+(define (binding-in-frame variable frame) (assoc variable frame))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+; extend procedure
+(define (extend variable value frame)
+  (cons (make-binding variable value) frame))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+ok
+
+;;; Amb-Eval input:
+(query '(job ?x (computer . ?type)))
+;;; Starting a new problem 
+;;; Amb-Eval value:
+(job (bitdiddle ben) (computer wizard))
+
+;;; Amb-Eval input:
+try-again
+;;; There are no more values of
+(query (quote (job ?x (computer . ?type))))
+
+;;; Amb-Eval input:
+End of input stream reached.
+Fortitudine vincimus.
