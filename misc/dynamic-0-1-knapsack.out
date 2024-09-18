@@ -1,0 +1,274 @@
+MIT/GNU Scheme running under GNU/Linux
+Type `^C' (control-C) followed by `H' to obtain information about interrupts.
+
+Copyright (C) 2022 Massachusetts Institute of Technology
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Friday January 6, 2023 at 10:11:41 PM
+  Release 12.1 || SF || LIAR/x86-64
+
+1 ]=> ;; load run-time option 'format
+(load-option 'format)
+;Loading "format.com"... done
+;Value: format
+
+1 ]=> ;; last? predicate
+(define (last? lis) (null? (cdr lis)))
+;Value: last?
+
+1 ]=> ;; last selector
+(define (last lis)
+  (cond ((null? lis) (error #f "Empty list -- LAST"))
+        ((last? lis) (car lis))
+        (else (last (cdr lis)))))
+;Value: last
+
+1 ]=> ;; next-to-last? predicate
+(define (next-to-last? lis) (null? (cddr lis)))
+;Value: next-to-last?
+
+1 ]=> ;; next-to-last selector
+(define (next-to-last lis)
+  (cond ((null? lis) (error #f "Empty list -- NEXT-TO-LAST"))
+        ((next-to-last? lis) (car lis))
+        (else (next-to-last (cdr lis)))))
+;Value: next-to-last
+
+1 ]=> ;; make-strides procedure
+(define (make-strides dims)
+  (if (last? dims)
+      '(1)
+      (cons (fold-left * 1 (cdr dims))
+            (make-strides (cdr dims)))))
+;Value: make-strides
+
+1 ]=> ;; make-array constructor
+(define (make-array dims)
+  (list dims
+        (make-strides dims)
+        (make-vector (fold-left * 1 dims))))
+;Value: make-array
+
+1 ]=> ;; vector->array procedure
+(define (vector->array vec dims)
+  (list dims
+        (make-strides dims)
+        (vector-copy vec)))
+;Value: vector->array
+
+1 ]=> ;; array-dims selector
+(define (array-dims arr) (car arr))
+;Value: array-dims
+
+1 ]=> ;; array-strides selector
+(define (array-strides arr) (cadr arr))
+;Value: array-strides
+
+1 ]=> ;; array-vector selector
+(define (array-vector arr) (caddr arr))
+;Value: array-vector
+
+1 ]=> ;; inner-prod procedure
+(define (inner-prod x y acc)
+  (if (or (null? x) (null? y))
+      acc
+      (inner-prod (cdr x) (cdr y) (+ (* (car x) (car y)) acc))))
+;Value: inner-prod
+
+1 ]=> ;; array-ref procedure
+(define (array-ref arr ind)
+  (vector-ref (array-vector arr)
+              (inner-prod (array-strides arr) ind 0)))
+;Value: array-ref
+
+1 ]=> ;; array-set! procedure
+(define (array-set! arr ind val)
+  (vector-set! (array-vector arr)
+               (inner-prod (array-strides arr) ind 0)
+               val))
+;Value: array-set!
+
+1 ]=> ;; subvector-disp procedure
+(define (subvector-disp vec beg end w)
+  (do ((i beg (+ i 1)))
+      ((>= i end))
+    (display (format #f "~v@a" w (vector-ref vec i))))
+  (newline))
+;Value: subvector-disp
+
+1 ]=> ;; vector-disp-iter procedure
+(define (vector-disp-iter vec len pos m n w)
+  (cond ((zero? m)
+         (subvector-disp vec pos n w))
+        ((zero? pos)
+         (subvector-disp vec pos (+ pos n) w)
+         (vector-disp-iter vec len (+ pos n) m n w))
+        (else
+         (cond ((= pos (- len n))
+                (subvector-disp vec pos (+ pos n) w))
+               ((zero? (remainder (+ pos n) (* m n)))
+                (subvector-disp vec pos (+ pos n) w)
+                (newline)
+                (vector-disp-iter vec len (+ pos n) m n w))
+               (else
+                (subvector-disp vec pos (+ pos n) w)
+                (vector-disp-iter vec len (+ pos n) m n w))))))
+;Value: vector-disp-iter
+
+1 ]=> ;; array-disp procedure
+(define (array-disp arr w)
+  (let* ((vec (array-vector arr))
+         (dims (array-dims arr))
+         (len (vector-length vec))
+         (rank (length dims))
+         (m (if (> rank 1) (next-to-last dims) 0))
+         (n (last dims)))
+    (newline)
+    (vector-disp-iter vec len 0 m n w)))
+;Value: array-disp
+
+1 ]=> ;; dynamic-0-1-knapsack procedure
+(define (dynamic-0-1-knapsack v-arr w-arr n W)
+  (let ((c (make-array (list (+ n 1) (+ W 1)))))
+    (do ((j 0 (+ j 1)))
+        ((> j W))
+      (array-set! c (list 0 j) 0))
+    (do ((i 1 (+ i 1)))
+        ((> i n) c)
+      (array-set! c (list i 0) 0)
+      (do ((j 1 (+ j 1)))
+          ((> j W) c)
+        (let ((wi (array-ref w-arr (list (- i 1))))
+              (cu (array-ref c (list (- i 1) j))))             ; c[i,j] up elt
+          (if (<= wi j)
+              (let ((vi (array-ref v-arr (list (- i 1))))
+                    (cd (array-ref c (list (- i 1) (- j wi))))); c[i,j] diag elt
+                (if (> (+ vi cd) cu)
+                    (array-set! c (list i j) (+ vi cd))
+                    (array-set! c (list i j) cu)))
+              (array-set! c (list i j) cu)))))))
+;Value: dynamic-0-1-knapsack
+
+1 ]=> ;; trace-0-1-knapsack
+(define (trace-0-1-knapsack c-arr w-arr ind acc)
+  (if (zero? (car ind))
+      acc
+      (let* ((i (car ind))
+             (w (cadr ind))
+             (up-ind (list (- i 1) w))
+             (cc (array-ref c-arr ind))
+             (cu (array-ref c-arr up-ind)))
+        (if (= cc cu)
+            (trace-0-1-knapsack c-arr w-arr up-ind acc)
+            (let* ((wi (array-ref w-arr (list (- i 1))))
+                   (diag-ind (list (- i 1) (- w wi))))
+              (trace-0-1-knapsack c-arr w-arr diag-ind (cons i acc)))))))
+;Value: trace-0-1-knapsack
+
+1 ]=> ;; unit tests
+(define v-arr (vector->array '#(6 10 12) '(3)))
+;Value: v-arr
+
+1 ]=> (define w-arr (vector->array '#(1 2 3) '(3)))
+;Value: w-arr
+
+1 ]=> (define n 3)
+;Value: n
+
+1 ]=> (define W 5)
+;Value: w
+
+1 ]=> (define c-arr (dynamic-0-1-knapsack v-arr w-arr n W))
+;Value: c-arr
+
+1 ]=> (define res (trace-0-1-knapsack c-arr w-arr (list n W) '()))
+;Value: res
+
+1 ]=> (define arr1 (vector->array '#(0 1 2 3 4 5 6 7 8 9 a b c d e f g h
+                                 i j k l m n o p q r s t u v w x y z)
+                            '(3 2 3 2)))
+;Value: arr1
+
+1 ]=> (define arr2 (vector->array '#(0 1 2 3 4 5 6 7 8 9 a b c d e f g h
+                                 i j k l m n o p q r s t u v w x y z)
+                            '(2 2 3 3)))
+;Value: arr2
+
+1 ]=> (array-disp v-arr 3)
+  6 10 12
+;Unspecified return value
+
+1 ]=> (array-disp v-arr 3)
+  6 10 12
+;Unspecified return value
+
+1 ]=> n
+;Value: 3
+
+1 ]=> W
+;Value: 5
+
+1 ]=> (array-disp c-arr 3)
+  0  0  0  0  0  0
+  0  6  6  6  6  6
+  0  6 10 16 16 16
+  0  6 10 16 18 22
+;Unspecified return value
+
+1 ]=> res
+;Value: (2 3)
+
+1 ]=> (array-dims arr1)
+;Value: (3 2 3 2)
+
+1 ]=> (array-disp arr1 3)
+  0  1
+  2  3
+  4  5
+
+  6  7
+  8  9
+  a  b
+
+  c  d
+  e  f
+  g  h
+
+  i  j
+  k  l
+  m  n
+
+  o  p
+  q  r
+  s  t
+
+  u  v
+  w  x
+  y  z
+;Unspecified return value
+
+1 ]=> (array-dims arr2)
+;Value: (2 2 3 3)
+
+1 ]=> (array-disp arr2 3)
+  0  1  2
+  3  4  5
+  6  7  8
+
+  9  a  b
+  c  d  e
+  f  g  h
+
+  i  j  k
+  l  m  n
+  o  p  q
+
+  r  s  t
+  u  v  w
+  x  y  z
+;Unspecified return value
+
+1 ]=> 
+End of input stream reached.
+Moriturus te salutat.
