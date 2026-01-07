@@ -83,7 +83,7 @@
 ;           └──────────────────┼──────────────────────────────────────┼─────┘
 ;                      ┌───────┘ Λ                                    │ Λ
 ;                      V         │                                    │ │
-;           ┌─────────ꙨꙨ─────────┘                                    │ │
+;           ┌─────────⨀⨀─────────┘                                    │ │
 ;           V                                                         │ │
 ; ⎛ params: -                                          ⎞              │ │
 ; ⎜ body: ((lambda (value informant constraints)       ⎟              │ │
@@ -97,7 +97,7 @@
 ; ⎝        '())                                        ⎠              │ │
 ;                                          ┌──────────────────────────┘ │
 ;                                          V                            │
-;            ┌────────────────────────────ꙨꙨ────────────────────────────┘
+;            ┌────────────────────────────⨀⨀────────────────────────────┘
 ;            V
 ;   params : exception, procedure, list
 ;   body: (define (loop items)
@@ -137,7 +137,7 @@
 ;  │ │ │    │ │    │ │                                            │ │
 ;  └─┼─┼────┼─┼────┼─┼───────────────────────┐┌───────────────────┘ │
 ;    │ │    │ │    │ │                       VV                     │
-;    │ │    │ │    │ │ ┌─────────────────────ꙨꙨ─────────────────────┘
+;    │ │    │ │    │ │ ┌─────────────────────⨀⨀─────────────────────┘
 ;    │ │    │ │    │ │ V
 ;    │ │    │ │    │ │ params: request
 ;    │ │    │ │    │ │ body: (cond ((eq? request 'has-value?)
@@ -147,7 +147,7 @@
 ;    │ │    │ │    │ │             ((eq? request 'forget) forget-my-value)
 ;    │ │    │ │    │ │             ((eq? request 'connect) connect)
 ;    │ │    │ │    V │             (else (error "Unknown operation -- CONNECTOR"
-;    │ │    │ │ ┌─ꙨꙨ─┘                          request))))
+;    │ │    │ │ ┌─⨀⨀─┘                          request))))
 ;    │ │    │ │ V
 ;    │ │    │ │ params: new-constraint
 ;    │ │    │ │ body: (if (not (memq new-constraint constraints))
@@ -155,7 +155,7 @@
 ;    │ │    │ │                 (cons new-constraint constraints)))
 ;    │ │    │ │       (if (has-value? me)
 ;    │ │    V │           (inform-about-value new-constraint))
-;    │ │ ┌─ꙨꙨ─┘       'done)
+;    │ │ ┌─⨀⨀─┘       'done)
 ;    │ │ V
 ;    │ │ params: retractor
 ;    │ │ body: (if (eq? retractor informant)
@@ -163,7 +163,7 @@
 ;    │ │                  (for-each-except retractor
 ;    │ │                                   inform-about-no-value
 ;    V │                                   constraints))
-; ┌─ꙨꙨ─┘           'ignored))
+; ┌─⨀⨀─┘           'ignored))
 ; V
 ; params: newval, setter
 ; body: (cond ((not (has-value? me))
@@ -202,7 +202,7 @@
 ;                 │        │ Λ                  │        │ Λ
 ;                 └────┐┌──┘ │                  └────┐┌──┘ │
 ;                      VV    │                       VV    │
-;                 ┌────ꙨꙨ────┘                  ┌────ꙨꙨ────┘
+;                 ┌────⨀⨀────┘                  ┌────⨀⨀────┘
 ;                 V                             V
 ;                 params: request               params: request
 ;                 body: (cond ...)              body: (cond ...)
@@ -232,7 +232,7 @@
 ;             │   │        │ Λ Λ Λ Λ            │        │ Λ                │
 ;             │   └────┐┌──┘ │ │ │ │            └────┐┌──┘ │                │
 ;             │        VV    │ │ │ └─────────┐       VV    │                │
-;             │   ┌────ꙨꙨ────┘ │ └───────┐   │  ┌────ꙨꙨ────┘                │
+;             │   ┌────⨀⨀────┘ │ └───────┐   │  ┌────⨀⨀────┘                │
 ;             │   │     Λ      └────┐    │   │  V                           │
 ;             │   V     └───────────┼────┼─┐ │  params: request             │
 ;             │   params: request   │    │ │ │  body: (cond ...)            │

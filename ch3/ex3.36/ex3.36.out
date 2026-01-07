@@ -1,12 +1,12 @@
 MIT/GNU Scheme running under GNU/Linux
 Type `^C' (control-C) followed by `H' to obtain information about interrupts.
 
-Copyright (C) 2020 Massachusetts Institute of Technology
+Copyright (C) 2022 Massachusetts Institute of Technology
 This is free software; see the source for copying conditions. There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-Image saved on Sunday March 7, 2021 at 3:24:56 PM
-  Release 11.2 || SF || LIAR/x86-64
+Image saved on Friday January 6, 2023 at 10:11:41 PM
+  Release 12.1 || SF || LIAR/x86-64
 
 1 ]=> ; make-connector constructor procedure
 (define (make-connector)
@@ -102,7 +102,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;           └──────────────────┼──────────────────────────────────────┼─────┘
 ;                      ┌───────┘ Λ                                    │ Λ
 ;                      V         │                                    │ │
-;           ┌─────────ꙨꙨ─────────┘                                    │ │
+;           ┌─────────⨀⨀─────────┘                                    │ │
 ;           V                                                         │ │
 ; ⎛ params: -                                          ⎞              │ │
 ; ⎜ body: ((lambda (value informant constraints)       ⎟              │ │
@@ -116,7 +116,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ; ⎝        '())                                        ⎠              │ │
 ;                                          ┌──────────────────────────┘ │
 ;                                          V                            │
-;            ┌────────────────────────────ꙨꙨ────────────────────────────┘
+;            ┌────────────────────────────⨀⨀────────────────────────────┘
 ;            V
 ;   params : exception, procedure, list
 ;   body: (define (loop items)
@@ -157,7 +157,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;  │ │ │    │ │    │ │                                            │ │
 ;  └─┼─┼────┼─┼────┼─┼───────────────────────┐┌───────────────────┘ │
 ;    │ │    │ │    │ │                       VV                     │
-;    │ │    │ │    │ │ ┌─────────────────────ꙨꙨ─────────────────────┘
+;    │ │    │ │    │ │ ┌─────────────────────⨀⨀─────────────────────┘
 ;    │ │    │ │    │ │ V
 ;    │ │    │ │    │ │ params: request
 ;    │ │    │ │    │ │ body: (cond ((eq? request 'has-value?)
@@ -167,7 +167,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;    │ │    │ │    │ │             ((eq? request 'forget) forget-my-value)
 ;    │ │    │ │    │ │             ((eq? request 'connect) connect)
 ;    │ │    │ │    V │             (else (error "Unknown operation -- CONNECTOR"
-;    │ │    │ │ ┌─ꙨꙨ─┘                          request))))
+;    │ │    │ │ ┌─⨀⨀─┘                          request))))
 ;    │ │    │ │ V
 ;    │ │    │ │ params: new-constraint
 ;    │ │    │ │ body: (if (not (memq new-constraint constraints))
@@ -175,7 +175,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;    │ │    │ │                 (cons new-constraint constraints)))
 ;    │ │    │ │       (if (has-value? me)
 ;    │ │    V │           (inform-about-value new-constraint))
-;    │ │ ┌─ꙨꙨ─┘       'done)
+;    │ │ ┌─⨀⨀─┘       'done)
 ;    │ │ V
 ;    │ │ params: retractor
 ;    │ │ body: (if (eq? retractor informant)
@@ -183,7 +183,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;    │ │                  (for-each-except retractor
 ;    │ │                                   inform-about-no-value
 ;    V │                                   constraints))
-; ┌─ꙨꙨ─┘           'ignored))
+; ┌─⨀⨀─┘           'ignored))
 ; V
 ; params: newval, setter
 ; body: (cond ((not (has-value? me))
@@ -223,7 +223,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;                 │        │ Λ                  │        │ Λ
 ;                 └────┐┌──┘ │                  └────┐┌──┘ │
 ;                      VV    │                       VV    │
-;                 ┌────ꙨꙨ────┘                  ┌────ꙨꙨ────┘
+;                 ┌────⨀⨀────┘                  ┌────⨀⨀────┘
 ;                 V                             V
 ;                 params: request               params: request
 ;                 body: (cond ...)              body: (cond ...)
@@ -254,7 +254,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;             │   │        │ Λ Λ Λ Λ            │        │ Λ                │
 ;             │   └────┐┌──┘ │ │ │ │            └────┐┌──┘ │                │
 ;             │        VV    │ │ │ └─────────┐       VV    │                │
-;             │   ┌────ꙨꙨ────┘ │ └───────┐   │  ┌────ꙨꙨ────┘                │
+;             │   ┌────⨀⨀────┘ │ └───────┐   │  ┌────⨀⨀────┘                │
 ;             │   │     Λ      └────┐    │   │  V                           │
 ;             │   V     └───────────┼────┼─┐ │  params: request             │
 ;             │   params: request   │    │ │ │  body: (cond ...)            │
@@ -294,4 +294,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;      ==> ??
 ;
 End of input stream reached.
-Ceterum censeo Carthaginem esse delendam.
+Fortitudine vincimus.

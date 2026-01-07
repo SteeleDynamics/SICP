@@ -1,12 +1,12 @@
 MIT/GNU Scheme running under GNU/Linux
 Type `^C' (control-C) followed by `H' to obtain information about interrupts.
 
-Copyright (C) 2020 Massachusetts Institute of Technology
+Copyright (C) 2022 Massachusetts Institute of Technology
 This is free software; see the source for copying conditions. There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-Image saved on Sunday March 7, 2021 at 3:24:56 PM
-  Release 11.2 || SF || LIAR/x86-64
+Image saved on Friday January 6, 2023 at 10:11:41 PM
+  Release 12.1 || SF || LIAR/x86-64
 
 1 ]=> (define (make-account balance)
   (define (withdraw amount)
@@ -31,7 +31,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;  env      └────────────────┼───┘
 ;                            │ Λ
 ;                            V │
-;                ┌──────────ꙨꙨ─┘
+;                ┌──────────⨀⨀─┘
 ;                V
 ;     params: balance
 ;     body: (define (withdraw amount) ...)
@@ -50,7 +50,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;  env      └────────────────┼───────────────────────────┘                 │
 ;                            │ Λ                      Λ                    │
 ;                            V │                      │                    │
-;                ┌──────────ꙨꙨ─┘            ┌─────────┴────────────────┐   │
+;                ┌──────────⨀⨀─┘            ┌─────────┴────────────────┐   │
 ;                V                     E1 ->│balance: 50               │   │
 ;     params: balance                       │dispatch: ──────────┐     │   │
 ;     body: (define (withdraw amount) ...)  │deposit: ──────┐    │     │   │
@@ -58,21 +58,21 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;           (define (dispatch m) ...)       └──────────┼────┼────┼─────┘   │
 ;           dispatch                   ┌───────────────┘ Λ  │ Λ  │  Λ      │
 ;                                      V                 │  │ │  │  │      │
-;           ┌─────────────────────────ꙨꙨ─────────────────┘  │ │  │  │      │
+;           ┌─────────────────────────⨀⨀─────────────────┘  │ │  │  │      │
 ;           V                                               │ │  │  │      │
 ; params: amount                                            │ │  │  │      │
 ; body: (if (>= balance amount)                             │ │  │  │      │
 ;           (begin (set! balance (- balance amount))        │ │  │  │      │
 ;                  balance)            ┌────────────────────┘ │  │  │      │
 ;           "Insufficient funds")      V                      │  │  │      │
-;           ┌─────────────────────────ꙨꙨ──────────────────────┘  │  │      │
+;           ┌─────────────────────────⨀⨀──────────────────────┘  │  │      │
 ;           V                                                    │  │      │
 ; params: amount                                                 │  │      │
 ; body: (set! balance (+ balance amount))                        │  │      │
 ;       balance                                                  │  │      │
 ;                                      ┌─────────────────────────┘  │      │
 ;                                      V                            │      │
-;           ┌─────────────────────────ꙨꙨ────────────────────────────┘      │
+;           ┌─────────────────────────⨀⨀────────────────────────────┘      │
 ;           V                          Λ                                   │
 ; params: m                            └───────────────────────────────────┘
 ; body: (cond ((eq? m 'withdraw) withdraw)
@@ -99,7 +99,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;                   │       └───────────────┼──────────┘
 ;                   └────────────┐ ┌────────┘  Λ    Λ
 ;                                V V           │    └───────┐
-;                         ┌──────ꙨꙨ────────────┘      ┌─────┴─────┐
+;                         ┌──────⨀⨀────────────┘      ┌─────┴─────┐
 ;                         V                      E2 ->│m: 'deposit│
 ;                      params: m                      └───────────┘
 ;                      body: ...                            Λ
@@ -124,7 +124,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;                   │       └───────────────┼──────────┘
 ;                   └────────────┐ ┌────────┘  Λ
 ;                                V V           │
-;                         ┌──────ꙨꙨ────────────┘
+;                         ┌──────⨀⨀────────────┘
 ;                         V
 ;                      params: m
 ;                      body: ...
@@ -148,7 +148,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;                   │       └───────────────┼──────────┘
 ;                   └────────────┐ ┌────────┘  Λ    Λ
 ;                                V V           │    └───────┐
-;                         ┌──────ꙨꙨ────────────┘      ┌─────┴──────┐
+;                         ┌──────⨀⨀────────────┘      ┌─────┴──────┐
 ;                         V                      E2 ->│m: 'withdraw│
 ;                      params: m                      └────────────┘
 ;                      body: ...                            Λ
@@ -175,7 +175,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;                   │       └───────────────┼──────────┘
 ;                   └────────────┐ ┌────────┘  Λ
 ;                                V V           │
-;                         ┌──────ꙨꙨ────────────┘
+;                         ┌──────⨀⨀────────────┘
 ;                         V
 ;                      params: m
 ;                      body: ...
@@ -200,7 +200,7 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ;                   │      └───────────────┼───┘  │      └───────────────┼───┘
 ;                   └───────────┐ ┌────────┘ Λ    └───────────┐ ┌────────┘ Λ
 ;                               V V          │                V V          │
-;                        ┌──────ꙨꙨ───────────┘                ꙨꙨ───────────┘
+;                        ┌──────⨀⨀───────────┘                ⨀⨀───────────┘
 ;                        │  ┌─────────────────────────────────┘
 ;                        V  V
 ;                     params: m
@@ -216,4 +216,4 @@ Image saved on Sunday March 7, 2021 at 3:24:56 PM
 ; A3: The code parts for dispatch, deposit, and withdraw are shared.
 ;
 End of input stream reached.
-Happy happy joy joy!
+Ceterum censeo Carthaginem esse delendam.

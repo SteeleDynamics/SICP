@@ -23,27 +23,27 @@
 ;           ┌─────────────────┐
 ; global -->│ factorial: ─┐   │
 ;  env      └─────────────┼───┘
-;                         │ ^
+;                         │ Λ
 ;                         V │
-;                        ꙨꙨ─┘
+;                        ⨀⨀─┘
 ;                        │
 ;                        V
 ;               parameters: n
 ;               body: (if (= n 1)
 ;                         1
 ;                         (* n (factorial (- n 1))))
-; 
+;
 ; Figure 1: Procedure object in the global frame.
 ;
 ;           ┌────────────────────────────────────────────────────────────────┐
 ; global -->│                                                                │
 ;  env      └────────────────────────────────────────────────────────────────┘
-;             ^           ^           ^           ^           ^           ^   
-;             │           │           │           │           │           │   
+;             Λ           Λ           Λ           Λ           Λ           Λ
+;             │           │           │           │           │           │
 ;           ┌─┴──┐      ┌─┴──┐      ┌─┴──┐      ┌─┴──┐      ┌─┴──┐      ┌─┴──┐
 ;      E1 ->│n: 6│ E2 ->│n: 5│ E3 ->│n: 4│ E4 ->│n: 3│ E5 ->│n: 2│ E6 ->│n: 1│
 ;           └────┘      └────┘      └────┘      └────┘      └────┘      └────┘
-; 
+;
 ; Figure 2: Environments created by evaluating (factorial 6) using the
 ;           procedures in figure 1. Each environment evaluates the body of
 ;           the function object factorial.
@@ -56,24 +56,24 @@
 ;           │ fact-iter: ──────────────────────────┐   │
 ; global -->│ factorial: ─┐                        │   │
 ;  env      └─────────────┼────────────────────────┼───┘
-;                         │ ^                      │ ^          
-;                         V │                      V │           
-;                        ꙨꙨ─┘                     ꙨꙨ─┘           
-;                        │                        │              
-;                        V                        V              
-;             parameters: n            parameters: product, counter, max-count           
+;                         │ Λ                      │ Λ
+;                         V │                      V │
+;                        ⨀⨀─┘                     ⨀⨀─┘
+;                        │                        │
+;                        V                        V
+;             parameters: n            parameters: product, counter, max-count
 ;             body: (fact-iter 1 1 n)  body: (if (> counter max-count)
 ;                                                product
 ;                                                (fact-iter (* counter product)
 ;                                                           (+ counter 1)
 ;                                                           max-count))
-; 
-; Figure 3: Procedure objects in the global frame. 
+;
+; Figure 3: Procedure objects in the global frame.
 ;
 ;           ┌────────────────────────────────────────────────────────────────┐
 ; global -->│                                                                │
 ;  env      └────────────────────────────────────────────────────────────────┘
-;             ^    ^        ^        ^        ^        ^        ^        ^
+;             Λ    Λ        Λ        Λ        Λ        Λ        Λ        Λ
 ;             │    │        │        │        │        │        │        │
 ;           ┌─┴──┐ │        │        │        │        │        │        │
 ;      E1 ->│n: 6│ │        │        │        │        │        │        │
